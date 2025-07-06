@@ -2,29 +2,26 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <!-- index.html の <head> または <body> 最下部に追加 -->
-<script type="module">
-  // ページの DOM が組み上がった後に実行
-  document.addEventListener('DOMContentLoaded', async () => {
-    try {
-      // 1) 外部ファイルを取得
-      const res = await fetch('./systemPrompt.txt');   // 同じ階層なら相対パス
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+   <script type="module">
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const res = await fetch('./systemPrompt.txt');
+    if (!res.ok) throw new Error(res.status);
+    const prompt = await res.text();
 
-      // 2) 文字列として読み込む
-      const prompt = await res.text();                 // .json にしたら res.json()
+    // ① グローバルに保持（必要に応じて settings にも）
+    window.commonSystemPrompt = prompt.trim();
+    if (window.state?.settings) state.settings.commonSystemPrompt = window.commonSystemPrompt;
 
-      // 3) どこからでも参照できる場所へ格納
-      window.commonSystemPrompt = prompt;              // 例: グローバル変数
-
-      // 4) プロンプトを渡してアプリを初期化
-      initApp(prompt);                                 // 自作の起動関数
-    } catch (e) {
-      console.error('systemPrompt の読み込み失敗:', e);
-      alert('設定ファイルが読み込めませんでした');    // 必要ならエラー表示
-    }
-  });
+    // ② アプリ初期化
+    appLogic.initializeApp();          // ← 重複呼び出しは 1 箇所だけ残す
+  } catch (e) {
+    console.error(e);
+    alert('systemPrompt.txt が読み込めません');
+  }
+});
 </script>
+
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
