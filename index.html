@@ -7,20 +7,23 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     const res = await fetch('./systemPrompt.txt');
     if (!res.ok) throw new Error(res.status);
-    const prompt = await res.text();
+    const prompt = (await res.text()).trim();
 
-    // ① グローバルに保持（必要に応じて settings にも）
-    window.commonSystemPrompt = prompt.trim();
-    if (window.state?.settings) state.settings.commonSystemPrompt = window.commonSystemPrompt;
+    /* ★ 1) 設定に代入  */
+    window.state        ??= {};   // state がまだ無い場合に備え
+    state.settings      ??= {};
+    state.settings.commonSystemPrompt = prompt;          // UI 連動用
+    window.commonSystemPrompt        = prompt;           // 必要ならグローバル保持
 
-    // ② アプリ初期化
-    appLogic.initializeApp();          // ← 重複呼び出しは 1 箇所だけ残す
+    /* ★ 2) アプリを初期化（ここで applySettingsToUI が走る） */
+    appLogic.initializeApp();
   } catch (e) {
     console.error(e);
-    alert('systemPrompt.txt が読み込めません');
+    alert('systemPrompt.txt が読み込めませんでした');
   }
 });
 </script>
+
 
 
     <meta charset="UTF-8">
