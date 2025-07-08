@@ -1164,6 +1164,73 @@ document.addEventListener('DOMContentLoaded', async () => {
             transform: scale(0.98);
         }
 
+        .prompt-setup-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .setting-group {
+            margin-bottom: 25px;
+        }
+
+        .setting-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+
+        .setting-select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 16px;
+            transition: border-color 0.2s ease;
+        }
+
+        .setting-select:focus {
+            outline: none;
+            border-color: var(--bg-button);
+        }
+
+        .prompt-preview {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-secondary);
+            border-radius: 6px;
+            padding: 15px;
+            min-height: 100px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        #prompt-setup-system-prompt {
+            width: 100%;
+            min-height: 200px;
+            padding: 15px;
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-family: monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+            transition: border-color 0.2s ease;
+        }
+
+        #prompt-setup-system-prompt:focus {
+            outline: none;
+            border-color: var(--bg-button);
+        }
+
         .screen {
             position: absolute;
             top: 0;
@@ -3265,7 +3332,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div id="home-screen" class="screen active">
             <header class="app-header">
                 <h1>GeminiPWA</h1>
-                <button id="goto-settings-btn" class="header-button" aria-label="設定へ">⚙</button>
+                <button id="home-goto-settings-btn" class="header-button" aria-label="設定へ">⚙</button>
             </header>
             <main class="main-content">
                 <div class="home-buttons-container">
@@ -3277,9 +3344,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         <div id="chat-screen" class="screen">
             <header class="app-header">
-                <button id="goto-home-btn" class="header-button" aria-label="ホームへ">🏠</button>
                 <button id="goto-history-btn" class="header-button" aria-label="履歴一覧へ">☰</button>
                 <h1 id="chat-title">新規チャット</h1>
+                <button id="goto-home-btn" class="header-button" aria-label="ホームへ">🏠</button>
                 <button id="new-chat-btn" class="new-chat-button" title="新規チャットを開始">新</button>
                 <button id="delete-session-btn" class="action-button-in-header" title="現在のチャットを削除">削</button>
                 <button id="copy-session-btn" class="action-button-in-header" title="チャット全体をコピー">コ</button>
@@ -3364,6 +3431,36 @@ document.addEventListener('DOMContentLoaded', async () => {
             </main>
         </div>
 
+        <div id="prompt-setup-screen" class="screen">
+            <header class="app-header">
+                <button id="back-to-home-from-prompt-setup" class="header-button" aria-label="ホームへ戻る">＜</button>
+                <h1>プロンプト設定</h1>
+                <button id="start-chat-with-prompt-btn" class="header-save-button" title="このプロンプトで会話を開始">開始</button>
+            </header>
+            <main class="main-content">
+                <div class="prompt-setup-container">
+                    <div class="setting-group">
+                        <label for="user-relationship-select">ユーザーとの関係:</label>
+                        <select id="user-relationship-select" class="setting-select">
+                            <option value="first-meeting">初対面</option>
+                            <option value="friend">友達</option>
+                            <option value="lover">恋人</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label for="prompt-setup-system-prompt">共通システムプロンプト:</label>
+                        <textarea id="prompt-setup-system-prompt" placeholder="ここにシステムプロンプトを入力してください..." aria-label="共通システムプロンプト"></textarea>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label>設定されるプロンプト (プレビュー):</label>
+                        <div id="prompt-preview" class="prompt-preview"></div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
         <div id="settings-screen" class="screen">
             <header class="app-header">
                  <button id="back-to-chat-from-settings" class="header-button" aria-label="チャットへ戻る">＜</button>
@@ -3392,7 +3489,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <label for="common-system-prompt-default">共通システムプロンプト (全API共通):</label>
                             <textarea id="common-system-prompt-default" placeholder="例: あなたは優秀なアシスタントです。ここに設定した内容は、APIごとの設定より優先されます。" aria-label="共通システムプロンプト (デフォルト)"></textarea>
                             <label class="checkbox-label" style="margin-top: -5px; margin-bottom: 15px;">
-                                <input type="checkbox" id="enable-common-system-prompt-default">
+                                <input type="checkbox" id="enable-common-system-prompt-default" checked>
                                 この共通システムプロンプトを有効にする (API別システムプロンプトより優先度低)
                             </label>
                         </div>
@@ -4894,6 +4991,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             homeScreen: document.getElementById('home-screen'),
             chatScreen: document.getElementById('chat-screen'),
             historyScreen: document.getElementById('history-screen'),
+            promptSetupScreen: document.getElementById('prompt-setup-screen'),
             settingsScreen: document.getElementById('settings-screen'),
             chatTitle: document.getElementById('chat-title'),
             messageContainer: document.getElementById('message-container'),
@@ -5105,9 +5203,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             deleteBackgroundBtn: document.getElementById('delete-background-btn'),
             gotoHistoryBtn: document.getElementById('goto-history-btn'),
             gotoSettingsBtn: document.getElementById('goto-settings-btn'),
+            homeGotoSettingsBtn: document.getElementById('home-goto-settings-btn'),
             gotoHomeBtn: document.getElementById('goto-home-btn'),
             startChatBtn: document.getElementById('start-chat-btn'),
             selectHistoryBtn: document.getElementById('select-history-btn'),
+            userRelationshipSelect: document.getElementById('user-relationship-select'),
+            promptSetupSystemPrompt: document.getElementById('prompt-setup-system-prompt'),
+            promptPreview: document.getElementById('prompt-preview'),
+            backToHomeFromPromptSetupBtn: document.getElementById('back-to-home-from-prompt-setup'),
+            startChatWithPromptBtn: document.getElementById('start-chat-with-prompt-btn'),
             backToChatFromHistoryBtn: document.getElementById('back-to-chat-from-history'),
             backToChatFromSettingsBtn: document.getElementById('back-to-chat-from-settings'),
             newChatBtn: document.getElementById('new-chat-btn'),
@@ -5254,7 +5358,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 modelName: DEFAULT_MODEL,
                 additionalModels: '',
                 commonSystemPrompt: '',
-                enableCommonSystemPromptDefault: false,
+                enableCommonSystemPromptDefault: true,
                 geminiSystemPrompt: '',
                 geminiEnableSystemPromptDefault: true,
                 geminiTemperature: null,
@@ -8056,11 +8160,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
 
-                const allScreens = [elements.homeScreen, elements.chatScreen, elements.historyScreen, elements.settingsScreen];
+                const allScreens = [elements.homeScreen, elements.chatScreen, elements.historyScreen, elements.promptSetupScreen, elements.settingsScreen];
                 let activeScreen = null;
 
                 if (!fromPopState) {
-                    if (screenName === 'history' || screenName === 'settings' || screenName === 'chat') {
+                    if (screenName === 'history' || screenName === 'settings' || screenName === 'chat' || screenName === 'prompt-setup') {
                         history.pushState({ screen: screenName }, '', `#${screenName}`);
                     } else if (screenName === 'home') {
                         history.replaceState({ screen: 'home' }, '', '#home');
@@ -8077,13 +8181,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     elements.homeScreen.style.transform = 'translateX(0)';
                     elements.chatScreen.style.transform = 'translateX(100%)';
                     elements.historyScreen.style.transform = 'translateX(-100%)';
-                    elements.settingsScreen.style.transform = 'translateX(200%)';
+                    elements.promptSetupScreen.style.transform = 'translateX(200%)';
+                    elements.settingsScreen.style.transform = 'translateX(300%)';
                 } else if (screenName === 'chat') {
                     activeScreen = elements.chatScreen;
                     elements.homeScreen.style.transform = 'translateX(-100%)';
                     elements.chatScreen.style.transform = 'translateX(0)';
                     elements.historyScreen.style.transform = 'translateX(-100%)';
-                    elements.settingsScreen.style.transform = 'translateX(100%)';
+                    elements.promptSetupScreen.style.transform = 'translateX(100%)';
+                    elements.settingsScreen.style.transform = 'translateX(200%)';
                     requestAnimationFrame(() => {
                         this.adjustTextareaHeight();
                         this.updateChatScreenElementVisibility();
@@ -8093,13 +8199,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                     elements.homeScreen.style.transform = 'translateX(-200%)';
                     elements.chatScreen.style.transform = 'translateX(100%)';
                     elements.historyScreen.style.transform = 'translateX(0)';
-                    elements.settingsScreen.style.transform = 'translateX(200%)';
+                    elements.promptSetupScreen.style.transform = 'translateX(200%)';
+                    elements.settingsScreen.style.transform = 'translateX(300%)';
                     this.renderHistoryList();
-                } else if (screenName === 'settings') {
-                    activeScreen = elements.settingsScreen;
+                } else if (screenName === 'prompt-setup') {
+                    activeScreen = elements.promptSetupScreen;
                     elements.homeScreen.style.transform = 'translateX(-300%)';
                     elements.chatScreen.style.transform = 'translateX(-100%)';
                     elements.historyScreen.style.transform = 'translateX(-200%)';
+                    elements.promptSetupScreen.style.transform = 'translateX(0)';
+                    elements.settingsScreen.style.transform = 'translateX(100%)';
+                    this.updatePromptPreview();
+                } else if (screenName === 'settings') {
+                    activeScreen = elements.settingsScreen;
+                    elements.homeScreen.style.transform = 'translateX(-400%)';
+                    elements.chatScreen.style.transform = 'translateX(-200%)';
+                    elements.historyScreen.style.transform = 'translateX(-300%)';
+                    elements.promptSetupScreen.style.transform = 'translateX(-100%)';
                     elements.settingsScreen.style.transform = 'translateX(0)';
                     this.applySettingsToUI();
                 }
@@ -8114,6 +8230,41 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 });
                 state.currentScreen = screenName;
+            },
+            updatePromptPreview() {
+                const relationship = elements.userRelationshipSelect.value;
+                const systemPrompt = elements.promptSetupSystemPrompt.value;
+                
+                const relationshipText = {
+                    'first-meeting': '初対面',
+                    'friend': '友達',
+                    'lover': '恋人'
+                }[relationship] || '初対面';
+                
+                const combinedPrompt = systemPrompt + (systemPrompt ? '\n\n' : '') + `ユーザーとの関係は${relationshipText}です。`;
+                elements.promptPreview.textContent = combinedPrompt;
+            },
+            startChatWithPrompt() {
+                const relationship = elements.userRelationshipSelect.value;
+                const systemPrompt = elements.promptSetupSystemPrompt.value;
+                
+                const relationshipText = {
+                    'first-meeting': '初対面',
+                    'friend': '友達',
+                    'lover': '恋人'
+                }[relationship] || '初対面';
+                
+                const combinedPrompt = systemPrompt + (systemPrompt ? '\n\n' : '') + `ユーザーとの関係は${relationshipText}です。`;
+                
+                // 設定に反映
+                state.settings.commonSystemPrompt = combinedPrompt;
+                elements.commonSystemPromptDefaultTextarea.value = combinedPrompt;
+                
+                // 設定を保存
+                appLogic.saveSettings();
+                
+                // チャット画面に移行
+                uiUtils.showScreen('chat');
             },
             setSendingState(sending) {
                 state.isSending = sending;
@@ -8645,11 +8796,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             setupEventListeners() {
                 elements.gotoHistoryBtn.addEventListener('click', () => uiUtils.showScreen('history'));
                 elements.gotoSettingsBtn.addEventListener('click', () => uiUtils.showScreen('settings'));
+                elements.homeGotoSettingsBtn.addEventListener('click', () => uiUtils.showScreen('settings'));
                 elements.gotoHomeBtn.addEventListener('click', () => uiUtils.showScreen('home'));
-                elements.startChatBtn.addEventListener('click', () => uiUtils.showScreen('chat'));
+                elements.startChatBtn.addEventListener('click', () => uiUtils.showScreen('prompt-setup'));
                 elements.selectHistoryBtn.addEventListener('click', () => uiUtils.showScreen('history'));
                 elements.backToChatFromHistoryBtn.addEventListener('click', () => history.back());
                 elements.backToChatFromSettingsBtn.addEventListener('click', () => history.back());
+                elements.backToHomeFromPromptSetupBtn.addEventListener('click', () => history.back());
+                elements.startChatWithPromptBtn.addEventListener('click', () => this.startChatWithPrompt());
+                elements.userRelationshipSelect.addEventListener('change', () => uiUtils.updatePromptPreview());
+                elements.promptSetupSystemPrompt.addEventListener('input', () => uiUtils.updatePromptPreview());
                 elements.toggleMemoBtn.addEventListener('click', () => this.toggleMemo());
                 elements.copyMemoBtn.addEventListener('click', () => this.copyMemoText());
                 elements.pasteMemoBtn.addEventListener('click', () => this.pasteIntoMemo());
@@ -11909,7 +12065,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     defaultSettingsCopy.modelName = DEFAULT_MODEL;
                     defaultSettingsCopy.additionalModels = '';
                     defaultSettingsCopy.commonSystemPrompt = '';
-                    defaultSettingsCopy.enableCommonSystemPromptDefault = false;
+                    defaultSettingsCopy.enableCommonSystemPromptDefault = true;
                     defaultSettingsCopy.deepSeekApiKey = '';
                     defaultSettingsCopy.deepSeekModelName = DEFAULT_DEEPSEEK_MODEL;
                     defaultSettingsCopy.deepSeekAdditionalModels = '';
