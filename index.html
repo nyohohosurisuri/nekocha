@@ -8788,16 +8788,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                         this.startNewChat();
                     }
                     
-                    // 初期画面をホーム画面に設定
-                    history.replaceState({ screen: 'home' }, '', '#home');
-                    state.currentScreen = 'home';
-                    uiUtils.showScreen('home');
-                    
                     updateMessageMaxWidthVar();
                     this.setupEventListeners();
                     this.updateZoomState();
                     uiUtils.adjustTextareaHeight();
                     uiUtils.setSendingState(false);
+                    
+                    // 初期画面をホーム画面に設定（イベントリスナー設定後）
+                    history.replaceState({ screen: 'home' }, '', '#home');
+                    state.currentScreen = 'home';
+                    uiUtils.showScreen('home');
                     
                     if (state.settings.autoScrollOnNewMessage) {
                         uiUtils.scrollToBottom();
