@@ -2,29 +2,29 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <!-- index.html の <head> または <body> 最下部に追加 -->
-<script type="module">
-  // ページの DOM が組み上がった後に実行
-  document.addEventListener('DOMContentLoaded', async () => {
-    try {
-      // 1) 外部ファイルを取得
-      const res = await fetch('./systemPrompt.txt');   // 同じ階層なら相対パス
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
+   <script type="module">
+document.addEventListener('DOMContentLoaded', async () => {
+  try {
+    const res = await fetch('./systemPrompt.txt');
+    if (!res.ok) throw new Error(res.status);
+    const prompt = (await res.text()).trim();
 
-      // 2) 文字列として読み込む
-      const prompt = await res.text();                 // .json にしたら res.json()
+    /* ★ 1) 設定に代入  */
+    window.state        ??= {};   // state がまだ無い場合に備え
+    state.settings      ??= {};
+    state.settings.commonSystemPrompt = prompt;          // UI 連動用
+    window.commonSystemPrompt        = prompt;           // 必要ならグローバル保持
 
-      // 3) どこからでも参照できる場所へ格納
-      window.commonSystemPrompt = prompt;              // 例: グローバル変数
-
-      // 4) プロンプトを渡してアプリを初期化
-      initApp(prompt);                                 // 自作の起動関数
-    } catch (e) {
-      console.error('systemPrompt の読み込み失敗:', e);
-      alert('設定ファイルが読み込めませんでした');    // 必要ならエラー表示
-    }
-  });
+    /* ★ 2) アプリを初期化（ここで applySettingsToUI が走る） */
+    appLogic.initializeApp();
+  } catch (e) {
+    console.error(e);
+    alert('systemPrompt.txt が読み込めませんでした');
+  }
+});
 </script>
+
+
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1149,160 +1149,9 @@
             transform: translateX(0);
             z-index: 1;
         }
-        #home-screen { transform: translateX(-200%); }
         #chat-screen { transform: translateX(0); }
         #history-screen { transform: translateX(-100%); }
-        #prompt-setup-screen { transform: translateX(200%); }
         #settings-screen { transform: translateX(100%); }
-
-        #home-screen {
-            position: relative;
-            z-index: 0;
-            background-color: var(--bg-primary);
-        }
-
-        .home-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            padding: 20px;
-        }
-
-        .home-buttons {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-            width: 100%;
-            max-width: 600px;
-        }
-
-        .home-button {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 20px;
-            background-color: var(--bg-button);
-            color: var(--text-light);
-            border: none;
-            border-radius: 12px;
-            font-size: 18px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
-
-        .home-button:hover {
-            background-color: var(--bg-button-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        }
-
-        .home-button-icon {
-            font-size: 24px;
-        }
-
-        .home-button-text {
-            flex: 1;
-            text-align: left;
-        }
-
-        #prompt-setup-screen {
-            position: relative;
-            z-index: 0;
-            background-color: var(--bg-primary);
-        }
-
-        .prompt-setup-container {
-            padding: 20px;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .setup-group {
-            margin-bottom: 30px;
-        }
-
-        .setup-group h3 {
-            margin-bottom: 15px;
-            color: var(--text-primary);
-            font-size: 16px;
-            font-weight: 600;
-        }
-
-        .relationship-options {
-            display: flex;
-            gap: 15px;
-            flex-wrap: wrap;
-        }
-
-        .radio-option {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            padding: 10px 15px;
-            border: 2px solid var(--border-primary);
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .radio-option:hover {
-            border-color: var(--bg-button);
-            background-color: var(--bg-secondary);
-        }
-
-        .radio-option input[type="radio"] {
-            margin: 0;
-            cursor: pointer;
-        }
-
-        .radio-option input[type="radio"]:checked + span {
-            color: var(--bg-button);
-            font-weight: 600;
-        }
-
-        .radio-option:has(input[type="radio"]:checked) {
-            border-color: var(--bg-button);
-            background-color: var(--bg-secondary);
-        }
-
-        #user-name-input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid var(--border-primary);
-            border-radius: 8px;
-            font-size: 14px;
-            background-color: var(--bg-input);
-            color: var(--text-primary);
-            transition: border-color 0.3s ease;
-        }
-
-        #user-name-input:focus {
-            outline: none;
-            border-color: var(--bg-button);
-        }
-
-        #character-prompt-input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid var(--border-primary);
-            border-radius: 8px;
-            font-size: 14px;
-            background-color: var(--bg-input);
-            color: var(--text-primary);
-            resize: vertical;
-            min-height: 120px;
-            font-family: inherit;
-            transition: border-color 0.3s ease;
-        }
-
-        #character-prompt-input:focus {
-            outline: none;
-            border-color: var(--bg-button);
-        }
 
         #chat-screen {
             position: relative;
@@ -3382,33 +3231,8 @@
 <body>
     <div class="app-container">
 
-        <div id="home-screen" class="screen active">
+        <div id="chat-screen" class="screen active">
             <header class="app-header">
-                <h1>GeminiPWA</h1>
-            </header>
-            <main class="main-content">
-                <div class="home-container">
-                    <div class="home-buttons">
-                        <button id="goto-history-from-home-btn" class="home-button">
-                            <span class="home-button-icon">📜</span>
-                            <span class="home-button-text">履歴から選択</span>
-                        </button>
-                        <button id="start-conversation-btn" class="home-button">
-                            <span class="home-button-icon">💬</span>
-                            <span class="home-button-text">会話を始める</span>
-                        </button>
-                        <button id="write-novel-btn" class="home-button">
-                            <span class="home-button-icon">📖</span>
-                            <span class="home-button-text">小説を書く</span>
-                        </button>
-                    </div>
-                </div>
-            </main>
-        </div>
-
-        <div id="chat-screen" class="screen">
-            <header class="app-header">
-                <button id="goto-home-btn" class="header-button" aria-label="ホームへ">🏠</button>
                 <button id="goto-history-btn" class="header-button" aria-label="履歴一覧へ">☰</button>
                 <h1 id="chat-title">新規チャット</h1>
                 <button id="new-chat-btn" class="new-chat-button" title="新規チャットを開始">新</button>
@@ -3492,45 +3316,6 @@
                     </li>
                 </ul>
                  <p id="no-history-message" class="hidden" style="text-align: center; color: var(--text-secondary); margin-top: 20px;">チャット履歴はありません。</p>
-            </main>
-        </div>
-
-        <div id="prompt-setup-screen" class="screen">
-            <header class="app-header">
-                <button id="back-to-home-from-prompt-setup" class="header-button" aria-label="ホームへ戻る">＜</button>
-                <h1>プロンプト設定</h1>
-                <button id="start-chat-from-prompt-setup" class="header-save-button" title="チャットを開始">チャット開始</button>
-            </header>
-            <main class="main-content">
-                <div class="prompt-setup-container">
-                    <div class="setup-group">
-                        <h3>ユーザーとの関係</h3>
-                        <div class="relationship-options">
-                            <label class="radio-option">
-                                <input type="radio" name="relationship" value="初対面">
-                                <span>初対面</span>
-                            </label>
-                            <label class="radio-option">
-                                <input type="radio" name="relationship" value="友達">
-                                <span>友達</span>
-                            </label>
-                            <label class="radio-option">
-                                <input type="radio" name="relationship" value="恋人">
-                                <span>恋人</span>
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="setup-group">
-                        <h3>ユーザーの名前（呼び名）</h3>
-                        <input type="text" id="user-name-input" placeholder="名前を入力してください（省略可）" />
-                    </div>
-                    
-                    <div class="setup-group">
-                        <h3>キャラクター設定</h3>
-                        <textarea id="character-prompt-input" placeholder="キャラクターの設定を入力してください..." rows="8"></textarea>
-                    </div>
-                </div>
             </main>
         </div>
 
@@ -5061,10 +4846,8 @@
 
         const elements = {
             appContainer: document.querySelector('.app-container'),
-            homeScreen: document.getElementById('home-screen'),
             chatScreen: document.getElementById('chat-screen'),
             historyScreen: document.getElementById('history-screen'),
-            promptSetupScreen: document.getElementById('prompt-setup-screen'),
             settingsScreen: document.getElementById('settings-screen'),
             chatTitle: document.getElementById('chat-title'),
             messageContainer: document.getElementById('message-container'),
@@ -5274,14 +5057,8 @@
             uploadBackgroundBtn: document.getElementById('upload-background-btn'),
             backgroundThumbnail: document.getElementById('background-thumbnail'),
             deleteBackgroundBtn: document.getElementById('delete-background-btn'),
-            gotoHomeBtn: document.getElementById('goto-home-btn'),
             gotoHistoryBtn: document.getElementById('goto-history-btn'),
             gotoSettingsBtn: document.getElementById('goto-settings-btn'),
-            gotoHistoryFromHomeBtn: document.getElementById('goto-history-from-home-btn'),
-            startConversationBtn: document.getElementById('start-conversation-btn'),
-            writeNovelBtn: document.getElementById('write-novel-btn'),
-            backToHomeFromPromptSetupBtn: document.getElementById('back-to-home-from-prompt-setup'),
-            startChatFromPromptSetupBtn: document.getElementById('start-chat-from-prompt-setup'),
             backToChatFromHistoryBtn: document.getElementById('back-to-chat-from-history'),
             backToChatFromSettingsBtn: document.getElementById('back-to-chat-from-settings'),
             newChatBtn: document.getElementById('new-chat-btn'),
@@ -5417,16 +5194,12 @@
             addXaiApiKeyBtn: document.getElementById('add-xai-api-key-btn'),
             llmaggregatorApiKeysList: document.getElementById('llmaggregator-api-keys-list'),
             addLlmaggregatorApiKeyBtn: document.getElementById('add-llmaggregator-api-key-btn'),
-            relationshipRadios: document.querySelectorAll('input[name="relationship"]'),
-            userNameInputPrompt: document.getElementById('user-name-input'),
-            characterPromptInput: document.getElementById('character-prompt-input'),
         };
 
         const state = {
             db: null,
             currentChatId: null,
             currentMessages: [],
-            currentMode: null,
             settings: {
                 apiKey: '',
                 modelName: DEFAULT_MODEL,
@@ -8234,16 +8007,14 @@
                     return;
                 }
 
-                const allScreens = [elements.homeScreen, elements.chatScreen, elements.historyScreen, elements.promptSetupScreen, elements.settingsScreen];
+                const allScreens = [elements.chatScreen, elements.historyScreen, elements.settingsScreen];
                 let activeScreen = null;
 
                 if (!fromPopState) {
-                    if (screenName === 'history' || screenName === 'settings' || screenName === 'prompt-setup') {
+                    if (screenName === 'history' || screenName === 'settings') {
                         history.pushState({ screen: screenName }, '', `#${screenName}`);
                     } else if (screenName === 'chat') {
                         history.replaceState({ screen: 'chat' }, '', '#chat');
-                    } else if (screenName === 'home') {
-                        history.replaceState({ screen: 'home' }, '', '#home');
                     }
                 }
 
@@ -8252,19 +8023,10 @@
                     screen.inert = true;
                 });
 
-                if (screenName === 'home') {
-                    activeScreen = elements.homeScreen;
-                    elements.homeScreen.style.transform = 'translateX(0)';
-                    elements.chatScreen.style.transform = 'translateX(200%)';
-                    elements.historyScreen.style.transform = 'translateX(100%)';
-                    elements.promptSetupScreen.style.transform = 'translateX(400%)';
-                    elements.settingsScreen.style.transform = 'translateX(300%)';
-                } else if (screenName === 'chat') {
+                if (screenName === 'chat') {
                     activeScreen = elements.chatScreen;
-                    elements.homeScreen.style.transform = 'translateX(-200%)';
                     elements.chatScreen.style.transform = 'translateX(0)';
                     elements.historyScreen.style.transform = 'translateX(-100%)';
-                    elements.promptSetupScreen.style.transform = 'translateX(200%)';
                     elements.settingsScreen.style.transform = 'translateX(100%)';
                     requestAnimationFrame(() => {
                         this.adjustTextareaHeight();
@@ -8272,25 +8034,14 @@
                     });
                 } else if (screenName === 'history') {
                     activeScreen = elements.historyScreen;
-                    elements.homeScreen.style.transform = 'translateX(-100%)';
                     elements.chatScreen.style.transform = 'translateX(100%)';
                     elements.historyScreen.style.transform = 'translateX(0)';
-                    elements.promptSetupScreen.style.transform = 'translateX(300%)';
                     elements.settingsScreen.style.transform = 'translateX(200%)';
                     this.renderHistoryList();
-                } else if (screenName === 'prompt-setup') {
-                    activeScreen = elements.promptSetupScreen;
-                    elements.homeScreen.style.transform = 'translateX(-400%)';
-                    elements.chatScreen.style.transform = 'translateX(-200%)';
-                    elements.historyScreen.style.transform = 'translateX(-300%)';
-                    elements.promptSetupScreen.style.transform = 'translateX(0)';
-                    elements.settingsScreen.style.transform = 'translateX(-100%)';
                 } else if (screenName === 'settings') {
                     activeScreen = elements.settingsScreen;
-                    elements.homeScreen.style.transform = 'translateX(-300%)';
                     elements.chatScreen.style.transform = 'translateX(-100%)';
                     elements.historyScreen.style.transform = 'translateX(-200%)';
-                    elements.promptSetupScreen.style.transform = 'translateX(100%)';
                     elements.settingsScreen.style.transform = 'translateX(0)';
                     this.applySettingsToUI();
                 }
@@ -8777,7 +8528,7 @@
                     event.preventDefault();
                 });
 
-                uiUtils.showScreen('home');
+                uiUtils.showScreen('chat');
                 registerServiceWorker();
 
                 try {
@@ -8834,14 +8585,8 @@
                 } 
             },
             setupEventListeners() {
-                elements.gotoHomeBtn.addEventListener('click', () => uiUtils.showScreen('home'));
                 elements.gotoHistoryBtn.addEventListener('click', () => uiUtils.showScreen('history'));
                 elements.gotoSettingsBtn.addEventListener('click', () => uiUtils.showScreen('settings'));
-                elements.gotoHistoryFromHomeBtn.addEventListener('click', () => uiUtils.showScreen('history'));
-                elements.startConversationBtn.addEventListener('click', () => appLogic.startConversationMode());
-                elements.writeNovelBtn.addEventListener('click', () => appLogic.startNovelMode());
-                elements.backToHomeFromPromptSetupBtn.addEventListener('click', () => uiUtils.showScreen('home'));
-                elements.startChatFromPromptSetupBtn.addEventListener('click', () => appLogic.startChatWithPrompt());
                 elements.backToChatFromHistoryBtn.addEventListener('click', () => history.back());
                 elements.backToChatFromSettingsBtn.addEventListener('click', () => history.back());
                 elements.toggleMemoBtn.addEventListener('click', () => this.toggleMemo());
@@ -14943,79 +14688,6 @@
                 activeKey.value = mainValue;
                 this.renderApiKeyList(provider);
             }
-        },
-        
-        async startConversationMode() {
-            state.currentMode = 'conversation';
-            await this.loadSystemPromptToCharacterInput();
-            uiUtils.showScreen('prompt-setup');
-        },
-        
-        async startNovelMode() {
-            state.currentMode = 'novel';
-            await this.loadSystemPromptToCharacterInput();
-            uiUtils.showScreen('prompt-setup');
-        },
-        
-        async loadSystemPromptToCharacterInput() {
-            try {
-                const response = await fetch('./systemPrompt.txt');
-                if (response.ok) {
-                    const promptText = await response.text();
-                    elements.characterPromptInput.value = promptText;
-                } else {
-                    console.warn('systemPrompt.txt not found, using empty prompt');
-                    elements.characterPromptInput.value = '';
-                }
-            } catch (error) {
-                console.error('Error loading systemPrompt.txt:', error);
-                elements.characterPromptInput.value = '';
-            }
-        },
-        
-        startChatWithPrompt() {
-            const characterPrompt = elements.characterPromptInput.value.trim();
-            const selectedRelationship = document.querySelector('input[name="relationship"]:checked')?.value;
-            const userName = elements.userNameInputPrompt.value.trim();
-            
-            if (!characterPrompt) {
-                alert('キャラクター設定を入力してください。');
-                return;
-            }
-            
-            let systemPrompt = '';
-            
-            // モードに応じてプロンプトの冒頭を設定
-            if (state.currentMode === 'conversation') {
-                systemPrompt = 'あなたは下記のキャラクターとしてなりきって会話します。\n\n';
-            } else if (state.currentMode === 'novel') {
-                systemPrompt = '下記のキャラクター設定をもとに小説を書いてください。\n\n';
-            }
-            
-            // 既存の共通システムプロンプトがあれば追加
-            if (window.commonSystemPrompt) {
-                systemPrompt += window.commonSystemPrompt + '\n\n';
-            }
-            
-            // キャラクター設定を追加
-            systemPrompt += characterPrompt;
-            
-            // 関係性を追加
-            if (selectedRelationship) {
-                systemPrompt += `\n\nユーザーとの関係は${selectedRelationship}です。`;
-            }
-            
-            // ユーザー名を追加
-            if (userName) {
-                systemPrompt += `\n\nユーザーの名前は${userName}です。`;
-            }
-            
-            // 一時的に共通システムプロンプトを上書き
-            window.commonSystemPrompt = systemPrompt;
-            
-            // 新しいチャットを開始
-            this.startNewChat();
-            uiUtils.showScreen('chat');
         }
     };
 
