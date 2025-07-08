@@ -3462,6 +3462,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                     
                     <div class="setting-group">
+                        <label for="user-name-input">ユーザーの名前(呼び名):</label>
+                        <input type="text" id="user-name-input" placeholder="例: 田中太郎" aria-label="ユーザーの名前">
+                    </div>
+                    
+                    <div class="setting-group">
                         <label for="user-relationship-select">ユーザーとの関係:</label>
                         <select id="user-relationship-select" class="setting-select">
                             <option value="first-meeting">初対面</option>
@@ -4403,8 +4408,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <input type="checkbox" id="show-user-name-toggle">
                             ユーザー名を表示する
                         </label>
-                        <label for="user-name-input">表示するユーザー名:</label>
-                        <input type="text" id="user-name-input" placeholder="例: あなた" aria-label="表示するユーザー名">
 
                         <label class="checkbox-label" style="margin-top: 20px;">
                             <input type="checkbox" id="show-ai-icon-toggle">
@@ -8205,13 +8208,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     elements.chatScreen.style.transform = 'translateX(100%)';
                     elements.historyScreen.style.transform = 'translateX(-100%)';
                     elements.promptSetupScreen.style.transform = 'translateX(200%)';
-                    elements.settingsScreen.style.transform = 'translateX(300%)';
+                    elements.settingsScreen.style.transform = 'translateX(100%)';
                 } else if (screenName === 'chat') {
                     activeScreen = elements.chatScreen;
                     elements.homeScreen.style.transform = 'translateX(-100%)';
                     elements.chatScreen.style.transform = 'translateX(0)';
                     elements.historyScreen.style.transform = 'translateX(-100%)';
-                    elements.promptSetupScreen.style.transform = 'translateX(100%)';
+                    elements.promptSetupScreen.style.transform = 'translateY(-100%)';
                     elements.settingsScreen.style.transform = 'translateX(200%)';
                     requestAnimationFrame(() => {
                         this.adjustTextareaHeight();
@@ -8219,29 +8222,33 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                 } else if (screenName === 'history') {
                     activeScreen = elements.historyScreen;
-                    elements.homeScreen.style.transform = 'translateX(-200%)';
-                    elements.chatScreen.style.transform = 'translateX(100%)';
+                    elements.homeScreen.style.transform = 'translateX(100%)';
+                    elements.chatScreen.style.transform = 'translateX(200%)';
                     elements.historyScreen.style.transform = 'translateX(0)';
-                    elements.promptSetupScreen.style.transform = 'translateX(200%)';
-                    elements.settingsScreen.style.transform = 'translateX(300%)';
+                    elements.promptSetupScreen.style.transform = 'translateX(300%)';
+                    elements.settingsScreen.style.transform = 'translateX(200%)';
                     this.renderHistoryList();
                 } else if (screenName === 'prompt-setup') {
                     activeScreen = elements.promptSetupScreen;
-                    elements.homeScreen.style.transform = 'translateX(-300%)';
-                    elements.chatScreen.style.transform = 'translateX(-100%)';
+                    elements.homeScreen.style.transform = 'translateX(-100%)';
+                    elements.chatScreen.style.transform = 'translateY(100%)';
                     elements.historyScreen.style.transform = 'translateX(-200%)';
                     elements.promptSetupScreen.style.transform = 'translateX(0)';
-                    elements.settingsScreen.style.transform = 'translateX(100%)';
+                    elements.settingsScreen.style.transform = 'translateX(200%)';
+                    // ユーザー名を設定から読み込み
+                    if (elements.userNameInput) {
+                        elements.userNameInput.value = state.settings.userName || '';
+                    }
                     // 初期表示時はプレビューを更新
                     if (elements.promptSetupSystemPrompt.value) {
                         this.updatePromptPreview();
                     }
                 } else if (screenName === 'settings') {
                     activeScreen = elements.settingsScreen;
-                    elements.homeScreen.style.transform = 'translateX(-400%)';
+                    elements.homeScreen.style.transform = 'translateX(-100%)';
                     elements.chatScreen.style.transform = 'translateX(-200%)';
-                    elements.historyScreen.style.transform = 'translateX(-300%)';
-                    elements.promptSetupScreen.style.transform = 'translateX(-100%)';
+                    elements.historyScreen.style.transform = 'translateX(-200%)';
+                    elements.promptSetupScreen.style.transform = 'translateX(-200%)';
                     elements.settingsScreen.style.transform = 'translateX(0)';
                     this.applySettingsToUI();
                 }
@@ -8287,7 +8294,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     'lover': '恋人'
                 }[relationship] || '初対面';
                 
-                const combinedPrompt = systemPrompt + (systemPrompt ? '\n\n' : '') + `ユーザーとの関係は${relationshipText}です。`;
+                let combinedPrompt = systemPrompt + (systemPrompt ? '\n\n' : '') + `ユーザーとの関係は${relationshipText}です。`;
+                
+                // ユーザー名を追加
+                const userName = state.settings.userName;
+                if (userName && userName.trim() !== '') {
+                    combinedPrompt += `\nユーザーの名前は${userName}です。`;
+                }
+                
                 elements.promptPreview.textContent = combinedPrompt;
             },
             async startChatWithPrompt() {
@@ -8296,23 +8310,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const relationship = elements.userRelationshipSelect.value;
                     const systemPrompt = elements.promptSetupSystemPrompt.value;
                     
-                    if (!characterValue) {
-                        await this.showCustomAlert('キャラクターを選択してください。');
-                        return;
-                    }
-                    
-                    if (!systemPrompt.trim()) {
-                        await this.showCustomAlert('システムプロンプトが読み込まれていません。');
-                        return;
-                    }
-                    
                     const relationshipText = {
                         'first-meeting': '初対面',
                         'friend': '友達',
                         'lover': '恋人'
                     }[relationship] || '初対面';
                     
-                    const combinedPrompt = systemPrompt + (systemPrompt ? '\n\n' : '') + `ユーザーとの関係は${relationshipText}です。`;
+                    // システムプロンプトが空の場合は関係性のみ設定
+                    let combinedPrompt = '';
+                    if (systemPrompt.trim()) {
+                        combinedPrompt = systemPrompt + '\n\n' + `ユーザーとの関係は${relationshipText}です。`;
+                    } else {
+                        combinedPrompt = `ユーザーとの関係は${relationshipText}です。`;
+                    }
+                    
+                    // ユーザー名を追加
+                    const userName = state.settings.userName;
+                    if (userName && userName.trim() !== '') {
+                        combinedPrompt += `\nユーザーの名前は${userName}です。`;
+                    }
                     
                     // 設定に反映
                     state.settings.commonSystemPrompt = combinedPrompt;
@@ -8934,6 +8950,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 if (elements.promptSetupSystemPrompt) {
                     elements.promptSetupSystemPrompt.addEventListener('input', () => uiUtils.updatePromptPreview());
+                }
+                if (elements.userNameInput) {
+                    elements.userNameInput.addEventListener('input', () => {
+                        state.settings.userName = elements.userNameInput.value.trim();
+                        uiUtils.updatePromptPreview();
+                    });
                 }
                 elements.toggleMemoBtn.addEventListener('click', () => this.toggleMemo());
                 elements.copyMemoBtn.addEventListener('click', () => this.copyMemoText());
