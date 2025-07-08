@@ -16,10 +16,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     window.commonSystemPrompt        = prompt;           // 必要ならグローバル保持
 
     /* ★ 2) アプリを初期化（ここで applySettingsToUI が走る） */
-    appLogic.initializeApp();
+    if (typeof appLogic !== 'undefined') {
+      appLogic.initializeApp();
+    }
   } catch (e) {
     console.error(e);
     alert('systemPrompt.txt が読み込めませんでした');
+    // エラーの場合でも初期化は実行
+    if (typeof appLogic !== 'undefined') {
+      appLogic.initializeApp();
+    }
   }
 });
 </script>
@@ -14915,4 +14921,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    err
+    errorRecovery.init();
+
+    window.errorRecovery = errorRecovery;
+</script>
+</body>
+</html>
