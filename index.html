@@ -1258,9 +1258,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             transform: translateX(0);
             z-index: 1;
         }
-        #chat-screen { transform: translateX(0); }
+        #home-screen { transform: translateX(0); }
+        #chat-screen { transform: translateX(100%); }
         #history-screen { transform: translateX(-100%); }
-        #settings-screen { transform: translateX(100%); }
+        #prompt-setup-screen { transform: translateX(200%); }
+        #settings-screen { transform: translateX(300%); }
 
         #chat-screen {
             position: relative;
@@ -8799,7 +8801,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     event.preventDefault();
                 });
 
-                uiUtils.showScreen('chat');
+                // 初期画面設定はinitializeApp()の最後で行うためここでは実行しない
                 registerServiceWorker();
 
                 try {
@@ -8828,6 +8830,33 @@ document.addEventListener('DOMContentLoaded', async () => {
                         try { state.aiIconUrl = URL.createObjectURL(state.settings.aiIconBlob); } catch (e) { }
                     }
     
+                    // イベントリスナーを最初に設定
+                    this.setupEventListeners();
+                    
+                    // 初期画面をホーム画面に設定（最優先で実行）
+                    console.log('Initializing home screen');
+                    console.log('Home screen element:', elements.homeScreen);
+                    console.log('Chat screen element:', elements.chatScreen);
+                    
+                    // 全画面を非アクティブにしてからホーム画面を表示
+                    const allScreens = [elements.homeScreen, elements.chatScreen, elements.historyScreen, elements.promptSetupScreen, elements.settingsScreen];
+                    allScreens.forEach(screen => {
+                        if (screen) {
+                            screen.classList.remove('active');
+                        }
+                    });
+                    
+                    // ホーム画面をアクティブにする
+                    if (elements.homeScreen) {
+                        elements.homeScreen.classList.add('active');
+                    }
+                    
+                    history.replaceState({ screen: 'home' }, '', '#home');
+                    state.currentScreen = 'home';
+                    uiUtils.showScreen('home');
+                    
+                    console.log('Home screen shown');
+                    
                     uiUtils.applySettingsToUI();
     
                     // チャット履歴は読み込むが、画面遷移は後で制御
@@ -8839,28 +8868,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     
                     updateMessageMaxWidthVar();
-                    this.setupEventListeners();
                     this.updateZoomState();
                     uiUtils.adjustTextareaHeight();
                     uiUtils.setSendingState(false);
                     
-                    // 初期画面をホーム画面に設定（イベントリスナー設定後）
-                    console.log('Initializing home screen');
-                    
-                    // 全画面を非アクティブにしてからホーム画面を表示
-                    const allScreens = [elements.homeScreen, elements.chatScreen, elements.historyScreen, elements.promptSetupScreen, elements.settingsScreen];
-                    allScreens.forEach(screen => {
-                        screen.classList.remove('active');
-                    });
-                    
-                    // ホーム画面をアクティブにする
-                    elements.homeScreen.classList.add('active');
-                    
-                    history.replaceState({ screen: 'home' }, '', '#home');
-                    state.currentScreen = 'home';
-                    uiUtils.showScreen('home');
-                    
-                    console.log('Home screen shown');
+                    // 最後に再度ホーム画面を確実に表示
+                    setTimeout(() => {
+                        // 状態を強制的にホーム画面に設定
+                        state.currentScreen = 'home';
+                        uiUtils.showScreen('home');
+                        console.log('Final home screen display');
+                    }, 200);
                     
                     if (state.settings.autoScrollOnNewMessage) {
                         uiUtils.scrollToBottom();
@@ -9981,20 +9999,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (needsSave) {
                         await dbUtils.saveChat();
                     }
-                    history.replaceState({ screen: 'chat' }, '', '#chat');
-                    state.currentScreen = 'chat';
+                    // 初期化時以外はチャット画面に移行
+                    if (state.currentScreen !== 'home') {
+                        history.replaceState({ screen: 'chat' }, '', '#chat');
+                        state.currentScreen = 'chat';
+                    }
                     if (state.settings.autoScrollOnNewMessage && state.currentMessages.length > 0) {
                         uiUtils.scrollToBottom();
                     }
                 } else {
                     await uiUtils.showCustomAlert("チャット履歴が見つかりませんでした。");
                     this.startNewChat();
-                    uiUtils.showScreen('chat');
+                    if (state.currentScreen !== 'home') {
+                        uiUtils.showScreen('chat');
+                    }
                 }
             } catch (error) {
                 await uiUtils.showCustomAlert(`チャットの読み込みエラー: ${error}`);
                 this.startNewChat();
-                uiUtils.showScreen('chat');
+                if (state.currentScreen !== 'home') {
+                    uiUtils.showScreen('chat');
+                }
             }
         },
         async duplicateChat(id) {
