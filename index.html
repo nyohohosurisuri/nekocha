@@ -1133,6 +1133,37 @@ document.addEventListener('DOMContentLoaded', async () => {
             touch-action: pan-y;
         }
 
+        .home-buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+
+        .home-button {
+            background: var(--bg-button);
+            color: var(--text-light);
+            border: none;
+            padding: 20px 40px;
+            font-size: 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.2s ease;
+        }
+
+        .home-button:hover {
+            background: var(--bg-button-hover);
+        }
+
+        .home-button:active {
+            transform: scale(0.98);
+        }
+
         .screen {
             position: absolute;
             top: 0;
@@ -3231,8 +3262,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 <body>
     <div class="app-container">
 
-        <div id="chat-screen" class="screen active">
+        <div id="home-screen" class="screen active">
             <header class="app-header">
+                <h1>GeminiPWA</h1>
+                <button id="goto-settings-btn" class="header-button" aria-label="設定へ">⚙</button>
+            </header>
+            <main class="main-content">
+                <div class="home-buttons-container">
+                    <button id="start-chat-btn" class="home-button">会話を始める</button>
+                    <button id="select-history-btn" class="home-button">履歴から選択</button>
+                </div>
+            </main>
+        </div>
+
+        <div id="chat-screen" class="screen">
+            <header class="app-header">
+                <button id="goto-home-btn" class="header-button" aria-label="ホームへ">🏠</button>
                 <button id="goto-history-btn" class="header-button" aria-label="履歴一覧へ">☰</button>
                 <h1 id="chat-title">新規チャット</h1>
                 <button id="new-chat-btn" class="new-chat-button" title="新規チャットを開始">新</button>
@@ -4846,6 +4891,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const elements = {
             appContainer: document.querySelector('.app-container'),
+            homeScreen: document.getElementById('home-screen'),
             chatScreen: document.getElementById('chat-screen'),
             historyScreen: document.getElementById('history-screen'),
             settingsScreen: document.getElementById('settings-screen'),
@@ -5059,6 +5105,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             deleteBackgroundBtn: document.getElementById('delete-background-btn'),
             gotoHistoryBtn: document.getElementById('goto-history-btn'),
             gotoSettingsBtn: document.getElementById('goto-settings-btn'),
+            gotoHomeBtn: document.getElementById('goto-home-btn'),
+            startChatBtn: document.getElementById('start-chat-btn'),
+            selectHistoryBtn: document.getElementById('select-history-btn'),
             backToChatFromHistoryBtn: document.getElementById('back-to-chat-from-history'),
             backToChatFromSettingsBtn: document.getElementById('back-to-chat-from-settings'),
             newChatBtn: document.getElementById('new-chat-btn'),
@@ -5444,7 +5493,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             touchEndY: 0,
             isSwiping: false,
             isZoomed: false,
-            currentScreen: 'chat',
+            currentScreen: 'home',
             selectedFilesForUpload: [],
             pendingAttachments: [],
             isMemoVisible: false,
@@ -8007,14 +8056,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
 
-                const allScreens = [elements.chatScreen, elements.historyScreen, elements.settingsScreen];
+                const allScreens = [elements.homeScreen, elements.chatScreen, elements.historyScreen, elements.settingsScreen];
                 let activeScreen = null;
 
                 if (!fromPopState) {
-                    if (screenName === 'history' || screenName === 'settings') {
+                    if (screenName === 'history' || screenName === 'settings' || screenName === 'chat') {
                         history.pushState({ screen: screenName }, '', `#${screenName}`);
-                    } else if (screenName === 'chat') {
-                        history.replaceState({ screen: 'chat' }, '', '#chat');
+                    } else if (screenName === 'home') {
+                        history.replaceState({ screen: 'home' }, '', '#home');
                     }
                 }
 
@@ -8023,8 +8072,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     screen.inert = true;
                 });
 
-                if (screenName === 'chat') {
+                if (screenName === 'home') {
+                    activeScreen = elements.homeScreen;
+                    elements.homeScreen.style.transform = 'translateX(0)';
+                    elements.chatScreen.style.transform = 'translateX(100%)';
+                    elements.historyScreen.style.transform = 'translateX(-100%)';
+                    elements.settingsScreen.style.transform = 'translateX(200%)';
+                } else if (screenName === 'chat') {
                     activeScreen = elements.chatScreen;
+                    elements.homeScreen.style.transform = 'translateX(-100%)';
                     elements.chatScreen.style.transform = 'translateX(0)';
                     elements.historyScreen.style.transform = 'translateX(-100%)';
                     elements.settingsScreen.style.transform = 'translateX(100%)';
@@ -8034,12 +8090,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                 } else if (screenName === 'history') {
                     activeScreen = elements.historyScreen;
+                    elements.homeScreen.style.transform = 'translateX(-200%)';
                     elements.chatScreen.style.transform = 'translateX(100%)';
                     elements.historyScreen.style.transform = 'translateX(0)';
                     elements.settingsScreen.style.transform = 'translateX(200%)';
                     this.renderHistoryList();
                 } else if (screenName === 'settings') {
                     activeScreen = elements.settingsScreen;
+                    elements.homeScreen.style.transform = 'translateX(-300%)';
                     elements.chatScreen.style.transform = 'translateX(-100%)';
                     elements.historyScreen.style.transform = 'translateX(-200%)';
                     elements.settingsScreen.style.transform = 'translateX(0)';
@@ -8587,6 +8645,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             setupEventListeners() {
                 elements.gotoHistoryBtn.addEventListener('click', () => uiUtils.showScreen('history'));
                 elements.gotoSettingsBtn.addEventListener('click', () => uiUtils.showScreen('settings'));
+                elements.gotoHomeBtn.addEventListener('click', () => uiUtils.showScreen('home'));
+                elements.startChatBtn.addEventListener('click', () => uiUtils.showScreen('chat'));
+                elements.selectHistoryBtn.addEventListener('click', () => uiUtils.showScreen('history'));
                 elements.backToChatFromHistoryBtn.addEventListener('click', () => history.back());
                 elements.backToChatFromSettingsBtn.addEventListener('click', () => history.back());
                 elements.toggleMemoBtn.addEventListener('click', () => this.toggleMemo());
