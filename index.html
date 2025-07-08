@@ -1148,6 +1148,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             height: 100%;
             max-width: 300px;
             margin: 0 auto;
+            position: relative;
+            z-index: 10;
         }
 
         .home-button {
@@ -1160,6 +1162,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             cursor: pointer;
             width: 100%;
             transition: background-color 0.2s ease;
+            position: relative;
+            z-index: 11;
+            pointer-events: auto;
         }
 
         .home-button:hover {
@@ -8811,10 +8816,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             setupEventListeners() {
                 elements.gotoHistoryBtn.addEventListener('click', () => uiUtils.showScreen('history'));
                 elements.gotoSettingsBtn.addEventListener('click', () => uiUtils.showScreen('settings'));
-                elements.homeGotoSettingsBtn.addEventListener('click', () => uiUtils.showScreen('settings'));
-                elements.gotoHomeBtn.addEventListener('click', () => uiUtils.showScreen('home'));
-                elements.startChatBtn.addEventListener('click', () => uiUtils.showScreen('prompt-setup'));
-                elements.selectHistoryBtn.addEventListener('click', () => uiUtils.showScreen('history'));
+                if (elements.homeGotoSettingsBtn) {
+                    elements.homeGotoSettingsBtn.addEventListener('click', () => uiUtils.showScreen('settings'));
+                }
+                if (elements.gotoHomeBtn) {
+                    elements.gotoHomeBtn.addEventListener('click', () => uiUtils.showScreen('home'));
+                }
+                if (elements.startChatBtn) {
+                    elements.startChatBtn.addEventListener('click', () => {
+                        console.log('Start chat button clicked');
+                        uiUtils.showScreen('prompt-setup');
+                    });
+                } else {
+                    console.error('startChatBtn element not found');
+                }
+                if (elements.selectHistoryBtn) {
+                    elements.selectHistoryBtn.addEventListener('click', () => {
+                        console.log('Select history button clicked');
+                        uiUtils.showScreen('history');
+                    });
+                } else {
+                    console.error('selectHistoryBtn element not found');
+                }
                 elements.backToChatFromHistoryBtn.addEventListener('click', () => history.back());
                 elements.backToChatFromSettingsBtn.addEventListener('click', () => history.back());
                 elements.backToHomeFromPromptSetupBtn.addEventListener('click', () => history.back());
@@ -14926,4 +14949,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     errorRecovery.init();
 
     window.errorRecovery = errorRecovery;
-</scrip
+</script>
+</body>
+</html>
