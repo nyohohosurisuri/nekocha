@@ -5,23 +5,17 @@
    <script type="module">
 document.addEventListener('DOMContentLoaded', async () => {
   try {
-    const res = await fetch('./epril.txt');
-    if (!res.ok) throw new Error(res.status);
-    const prompt = (await res.text()).trim();
-
-    /* ★ 1) 設定に代入  */
+    /* ★ 初期化処理のみ実行（プロンプト読み込みはキャラクター選択時に行う） */
     window.state        ??= {};   // state がまだ無い場合に備え
     state.settings      ??= {};
-    state.settings.commonSystemPrompt = prompt;          // UI 連動用
-    window.commonSystemPrompt        = prompt;           // 必要ならグローバル保持
-
-    /* ★ 2) アプリを初期化（ここで applySettingsToUI が走る） */
+    
+    /* ★ アプリを初期化 */
     if (typeof appLogic !== 'undefined') {
       appLogic.initializeApp();
     }
   } catch (e) {
     console.error(e);
-    alert('epril.txt が読み込めませんでした');
+    alert('アプリの初期化に失敗しました');
     // エラーの場合でも初期化は実行
     if (typeof appLogic !== 'undefined') {
       appLogic.initializeApp();
@@ -1240,6 +1234,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         #prompt-setup-system-prompt:focus {
             outline: none;
             border-color: var(--bg-button);
+        }
+
+        #prompt-setup-system-prompt[readonly] {
+            background: var(--bg-secondary);
+            color: var(--text-secondary);
+            cursor: not-allowed;
         }
 
         .screen {
@@ -3451,6 +3451,15 @@ document.addEventListener('DOMContentLoaded', async () => {
             <main class="main-content">
                 <div class="prompt-setup-container">
                     <div class="setting-group">
+                        <label for="character-select">キャラクター選択:</label>
+                        <select id="character-select" class="setting-select">
+                            <option value="">-- キャラクターを選択してください --</option>
+                            <option value="epril">エプリル</option>
+                            <option value="leece">リーチェ</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group">
                         <label for="user-relationship-select">ユーザーとの関係:</label>
                         <select id="user-relationship-select" class="setting-select">
                             <option value="first-meeting">初対面</option>
@@ -3461,7 +3470,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     <div class="setting-group">
                         <label for="prompt-setup-system-prompt">共通システムプロンプト:</label>
-                        <textarea id="prompt-setup-system-prompt" placeholder="ここにシステムプロンプトを入力してください..." aria-label="共通システムプロンプト"></textarea>
+                        <textarea id="prompt-setup-system-prompt" placeholder="キャラクターを選択すると自動で読み込まれます..." aria-label="共通システムプロンプト" readonly></textarea>
                     </div>
                     
                     <div class="setting-group">
@@ -5218,6 +5227,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             gotoHomeBtn: document.getElementById('goto-home-btn'),
             startChatBtn: document.getElementById('start-chat-btn'),
             selectHistoryBtn: document.getElementById('select-history-btn'),
+            characterSelect: document.getElementById('character-select'),
             userRelationshipSelect: document.getElementById('user-relationship-select'),
             promptSetupSystemPrompt: document.getElementById('prompt-setup-system-prompt'),
             promptPreview: document.getElementById('prompt-preview'),
@@ -8220,7 +8230,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     elements.historyScreen.style.transform = 'translateX(-200%)';
                     elements.promptSetupScreen.style.transform = 'translateX(0)';
                     elements.settingsScreen.style.transform = 'translateX(100%)';
-                    this.updatePromptPreview();
+                    // 初期表示時はプレビューを更新
+                    if (elements.promptSetupSystemPrompt.value) {
+                        this.updatePromptPreview();
+                    }
                 } else if (screenName === 'settings') {
                     activeScreen = elements.settingsScreen;
                     elements.homeScreen.style.transform = 'translateX(-400%)';
@@ -8242,6 +8255,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 state.currentScreen = screenName;
             },
+            async loadCharacterPrompt(characterValue) {
+                try {
+                    if (!characterValue) {
+                        elements.promptSetupSystemPrompt.value = '';
+                        return;
+                    }
+                    
+                    const filename = `${characterValue}.txt`;
+                    const res = await fetch(`./${filename}`);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const prompt = (await res.text()).trim();
+                    
+                    elements.promptSetupSystemPrompt.value = prompt;
+                    this.updatePromptPreview();
+                } catch (error) {
+                    console.error('キャラクタープロンプト読み込みエラー:', error);
+                    elements.promptSetupSystemPrompt.value = '';
+                    await this.showCustomAlert(`キャラクタープロンプト(${characterValue}.txt)の読み込みに失敗しました。`);
+                }
+            },
             updatePromptPreview() {
                 const relationship = elements.userRelationshipSelect.value;
                 const systemPrompt = elements.promptSetupSystemPrompt.value;
@@ -8257,8 +8290,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             },
             async startChatWithPrompt() {
                 try {
+                    const characterValue = elements.characterSelect.value;
                     const relationship = elements.userRelationshipSelect.value;
                     const systemPrompt = elements.promptSetupSystemPrompt.value;
+                    
+                    if (!characterValue) {
+                        await this.showCustomAlert('キャラクターを選択してください。');
+                        return;
+                    }
+                    
+                    if (!systemPrompt.trim()) {
+                        await this.showCustomAlert('システムプロンプトが読み込まれていません。');
+                        return;
+                    }
                     
                     const relationshipText = {
                         'first-meeting': '初対面',
@@ -8842,8 +8886,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 elements.backToChatFromSettingsBtn.addEventListener('click', () => history.back());
                 elements.backToHomeFromPromptSetupBtn.addEventListener('click', () => history.back());
                 elements.startChatWithPromptBtn.addEventListener('click', () => uiUtils.startChatWithPrompt());
-                elements.userRelationshipSelect.addEventListener('change', () => uiUtils.updatePromptPreview());
-                elements.promptSetupSystemPrompt.addEventListener('input', () => uiUtils.updatePromptPreview());
+                if (elements.characterSelect) {
+                    elements.characterSelect.addEventListener('change', async () => {
+                        const selectedValue = elements.characterSelect.value;
+                        await uiUtils.loadCharacterPrompt(selectedValue);
+                    });
+                }
+                if (elements.userRelationshipSelect) {
+                    elements.userRelationshipSelect.addEventListener('change', () => uiUtils.updatePromptPreview());
+                }
+                if (elements.promptSetupSystemPrompt) {
+                    elements.promptSetupSystemPrompt.addEventListener('input', () => uiUtils.updatePromptPreview());
+                }
                 elements.toggleMemoBtn.addEventListener('click', () => this.toggleMemo());
                 elements.copyMemoBtn.addEventListener('click', () => this.copyMemoText());
                 elements.pasteMemoBtn.addEventListener('click', () => this.pasteIntoMemo());
