@@ -8244,27 +8244,34 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const combinedPrompt = systemPrompt + (systemPrompt ? '\n\n' : '') + `ユーザーとの関係は${relationshipText}です。`;
                 elements.promptPreview.textContent = combinedPrompt;
             },
-            startChatWithPrompt() {
-                const relationship = elements.userRelationshipSelect.value;
-                const systemPrompt = elements.promptSetupSystemPrompt.value;
-                
-                const relationshipText = {
-                    'first-meeting': '初対面',
-                    'friend': '友達',
-                    'lover': '恋人'
-                }[relationship] || '初対面';
-                
-                const combinedPrompt = systemPrompt + (systemPrompt ? '\n\n' : '') + `ユーザーとの関係は${relationshipText}です。`;
-                
-                // 設定に反映
-                state.settings.commonSystemPrompt = combinedPrompt;
-                elements.commonSystemPromptDefaultTextarea.value = combinedPrompt;
-                
-                // 設定を保存
-                appLogic.saveSettings();
-                
-                // チャット画面に移行
-                uiUtils.showScreen('chat');
+            async startChatWithPrompt() {
+                try {
+                    const relationship = elements.userRelationshipSelect.value;
+                    const systemPrompt = elements.promptSetupSystemPrompt.value;
+                    
+                    const relationshipText = {
+                        'first-meeting': '初対面',
+                        'friend': '友達',
+                        'lover': '恋人'
+                    }[relationship] || '初対面';
+                    
+                    const combinedPrompt = systemPrompt + (systemPrompt ? '\n\n' : '') + `ユーザーとの関係は${relationshipText}です。`;
+                    
+                    // 設定に反映
+                    state.settings.commonSystemPrompt = combinedPrompt;
+                    if (elements.commonSystemPromptDefaultTextarea) {
+                        elements.commonSystemPromptDefaultTextarea.value = combinedPrompt;
+                    }
+                    
+                    // 設定を保存
+                    await appLogic.saveSettings(false);
+                    
+                    // チャット画面に移行
+                    this.showScreen('chat');
+                } catch (error) {
+                    console.error('プロンプト設定エラー:', error);
+                    await this.showCustomAlert('プロンプト設定中にエラーが発生しました。');
+                }
             },
             setSendingState(sending) {
                 state.isSending = sending;
@@ -8803,7 +8810,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 elements.backToChatFromHistoryBtn.addEventListener('click', () => history.back());
                 elements.backToChatFromSettingsBtn.addEventListener('click', () => history.back());
                 elements.backToHomeFromPromptSetupBtn.addEventListener('click', () => history.back());
-                elements.startChatWithPromptBtn.addEventListener('click', () => this.startChatWithPrompt());
+                elements.startChatWithPromptBtn.addEventListener('click', () => uiUtils.startChatWithPrompt());
                 elements.userRelationshipSelect.addEventListener('change', () => uiUtils.updatePromptPreview());
                 elements.promptSetupSystemPrompt.addEventListener('input', () => uiUtils.updatePromptPreview());
                 elements.toggleMemoBtn.addEventListener('click', () => this.toggleMemo());
@@ -14908,11 +14915,4 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
 
-    errorRecovery.init();
-
-    window.errorRecovery = errorRecovery;
-
-    appLogic.initializeApp();
-</script>
-</body>
-</html>
+    err
