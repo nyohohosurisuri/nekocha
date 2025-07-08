@@ -5,7 +5,7 @@
    <script type="module">
 document.addEventListener('DOMContentLoaded', async () => {
   try {
-    const res = await fetch('./systemPrompt.txt');
+    const res = await fetch('./epril.txt');
     if (!res.ok) throw new Error(res.status);
     const prompt = (await res.text()).trim();
 
@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   } catch (e) {
     console.error(e);
-    alert('systemPrompt.txt が読み込めませんでした');
+    alert('epril.txt が読み込めませんでした');
     // エラーの場合でも初期化は実行
     if (typeof appLogic !== 'undefined') {
       appLogic.initializeApp();
@@ -8788,8 +8788,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         this.startNewChat();
                     }
                     
-                    history.replaceState({ screen: 'chat' }, '', '#chat');
-                    state.currentScreen = 'chat';
+                    // 初期画面をホーム画面に設定
+                    history.replaceState({ screen: 'home' }, '', '#home');
+                    state.currentScreen = 'home';
+                    uiUtils.showScreen('home');
                     
                     updateMessageMaxWidthVar();
                     this.setupEventListeners();
@@ -14924,6 +14926,4 @@ document.addEventListener('DOMContentLoaded', async () => {
     errorRecovery.init();
 
     window.errorRecovery = errorRecovery;
-</script>
-</body>
-</html>
+</scrip
