@@ -8830,6 +8830,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
                     uiUtils.applySettingsToUI();
     
+                    // チャット履歴は読み込むが、画面遷移は後で制御
                     const chats = await dbUtils.getAllChats(state.settings.historySortOrder);
                     if (chats && chats.length > 0) {
                         await this.loadChat(chats[0].id);
@@ -8844,9 +8845,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                     uiUtils.setSendingState(false);
                     
                     // 初期画面をホーム画面に設定（イベントリスナー設定後）
+                    console.log('Initializing home screen');
+                    
+                    // 全画面を非アクティブにしてからホーム画面を表示
+                    const allScreens = [elements.homeScreen, elements.chatScreen, elements.historyScreen, elements.promptSetupScreen, elements.settingsScreen];
+                    allScreens.forEach(screen => {
+                        screen.classList.remove('active');
+                    });
+                    
+                    // ホーム画面をアクティブにする
+                    elements.homeScreen.classList.add('active');
+                    
                     history.replaceState({ screen: 'home' }, '', '#home');
                     state.currentScreen = 'home';
                     uiUtils.showScreen('home');
+                    
+                    console.log('Home screen shown');
                     
                     if (state.settings.autoScrollOnNewMessage) {
                         uiUtils.scrollToBottom();
@@ -8864,7 +8878,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     elements.homeGotoSettingsBtn.addEventListener('click', () => uiUtils.showScreen('settings'));
                 }
                 if (elements.gotoHomeBtn) {
-                    elements.gotoHomeBtn.addEventListener('click', () => uiUtils.showScreen('home'));
+                    elements.gotoHomeBtn.addEventListener('click', () => {
+                        console.log('Home button clicked');
+                        uiUtils.showScreen('home');
+                    });
+                } else {
+                    console.error('gotoHomeBtn element not found');
                 }
                 if (elements.startChatBtn) {
                     elements.startChatBtn.addEventListener('click', () => {
