@@ -10382,15 +10382,45 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     
                     if (chat.aiIconBlob) {
-                        state.settings.aiIconBlob = chat.aiIconBlob;
                         console.log('Restored AI icon from chat data');
-                        // AIアイコンを画面に反映
+                        // AIアイコンのBlobデータを復元
+                        let restoredBlob;
+                        if (chat.aiIconBlob instanceof Blob) {
+                            restoredBlob = chat.aiIconBlob;
+                        } else if (chat.aiIconBlob instanceof ArrayBuffer) {
+                            restoredBlob = new Blob([chat.aiIconBlob], { type: 'image/jpeg' });
+                        } else if (chat.aiIconBlob.constructor === Uint8Array || Array.isArray(chat.aiIconBlob)) {
+                            restoredBlob = new Blob([new Uint8Array(chat.aiIconBlob)], { type: 'image/jpeg' });
+                        } else {
+                            console.warn('Unknown aiIconBlob format:', typeof chat.aiIconBlob);
+                            restoredBlob = null;
+                        }
+                        
+                        if (restoredBlob) {
+                            state.settings.aiIconBlob = restoredBlob;
+                            // 既存のURL解放
+                            if (state.aiIconUrl) {
+                                URL.revokeObjectURL(state.aiIconUrl);
+                            }
+                            state.aiIconUrl = URL.createObjectURL(restoredBlob);
+                            
+                            // AIアイコンを画面に反映
+                            const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
+                            if (aiIconThumbnail) {
+                                aiIconThumbnail.src = state.aiIconUrl;
+                                aiIconThumbnail.style.display = 'block';
+                            }
+                        }
+                    } else {
+                        // AIアイコンがない場合はクリーンアップ
+                        if (state.aiIconUrl) {
+                            URL.revokeObjectURL(state.aiIconUrl);
+                            state.aiIconUrl = null;
+                        }
+                        state.settings.aiIconBlob = null;
                         const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
-                        if (aiIconThumbnail && chat.aiIconBlob) {
-                            const blob = new Blob([new Uint8Array(chat.aiIconBlob)], { type: 'image/jpeg' });
-                            state.aiIconUrl = URL.createObjectURL(blob);
-                            aiIconThumbnail.src = state.aiIconUrl;
-                            aiIconThumbnail.style.display = 'block';
+                        if (aiIconThumbnail) {
+                            aiIconThumbnail.style.display = 'none';
                         }
                     }
                     state.messageCollapsedStates.clear();
@@ -10408,6 +10438,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     uiUtils.renderChatMessages();
                     uiUtils.updateChatTitle(chat.title);
+                    
+                    // AIアイコンの表示を更新（メッセージ表示後）
+                    if (state.aiIconUrl) {
+                        setTimeout(() => {
+                            const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
+                            if (aiIconThumbnail) {
+                                aiIconThumbnail.src = state.aiIconUrl;
+                                aiIconThumbnail.style.display = 'block';
+                            }
+                        }, 100);
+                    }
                     elements.userInput.value = '';
                     uiUtils.adjustTextareaHeight();
                     uiUtils.setSendingState(false);
