@@ -15819,40 +15819,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // チャット設定モーダル機能の初期化
     function initializeChatSettingsModal() {
-        console.log('チャット設定モーダルの初期化開始');
-        
-        // ボタンの詳細情報を取得
-        const chatSettingsBtn = document.getElementById('chat-settings-btn');
-        console.log('チャット設定ボタンの存在:', !!chatSettingsBtn);
-        
-        if (chatSettingsBtn) {
-            const rect = chatSettingsBtn.getBoundingClientRect();
-            const style = getComputedStyle(chatSettingsBtn);
-            console.log('ボタンの位置:', rect);
-            console.log('ボタンのスタイル:', {
-                display: style.display,
-                visibility: style.visibility,
-                opacity: style.opacity,
-                pointerEvents: style.pointerEvents,
-                zIndex: style.zIndex
-            });
-            
-            // ボタンに直接クリックイベントを追加してテスト
-            chatSettingsBtn.addEventListener('click', function(e) {
-                console.log('チャット設定ボタンがクリックされました!', e);
-                e.preventDefault();
-                e.stopPropagation();
-                alert('チャット設定ボタンがクリックされました！');
-            });
-            
-            // マウスイベントをテスト
-            chatSettingsBtn.addEventListener('mouseenter', () => {
-                console.log('マウスがボタンに入りました');
-            });
-            
-            chatSettingsBtn.addEventListener('mouseleave', () => {
-                console.log('マウスがボタンから出ました');
-            });
+        // 既に初期化済みの場合はスキップ
+        if (window.chatSettingsModal) {
+            return;
         }
         
         // チャット設定モーダル機能
@@ -15977,20 +15946,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         // イベントリスナー設定（null チェック付き）
         const chatSettingsBtn = document.getElementById('chat-settings-btn');
         if (chatSettingsBtn) {
-            // 既存のイベントリスナーを削除
-            chatSettingsBtn.removeEventListener('click', arguments.callee);
-            
-            // 新しいイベントリスナーを追加
             chatSettingsBtn.addEventListener('click', function(e) {
-                console.log('チャット設定ボタンがクリックされました（メインハンドラー）');
                 e.preventDefault();
                 e.stopPropagation();
                 chatSettingsModal.show();
             });
-            
-            console.log('チャット設定ボタンにイベントリスナーが登録されました');
-        } else {
-            console.error('チャット設定ボタンが見つかりません');
         }
     
         if (elements.chatSettingsSaveBtn) {
@@ -16097,11 +16057,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // DOMContentLoadedイベントでチャット設定モーダルを初期化
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            setTimeout(initializeChatSettingsModal, 100);
-        });
+        document.addEventListener('DOMContentLoaded', initializeChatSettingsModal);
     } else {
-        setTimeout(initializeChatSettingsModal, 100);
+        initializeChatSettingsModal();
     }
 </script>
 
