@@ -8265,31 +8265,57 @@ document.addEventListener('DOMContentLoaded', async () => {
             },
             async loadCharacterOptions() {
                 try {
-                    // systempromptフォルダ内のファイルを順番に確認
-                    const possibleCharacters = [
-                        'aisha', 'chiara', 'cure', 'epril', 'fee', 'leece', 'lily', 
-                        'loussier', 'luna', 'nocturika', 'rilltet', 'sara', 'setsuna', 
-                        'sheryl', 'tina'
-                    ];
+                    // systempromptフォルダのディレクトリリストを取得
+                    let availableCharacters = [];
+                    
+                    try {
+                        const res = await fetch('./systemprompt/');
+                        if (res.ok) {
+                            const html = await res.text();
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const links = doc.querySelectorAll('a[href$=".txt"]');
+                            
+                            links.forEach(link => {
+                                const filename = link.getAttribute('href');
+                                if (filename && filename.endsWith('.txt')) {
+                                    // URLデコードを使用して日本語ファイル名に対応
+                                    const decodedFilename = decodeURIComponent(filename);
+                                    const characterName = decodedFilename.replace('.txt', '');
+                                    availableCharacters.push(characterName);
+                                }
+                            });
+                        }
+                    } catch (dirError) {
+                        console.warn('ディレクトリリストの取得に失敗:', dirError);
+                    }
+                    
+                    // ディレクトリリストが取得できない場合のフォールバック
+                    if (availableCharacters.length === 0) {
+                        const knownCharacters = [
+                            'aisha', 'chiara', 'cure', 'epril', 'fee', 'leece', 'lily', 
+                            'loussier', 'luna', 'nocturika', 'rilltet', 'sara', 'setsuna', 
+                            'sheryl', 'tina', 'テスト'
+                        ];
+                        
+                        // 各ファイルの存在確認
+                        for (const char of knownCharacters) {
+                            try {
+                                const encodedChar = encodeURIComponent(char);
+                                const res = await fetch(`./systemprompt/${encodedChar}.txt`);
+                                if (res.ok) {
+                                    availableCharacters.push(char);
+                                }
+                            } catch (error) {
+                                // ファイルが存在しない場合は無視
+                            }
+                        }
+                    }
                     
                     const characterSelect = elements.characterSelect;
                     // 既存のオプションをクリア（最初のオプションは残す）
                     while (characterSelect.children.length > 1) {
                         characterSelect.removeChild(characterSelect.lastChild);
-                    }
-                    
-                    const availableCharacters = [];
-                    
-                    // 各ファイルの存在確認
-                    for (const char of possibleCharacters) {
-                        try {
-                            const res = await fetch(`./systemprompt/${char}.txt`);
-                            if (res.ok) {
-                                availableCharacters.push(char);
-                            }
-                        } catch (error) {
-                            // ファイルが存在しない場合は無視
-                        }
                     }
                     
                     // 見つかったファイルから選択肢を生成
@@ -8314,7 +8340,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         return;
                     }
                     
-                    const filename = `systemprompt/${characterValue}.txt`;
+                    // URLエンコードを使用して日本語ファイル名に対応
+                    const encodedCharacterValue = encodeURIComponent(characterValue);
+                    const filename = `systemprompt/${encodedCharacterValue}.txt`;
                     const res = await fetch(`./${filename}`);
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const prompt = (await res.text()).trim();
