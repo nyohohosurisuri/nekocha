@@ -8320,6 +8320,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             },
             async loadCharacterOptions() {
                 try {
+                    // キャラクターリスト読み込み中の表示
+                    const characterSelect = elements.characterSelect;
+                    if (characterSelect) {
+                        // 既存のオプションをクリア（最初のオプションは残す）
+                        while (characterSelect.children.length > 1) {
+                            characterSelect.removeChild(characterSelect.lastChild);
+                        }
+                        // 読み込み中オプションを追加
+                        const loadingOption = document.createElement('option');
+                        loadingOption.value = '';
+                        loadingOption.textContent = 'キャラクターリスト読み込み中...';
+                        loadingOption.disabled = true;
+                        characterSelect.appendChild(loadingOption);
+                    }
+
                     // systempromptフォルダのディレクトリリストを取得
                     let availableCharacters = [];
                     
@@ -8378,22 +8393,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                     }
                     
-                    const characterSelect = elements.characterSelect;
-                    // 既存のオプションをクリア（最初のオプションは残す）
-                    while (characterSelect.children.length > 1) {
-                        characterSelect.removeChild(characterSelect.lastChild);
-                    }
-                    
-                    // 見つかったファイルから選択肢を生成
-                    availableCharacters.forEach(char => {
-                        const option = document.createElement('option');
-                        option.value = char;
-                        option.textContent = char;
-                        characterSelect.appendChild(option);
-                    });
-                    
-                    if (availableCharacters.length === 0) {
-                        console.warn('使用可能なキャラクターファイルが見つかりません');
+                    // 読み込み完了後、選択肢を更新
+                    if (characterSelect) {
+                        // 既存のオプションをクリア（最初のオプションは残す）
+                        while (characterSelect.children.length > 1) {
+                            characterSelect.removeChild(characterSelect.lastChild);
+                        }
+                        
+                        // 見つかったファイルから選択肢を生成
+                        availableCharacters.forEach(char => {
+                            const option = document.createElement('option');
+                            option.value = char;
+                            option.textContent = char;
+                            characterSelect.appendChild(option);
+                        });
+                        
+                        if (availableCharacters.length === 0) {
+                            console.warn('使用可能なキャラクターファイルが見つかりません');
+                            // キャラクターが見つからない場合のメッセージ
+                            const noCharOption = document.createElement('option');
+                            noCharOption.value = '';
+                            noCharOption.textContent = 'キャラクターファイルが見つかりません';
+                            noCharOption.disabled = true;
+                            characterSelect.appendChild(noCharOption);
+                        }
                     }
                 } catch (error) {
                     console.error('キャラクター選択肢の読み込みエラー:', error);
