@@ -8470,6 +8470,37 @@ document.addEventListener('DOMContentLoaded', async () => {
                         combinedPrompt += `\nユーザーの名前は${userName}です。`;
                     }
                     
+                    // 新規チャットを開始
+                    appLogic.startNewChat();
+                    
+                    // 新しいチャットにプロンプト情報を直接追加
+                    const messages = [];
+                    
+                    // システムプロンプトを追加
+                    if (combinedPrompt.trim()) {
+                        messages.push({
+                            role: 'system',
+                            content: combinedPrompt.trim(),
+                            timestamp: Date.now(),
+                            generatedByApiProvider: null
+                        });
+                        console.log('Added system message to new chat:', combinedPrompt.substring(0, 100) + '...');
+                    }
+                    
+                    // キャラクター情報を追加
+                    if (characterValue) {
+                        messages.push({
+                            role: 'character',
+                            content: characterValue,
+                            timestamp: Date.now(),
+                            generatedByApiProvider: null
+                        });
+                        console.log('Added character message to new chat:', characterValue);
+                    }
+                    
+                    // メッセージを設定
+                    state.currentMessages = messages;
+                    
                     // 設定に反映
                     state.settings.commonSystemPrompt = combinedPrompt;
                     if (elements.commonSystemPromptDefaultTextarea) {
@@ -8479,19 +8510,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // 設定を保存
                     await appLogic.saveSettings(false);
                     
-                    // 新規チャットを開始
-                    appLogic.startNewChat();
-                    
-                    // キャラクター名を一時保存（新しいチャット作成時に使用）
+                    // キャラクター名を一時保存
                     if (characterValue) {
                         state.pendingCharacterName = characterValue;
-                        console.log('Pending character name set to:', characterValue);
                         // チャットタイトルを更新
                         uiUtils.updateChatTitle(`新しいチャット (${characterValue})`);
                     } else {
                         state.pendingCharacterName = null;
                         uiUtils.updateChatTitle('新しいチャット');
                     }
+                    
+                    // チャットを保存
+                    await dbUtils.saveChat();
+                    console.log('Chat saved with prompt information');
                     
                     // チャット画面に移行
                     await this.showScreen('chat');
@@ -10532,8 +10563,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     uiUtils.renderChatMessages(true);
                 } else {
-                    // 新しいチャットの場合、システムプロンプトとキャラクター情報を追加
-                    if (state.currentMessages.length === 0) {
+                    // システムプロンプトとキャラクター情報がまだ追加されていない場合のみ追加
+                    const hasSystemMessage = state.currentMessages.some(m => m.role === 'system');
+                    if (!hasSystemMessage) {
                         // システムプロンプトを追加
                         const systemPrompt = state.settings.commonSystemPrompt;
                         if (systemPrompt && systemPrompt.trim()) {
@@ -10543,9 +10575,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 timestamp: Date.now(),
                                 generatedByApiProvider: null
                             };
-                            state.currentMessages.push(systemMessage);
-                            console.log('Added system message:', systemPrompt.substring(0, 100) + '...');
-                            console.log('Current messages after adding system:', state.currentMessages.map(m => ({ role: m.role, content: m.content?.substring(0, 50) })));
+                            state.currentMessages.unshift(systemMessage); // 最初に追加
+                            console.log('Added system message to existing chat:', systemPrompt.substring(0, 100) + '...');
                         }
                         
                         // キャラクター情報を追加
@@ -10557,7 +10588,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 generatedByApiProvider: null
                             };
                             state.currentMessages.push(characterMessage);
-                            console.log('Added character message:', state.pendingCharacterName);
+                            console.log('Added character message to existing chat:', state.pendingCharacterName);
                         }
                     }
                     
