@@ -6002,7 +6002,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             messages: messagesToSave,
                             updatedAt: now, createdAt: existingChatData ? existingChatData.createdAt : now,
                             title: title,
-                            characterName: existingChatData ? existingChatData.characterName : null,
+                            characterName: existingChatData ? existingChatData.characterName : (state.pendingCharacterName || null),
                         };
                         if (state.settings.persistMessageCollapseState) {
                             chatData.collapsedStates = Object.fromEntries(state.messageCollapsedStates);
@@ -6021,6 +6021,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }
                             if ((state.currentChatId || savedId) === (chatIdForOperation || savedId)) {
                                 uiUtils.updateChatTitle(chatData.title);
+                            }
+                            // 新しいチャットが作成されたらpendingCharacterNameをクリア
+                            if (!existingChatData && state.pendingCharacterName) {
+                                console.log('New chat created with character:', state.pendingCharacterName);
+                                state.pendingCharacterName = null;
                             }
                             resolve(state.currentChatId || savedId);
                         };
@@ -7174,11 +7179,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                             
                             // キャラクター名を表示
                             const characterEl = li.querySelector('.history-item-character');
+                            console.log('Chat character info:', { chatId: chat.id, characterName: chat.characterName });
                             if (chat.characterName) {
                                 characterEl.textContent = `🎭 ${chat.characterName}`;
                                 characterEl.style.display = 'block';
+                                console.log('Displaying character:', chat.characterName);
                             } else {
                                 characterEl.style.display = 'none';
+                                console.log('No character name for chat:', chat.id);
                             }
                             titleEl.title = titleText;
 
@@ -8445,13 +8453,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // 設定を保存
                     await appLogic.saveSettings(false);
                     
-                    // 現在のチャットにキャラクター名を設定
-                    if (state.currentChatId && characterValue) {
-                        const currentChat = state.chats[state.currentChatId];
-                        if (currentChat) {
-                            currentChat.characterName = characterValue;
-                            await dbUtils.saveChat(state.currentChatId, currentChat);
-                        }
+                    // キャラクター名を一時保存（新しいチャット作成時に使用）
+                    if (characterValue) {
+                        state.pendingCharacterName = characterValue;
+                        console.log('Pending character name set to:', characterValue);
+                    } else {
+                        state.pendingCharacterName = null;
                     }
                     
                     // チャット画面に移行
@@ -10045,6 +10052,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             
             state.pendingAttachments = [];
+            state.pendingCharacterName = null;
             state.isMemoVisible = false;
             elements.memoArea.classList.add('hidden');
             elements.memoEditor.value = '';
