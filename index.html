@@ -1261,8 +1261,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         #home-screen { transform: translateX(0); }
         #chat-screen { transform: translateX(100%); }
         #history-screen { transform: translateX(-100%); }
-        #prompt-setup-screen { transform: translateX(200%); }
-        #settings-screen { transform: translateX(300%); }
+        #prompt-setup-screen { transform: translateY(100%); }
+        #settings-screen { transform: translateX(100%); }
 
         #chat-screen {
             position: relative;
@@ -8251,15 +8251,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     elements.homeScreen.style.transform = 'translateX(0)';
                     elements.chatScreen.style.transform = 'translateX(100%)';
                     elements.historyScreen.style.transform = 'translateX(-100%)';
-                    elements.promptSetupScreen.style.transform = 'translateX(200%)';
+                    elements.promptSetupScreen.style.transform = 'translateY(100%)';
                     elements.settingsScreen.style.transform = 'translateX(100%)';
                 } else if (screenName === 'chat') {
                     activeScreen = elements.chatScreen;
-                    elements.homeScreen.style.transform = 'translateX(-100%)';
+                    elements.homeScreen.style.transform = 'translateY(-100%)';
                     elements.chatScreen.style.transform = 'translateX(0)';
                     elements.historyScreen.style.transform = 'translateX(-100%)';
                     elements.promptSetupScreen.style.transform = 'translateY(-100%)';
-                    elements.settingsScreen.style.transform = 'translateX(200%)';
+                    elements.settingsScreen.style.transform = 'translateX(100%)';
                     requestAnimationFrame(() => {
                         this.adjustTextareaHeight();
                         this.updateChatScreenElementVisibility();
@@ -8267,14 +8267,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else if (screenName === 'history') {
                     activeScreen = elements.historyScreen;
                     elements.homeScreen.style.transform = 'translateX(100%)';
-                    elements.chatScreen.style.transform = 'translateX(200%)';
+                    elements.chatScreen.style.transform = 'translateX(100%)';
                     elements.historyScreen.style.transform = 'translateX(0)';
                     elements.promptSetupScreen.style.transform = 'translateX(300%)';
                     elements.settingsScreen.style.transform = 'translateX(200%)';
                     this.renderHistoryList();
                 } else if (screenName === 'prompt-setup') {
                     activeScreen = elements.promptSetupScreen;
-                    elements.homeScreen.style.transform = 'translateX(-100%)';
+                    elements.homeScreen.style.transform = 'translateY(-100%)';
                     elements.chatScreen.style.transform = 'translateY(100%)';
                     elements.historyScreen.style.transform = 'translateX(-200%)';
                     elements.promptSetupScreen.style.transform = 'translateX(0)';
@@ -8300,7 +8300,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else if (screenName === 'settings') {
                     activeScreen = elements.settingsScreen;
                     elements.homeScreen.style.transform = 'translateX(-100%)';
-                    elements.chatScreen.style.transform = 'translateX(-200%)';
+                    elements.chatScreen.style.transform = 'translateX(-100%)';
                     elements.historyScreen.style.transform = 'translateX(-200%)';
                     elements.promptSetupScreen.style.transform = 'translateX(-200%)';
                     elements.settingsScreen.style.transform = 'translateX(0)';
