@@ -15827,51 +15827,69 @@ document.addEventListener('DOMContentLoaded', async () => {
         // チャット設定モーダル機能
         const chatSettingsModal = {
             show() {
-                // 現在の値を設定
-                if (elements.chatAiNameInput) {
-                    elements.chatAiNameInput.value = state.settings.aiName || '';
+                console.log('チャット設定モーダル show() が呼ばれました');
+                
+                // モーダル要素の確認
+                const modal = document.getElementById('chat-settings-modal');
+                console.log('モーダル要素:', modal);
+                
+                if (!modal) {
+                    console.error('モーダル要素が見つかりません');
+                    return;
                 }
-                if (elements.chatSystemPromptTextarea) {
-                    elements.chatSystemPromptTextarea.value = state.chatSystemPrompt || '';
+                
+                // 現在の値を設定
+                const chatAiNameInput = document.getElementById('chat-ai-name');
+                const chatSystemPromptTextarea = document.getElementById('chat-system-prompt');
+                
+                if (chatAiNameInput) {
+                    chatAiNameInput.value = state.settings.aiName || '';
+                }
+                if (chatSystemPromptTextarea) {
+                    chatSystemPromptTextarea.value = state.chatSystemPrompt || '';
                 }
                 
                 // AIアイコンプレビューを表示
+                const chatAiIconPreview = document.getElementById('chat-ai-icon-preview');
+                const chatAiIconRemove = document.getElementById('chat-ai-icon-remove');
+                
                 if (state.settings.aiIconBlob) {
                     if (state.aiIconUrl) {
-                        if (elements.chatAiIconPreview) {
-                            elements.chatAiIconPreview.src = state.aiIconUrl;
-                            elements.chatAiIconPreview.style.display = 'inline-block';
+                        if (chatAiIconPreview) {
+                            chatAiIconPreview.src = state.aiIconUrl;
+                            chatAiIconPreview.style.display = 'inline-block';
                         }
-                        if (elements.chatAiIconRemove) {
-                            elements.chatAiIconRemove.style.display = 'inline-block';
+                        if (chatAiIconRemove) {
+                            chatAiIconRemove.style.display = 'inline-block';
                         }
                     } else if (state.settings.aiIconBlob instanceof Blob) {
                         const url = URL.createObjectURL(state.settings.aiIconBlob);
-                        if (elements.chatAiIconPreview) {
-                            elements.chatAiIconPreview.src = url;
-                            elements.chatAiIconPreview.style.display = 'inline-block';
+                        if (chatAiIconPreview) {
+                            chatAiIconPreview.src = url;
+                            chatAiIconPreview.style.display = 'inline-block';
                         }
-                        if (elements.chatAiIconRemove) {
-                            elements.chatAiIconRemove.style.display = 'inline-block';
+                        if (chatAiIconRemove) {
+                            chatAiIconRemove.style.display = 'inline-block';
                         }
                     }
                 } else {
-                    if (elements.chatAiIconPreview) {
-                        elements.chatAiIconPreview.style.display = 'none';
+                    if (chatAiIconPreview) {
+                        chatAiIconPreview.style.display = 'none';
                     }
-                    if (elements.chatAiIconRemove) {
-                        elements.chatAiIconRemove.style.display = 'none';
+                    if (chatAiIconRemove) {
+                        chatAiIconRemove.style.display = 'none';
                     }
                 }
                 
-                if (elements.chatSettingsModal) {
-                    elements.chatSettingsModal.style.display = 'flex';
-                }
+                // モーダルを表示
+                modal.style.display = 'flex';
+                console.log('モーダルの表示を設定しました');
             },
         
             hide() {
-                if (elements.chatSettingsModal) {
-                    elements.chatSettingsModal.style.display = 'none';
+                const modal = document.getElementById('chat-settings-modal');
+                if (modal) {
+                    modal.style.display = 'none';
                 }
             },
             
@@ -15945,29 +15963,40 @@ document.addEventListener('DOMContentLoaded', async () => {
     
         // イベントリスナー設定（null チェック付き）
         const chatSettingsBtn = document.getElementById('chat-settings-btn');
+        console.log('チャット設定ボタン:', chatSettingsBtn);
+        
         if (chatSettingsBtn) {
             chatSettingsBtn.addEventListener('click', function(e) {
+                console.log('チャット設定ボタンがクリックされました');
                 e.preventDefault();
                 e.stopPropagation();
                 chatSettingsModal.show();
             });
+            console.log('チャット設定ボタンにイベントリスナーを追加しました');
+        } else {
+            console.error('チャット設定ボタンが見つかりません');
         }
     
-        if (elements.chatSettingsSaveBtn) {
-            elements.chatSettingsSaveBtn.addEventListener('click', () => {
+        // モーダル内のボタンイベントリスナー
+        const chatSettingsSaveBtn = document.getElementById('chat-settings-save');
+        const chatSettingsCancelBtn = document.getElementById('chat-settings-cancel');
+        const modalElement = document.getElementById('chat-settings-modal');
+        
+        if (chatSettingsSaveBtn) {
+            chatSettingsSaveBtn.addEventListener('click', () => {
                 chatSettingsModal.save();
             });
         }
         
-        if (elements.chatSettingsCancelBtn) {
-            elements.chatSettingsCancelBtn.addEventListener('click', () => {
+        if (chatSettingsCancelBtn) {
+            chatSettingsCancelBtn.addEventListener('click', () => {
                 chatSettingsModal.hide();
             });
         }
     
         // モーダルクローズボタン
-        if (elements.chatSettingsModal) {
-            const closeBtn = elements.chatSettingsModal.querySelector('.modal-close-btn');
+        if (modalElement) {
+            const closeBtn = modalElement.querySelector('.modal-close-btn');
             if (closeBtn) {
                 closeBtn.addEventListener('click', () => {
                     chatSettingsModal.hide();
@@ -15975,8 +16004,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             
             // オーバーレイクリックで閉じる
-            elements.chatSettingsModal.addEventListener('click', (e) => {
-                if (e.target === elements.chatSettingsModal) {
+            modalElement.addEventListener('click', (e) => {
+                if (e.target === modalElement) {
                     chatSettingsModal.hide();
                 }
             });
