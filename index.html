@@ -3456,8 +3456,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <label for="character-select">キャラクター選択:</label>
                         <select id="character-select" class="setting-select">
                             <option value="">-- キャラクターを選択してください --</option>
-                            <option value="epril">エプリル</option>
-                            <option value="leece">リーチェ</option>
                         </select>
                     </div>
                     
@@ -8234,6 +8232,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     elements.historyScreen.style.transform = 'translateX(-200%)';
                     elements.promptSetupScreen.style.transform = 'translateX(0)';
                     elements.settingsScreen.style.transform = 'translateX(200%)';
+                    // キャラクター選択肢を読み込み
+                    await this.loadCharacterOptions();
                     // ユーザー名を設定から読み込み
                     if (elements.userNameInput) {
                         elements.userNameInput.value = state.settings.userName || '';
@@ -8262,6 +8262,50 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 });
                 state.currentScreen = screenName;
+            },
+            async loadCharacterOptions() {
+                try {
+                    // systempromptフォルダ内のファイルを順番に確認
+                    const possibleCharacters = [
+                        'aisha', 'chiara', 'cure', 'epril', 'fee', 'leece', 'lily', 
+                        'loussier', 'luna', 'nocturika', 'rilltet', 'sara', 'setsuna', 
+                        'sheryl', 'tina'
+                    ];
+                    
+                    const characterSelect = elements.characterSelect;
+                    // 既存のオプションをクリア（最初のオプションは残す）
+                    while (characterSelect.children.length > 1) {
+                        characterSelect.removeChild(characterSelect.lastChild);
+                    }
+                    
+                    const availableCharacters = [];
+                    
+                    // 各ファイルの存在確認
+                    for (const char of possibleCharacters) {
+                        try {
+                            const res = await fetch(`./systemprompt/${char}.txt`);
+                            if (res.ok) {
+                                availableCharacters.push(char);
+                            }
+                        } catch (error) {
+                            // ファイルが存在しない場合は無視
+                        }
+                    }
+                    
+                    // 見つかったファイルから選択肢を生成
+                    availableCharacters.forEach(char => {
+                        const option = document.createElement('option');
+                        option.value = char;
+                        option.textContent = char;
+                        characterSelect.appendChild(option);
+                    });
+                    
+                    if (availableCharacters.length === 0) {
+                        console.warn('使用可能なキャラクターファイルが見つかりません');
+                    }
+                } catch (error) {
+                    console.error('キャラクター選択肢の読み込みエラー:', error);
+                }
             },
             async loadCharacterPrompt(characterValue) {
                 try {
