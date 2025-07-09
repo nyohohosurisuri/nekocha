@@ -8508,12 +8508,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 elements.promptPreview.textContent = combinedPrompt;
             },
             updatePromptAiIconDisplay() {
-                const aiIcon = state.settings.aiIcon;
                 const thumbnail = elements.promptAiIconThumbnail;
                 const deleteBtn = elements.promptDeleteAiIconBtn;
                 
-                if (aiIcon && thumbnail) {
-                    thumbnail.src = aiIcon;
+                if (state.aiIconUrl && thumbnail) {
+                    thumbnail.src = state.aiIconUrl;
                     thumbnail.classList.remove('hidden');
                     if (deleteBtn) {
                         deleteBtn.classList.remove('hidden');
@@ -8531,20 +8530,46 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const file = event.target.files[0];
                 if (!file) return;
                 
+                const maxSize = 1 * 1024 * 1024;
+                if (file.size > maxSize) {
+                    await this.showCustomAlert(`画像サイズが大きすぎます (${(maxSize / 1024 / 1024).toFixed(1)}MB以下)。`);
+                    return;
+                }
+                if (!file.type.startsWith('image/')) {
+                    await this.showCustomAlert("画像ファイルを選択してください。");
+                    return;
+                }
+
                 try {
-                    const dataUrl = await dbUtils.fileToDataUrl(file);
-                    state.settings.aiIcon = dataUrl;
-                    await dbUtils.saveSettings();
+                    const blob = file;
+                    if(state.aiIconUrl) URL.revokeObjectURL(state.aiIconUrl);
+                    await dbUtils.saveSetting('aiIconBlob', blob);
+                    state.settings.aiIconBlob = blob;
+                    state.aiIconUrl = URL.createObjectURL(blob);
                     this.updatePromptAiIconDisplay();
+                    this.updateIconSettingsUI();
                 } catch (error) {
                     console.error('AIアイコンアップロードエラー:', error);
-                    await this.showCustomAlert('AIアイコンのアップロードに失敗しました。');
+                    await this.showCustomAlert(`AIアイコンの処理エラー: ${error}`);
                 }
+                
+                // ファイル選択をクリア
+                event.target.value = null;
             },
             async deletePromptAiIcon() {
-                state.settings.aiIcon = null;
-                await dbUtils.saveSettings();
-                this.updatePromptAiIconDisplay();
+                const confirmed = await this.showCustomConfirm('AIアイコンを削除しますか？');
+                if (confirmed) {
+                    try {
+                        if (state.aiIconUrl) URL.revokeObjectURL(state.aiIconUrl);
+                        state.aiIconUrl = null;
+                        state.settings.aiIconBlob = null;
+                        await dbUtils.saveSetting('aiIconBlob', null);
+                        this.updatePromptAiIconDisplay();
+                        this.updateIconSettingsUI();
+                    } catch (error) {
+                        await this.showCustomAlert(`AIアイコンの削除エラー: ${error}`);
+                    }
+                }
             },
             async startChatWithPrompt() {
                 try {
