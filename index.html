@@ -15926,14 +15926,32 @@ document.addEventListener('DOMContentLoaded', async () => {
                         chatSystemPromptTextarea.value.trim() : '';
                     state.chatSystemPrompt = systemPrompt || null;
                     
+                    // AIアイコンの状態を確認（既にファイル選択時に保存済み）
+                    // 削除された場合の処理
+                    if (elements.chatAiIconInput && elements.chatAiIconInput.value === '' && 
+                        elements.chatAiIconPreview && elements.chatAiIconPreview.style.display === 'none') {
+                        // アイコンが削除されている場合
+                        state.settings.aiIconBlob = null;
+                        if (state.aiIconUrl) {
+                            URL.revokeObjectURL(state.aiIconUrl);
+                            state.aiIconUrl = null;
+                        }
+                        await dbUtils.saveSetting('aiIconBlob', null);
+                    }
+                    
                     // チャットを保存（設定を反映）
                     if (state.currentChatId && state.currentMessages && state.currentMessages.length > 0) {
                         await dbUtils.saveChat();
                     }
                     
-                    // メッセージを再描画してAI名を反映
+                    // メッセージを再描画してAI名とアイコンを反映
                     if (uiUtils && uiUtils.renderChatMessages) {
                         uiUtils.renderChatMessages();
+                    }
+                    
+                    // アイコン表示の更新
+                    if (uiUtils && uiUtils.updateIconSettingsUI) {
+                        uiUtils.updateIconSettingsUI();
                     }
                     
                     this.hide();
