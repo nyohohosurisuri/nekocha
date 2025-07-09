@@ -1259,7 +1259,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             z-index: 1;
         }
         #home-screen { transform: translateX(0); }
-        #chat-screen { transform: translateX(100%); }
+        #chat-screen { transform: translateY(100%); }
         #history-screen { transform: translateX(-100%); }
         #prompt-setup-screen { transform: translateY(100%); }
         #settings-screen { transform: translateX(100%); }
@@ -3459,7 +3459,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div id="prompt-setup-screen" class="screen">
             <header class="app-header">
                 <button id="back-to-home-from-prompt-setup" class="header-button" aria-label="ホームへ戻る">＜</button>
-                <h1>プロンプト設定</h1>
+                <h1>プロンプト作成</h1>
                 <button id="start-chat-with-prompt-btn" class="header-save-button" title="このプロンプトで会話を開始">開始</button>
             </header>
             <main class="main-content">
@@ -8256,7 +8256,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else if (screenName === 'chat') {
                     activeScreen = elements.chatScreen;
                     elements.homeScreen.style.transform = 'translateY(-100%)';
-                    elements.chatScreen.style.transform = 'translateX(0)';
+                    elements.chatScreen.style.transform = 'translateY(0)';
                     elements.historyScreen.style.transform = 'translateX(-100%)';
                     elements.promptSetupScreen.style.transform = 'translateY(100%)';
                     elements.settingsScreen.style.transform = 'translateX(100%)';
@@ -8281,7 +8281,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     elements.settingsScreen.style.transform = 'translateX(100%)';
                     // キャラクター選択肢を読み込み
                     await this.loadCharacterOptions();
-                    // プロンプト設定画面の入力フィールドをクリア
+                    // プロンプト作成画面の入力フィールドをクリア
                     if (elements.characterSelect) {
                         elements.characterSelect.value = '';
                     }
@@ -9128,7 +9128,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 elements.rollDiceBtn.addEventListener('click', () => this.rollDiceAndInput());
 
                 elements.newChatBtn.addEventListener('click', async () => {
-                    // 現在のチャットを保存してからプロンプト設定画面に移行
+                    // 現在のチャットを保存してからプロンプト作成画面に移行
                     await dbUtils.saveChat();
                     await uiUtils.showScreen('prompt-setup');
                 });
