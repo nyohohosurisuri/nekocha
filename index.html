@@ -2102,6 +2102,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             color: var(--text-secondary);
             margin-top: 4px;
         }
+        .history-item-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 0px;
+        }
+        .history-item-ai-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 1px solid var(--border-tertiary);
+        }
         .history-item-bottom-row {
             display: flex;
             justify-content: space-between;
@@ -3434,7 +3448,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <ul id="history-list" class="history-list">
                     <li class="js-history-item-template history-item">
                         <div class="history-item-details">
-                            <span class="history-item-title"></span>
+                            <div class="history-item-header">
+                                <img class="history-item-ai-icon" src="" alt="AI Icon" style="display: none;">
+                                <span class="history-item-title"></span>
+                            </div>
                             <span class="history-item-character"></span>
                         </div>
                         <div class="history-item-bottom-row">
@@ -7236,6 +7253,41 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 characterEl.style.display = 'none';
                                 console.log('No character name for chat:', chat.id);
                             }
+                            
+                            // AIアイコンを表示
+                            const aiIconEl = li.querySelector('.history-item-ai-icon');
+                            if (chat.aiIconBlob && state.settings.showAiIcon) {
+                                try {
+                                    let aiIconBlob;
+                                    if (chat.aiIconBlob instanceof Blob) {
+                                        aiIconBlob = chat.aiIconBlob;
+                                    } else if (chat.aiIconBlob instanceof ArrayBuffer) {
+                                        aiIconBlob = new Blob([chat.aiIconBlob], { type: 'image/jpeg' });
+                                    } else if (chat.aiIconBlob.constructor === Uint8Array || Array.isArray(chat.aiIconBlob)) {
+                                        aiIconBlob = new Blob([new Uint8Array(chat.aiIconBlob)], { type: 'image/jpeg' });
+                                    }
+                                    
+                                    if (aiIconBlob) {
+                                        const aiIconUrl = URL.createObjectURL(aiIconBlob);
+                                        aiIconEl.src = aiIconUrl;
+                                        aiIconEl.style.display = 'inline-block';
+                                        console.log('Displaying AI icon for chat:', chat.id);
+                                        
+                                        // メモリリークを防ぐため、画像読み込み後にURLを解放
+                                        aiIconEl.onload = () => {
+                                            setTimeout(() => URL.revokeObjectURL(aiIconUrl), 1000);
+                                        };
+                                    } else {
+                                        aiIconEl.style.display = 'none';
+                                    }
+                                } catch (error) {
+                                    console.error('Error displaying AI icon:', error);
+                                    aiIconEl.style.display = 'none';
+                                }
+                            } else {
+                                aiIconEl.style.display = 'none';
+                            }
+                            
                             titleEl.title = titleText;
 
                             li.querySelector('.created-date').textContent = `作成: ${this.formatDate(chat.createdAt)}`;
