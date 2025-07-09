@@ -15801,41 +15801,64 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     window.errorRecovery = errorRecovery;
     
-    // チャット設定モーダル機能
-    const chatSettingsModal = {
+    // チャット設定モーダル機能の初期化
+    function initializeChatSettingsModal() {
+        // チャット設定モーダル機能
+        const chatSettingsModal = {
         show() {
             // 現在の値を設定
-            elements.chatAiNameInput.value = state.settings.aiName || '';
-            elements.chatSystemPromptTextarea.value = state.chatSystemPrompt || '';
+            if (elements.chatAiNameInput) {
+                elements.chatAiNameInput.value = state.settings.aiName || '';
+            }
+            if (elements.chatSystemPromptTextarea) {
+                elements.chatSystemPromptTextarea.value = state.chatSystemPrompt || '';
+            }
             
             // AIアイコンプレビューを表示
             if (state.settings.aiIconBlob) {
                 if (state.aiIconUrl) {
-                    elements.chatAiIconPreview.src = state.aiIconUrl;
-                    elements.chatAiIconPreview.style.display = 'inline-block';
-                    elements.chatAiIconRemove.style.display = 'inline-block';
+                    if (elements.chatAiIconPreview) {
+                        elements.chatAiIconPreview.src = state.aiIconUrl;
+                        elements.chatAiIconPreview.style.display = 'inline-block';
+                    }
+                    if (elements.chatAiIconRemove) {
+                        elements.chatAiIconRemove.style.display = 'inline-block';
+                    }
                 } else if (state.settings.aiIconBlob instanceof Blob) {
                     const url = URL.createObjectURL(state.settings.aiIconBlob);
-                    elements.chatAiIconPreview.src = url;
-                    elements.chatAiIconPreview.style.display = 'inline-block';
-                    elements.chatAiIconRemove.style.display = 'inline-block';
+                    if (elements.chatAiIconPreview) {
+                        elements.chatAiIconPreview.src = url;
+                        elements.chatAiIconPreview.style.display = 'inline-block';
+                    }
+                    if (elements.chatAiIconRemove) {
+                        elements.chatAiIconRemove.style.display = 'inline-block';
+                    }
                 }
             } else {
-                elements.chatAiIconPreview.style.display = 'none';
-                elements.chatAiIconRemove.style.display = 'none';
+                if (elements.chatAiIconPreview) {
+                    elements.chatAiIconPreview.style.display = 'none';
+                }
+                if (elements.chatAiIconRemove) {
+                    elements.chatAiIconRemove.style.display = 'none';
+                }
             }
             
-            elements.chatSettingsModal.style.display = 'flex';
+            if (elements.chatSettingsModal) {
+                elements.chatSettingsModal.style.display = 'flex';
+            }
         },
         
         hide() {
-            elements.chatSettingsModal.style.display = 'none';
+            if (elements.chatSettingsModal) {
+                elements.chatSettingsModal.style.display = 'none';
+            }
         },
         
         async save() {
             try {
                 // AI名を更新
-                const aiName = elements.chatAiNameInput.value.trim() || 'AI';
+                const aiName = elements.chatAiNameInput ? 
+                    (elements.chatAiNameInput.value.trim() || 'AI') : 'AI';
                 state.settings.aiName = aiName;
                 await dbUtils.saveSetting('aiName', aiName);
                 
@@ -15846,7 +15869,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 
                 // システムプロンプトを更新
-                const systemPrompt = elements.chatSystemPromptTextarea.value.trim();
+                const systemPrompt = elements.chatSystemPromptTextarea ? 
+                    elements.chatSystemPromptTextarea.value.trim() : '';
                 state.chatSystemPrompt = systemPrompt || null;
                 
                 // チャットを保存（設定を反映）
@@ -15855,16 +15879,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 
                 // メッセージを再描画してAI名を反映
-                uiUtils.renderChatMessages();
+                if (uiUtils && uiUtils.renderChatMessages) {
+                    uiUtils.renderChatMessages();
+                }
                 
                 this.hide();
                 
                 // 成功メッセージを表示
-                await uiUtils.showCustomAlert('チャット設定を保存しました。');
+                if (uiUtils && uiUtils.showCustomAlert) {
+                    await uiUtils.showCustomAlert('チャット設定を保存しました。');
+                }
                 
             } catch (error) {
                 console.error('チャット設定の保存に失敗しました:', error);
-                await uiUtils.showCustomAlert('チャット設定の保存に失敗しました。');
+                if (uiUtils && uiUtils.showCustomAlert) {
+                    await uiUtils.showCustomAlert('チャット設定の保存に失敗しました。');
+                }
             }
         },
         
@@ -15874,9 +15904,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 URL.revokeObjectURL(state.aiIconUrl);
                 state.aiIconUrl = null;
             }
-            elements.chatAiIconPreview.style.display = 'none';
-            elements.chatAiIconRemove.style.display = 'none';
-            elements.chatAiIconInput.value = '';
+            if (elements.chatAiIconPreview) {
+                elements.chatAiIconPreview.style.display = 'none';
+            }
+            if (elements.chatAiIconRemove) {
+                elements.chatAiIconRemove.style.display = 'none';
+            }
+            if (elements.chatAiIconInput) {
+                elements.chatAiIconInput.value = '';
+            }
             
             // AIアイコンサムネイルを更新
             const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
@@ -15886,94 +15922,121 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     };
     
-    // イベントリスナー設定
-    elements.chatSettingsBtn.addEventListener('click', () => {
-        chatSettingsModal.show();
-    });
+    // イベントリスナー設定（null チェック付き）
+    if (elements.chatSettingsBtn) {
+        elements.chatSettingsBtn.addEventListener('click', () => {
+            chatSettingsModal.show();
+        });
+    }
     
-    elements.chatSettingsSaveBtn.addEventListener('click', () => {
-        chatSettingsModal.save();
-    });
+    if (elements.chatSettingsSaveBtn) {
+        elements.chatSettingsSaveBtn.addEventListener('click', () => {
+            chatSettingsModal.save();
+        });
+    }
     
-    elements.chatSettingsCancelBtn.addEventListener('click', () => {
-        chatSettingsModal.hide();
-    });
+    if (elements.chatSettingsCancelBtn) {
+        elements.chatSettingsCancelBtn.addEventListener('click', () => {
+            chatSettingsModal.hide();
+        });
+    }
     
     // モーダルクローズボタン
-    elements.chatSettingsModal.querySelector('.modal-close-btn').addEventListener('click', () => {
-        chatSettingsModal.hide();
-    });
-    
-    // オーバーレイクリックで閉じる
-    elements.chatSettingsModal.addEventListener('click', (e) => {
-        if (e.target === elements.chatSettingsModal) {
-            chatSettingsModal.hide();
+    if (elements.chatSettingsModal) {
+        const closeBtn = elements.chatSettingsModal.querySelector('.modal-close-btn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                chatSettingsModal.hide();
+            });
         }
-    });
+        
+        // オーバーレイクリックで閉じる
+        elements.chatSettingsModal.addEventListener('click', (e) => {
+            if (e.target === elements.chatSettingsModal) {
+                chatSettingsModal.hide();
+            }
+        });
+    }
     
     // AIアイコンファイル選択
-    elements.chatAiIconInput.addEventListener('change', async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        // ファイルサイズチェック
-        const maxSize = 1 * 1024 * 1024; // 1MB
-        if (file.size > maxSize) {
-            await uiUtils.showCustomAlert('ファイルサイズは1MB以下にしてください。');
-            elements.chatAiIconInput.value = '';
-            return;
-        }
-        
-        // ファイルタイプチェック
-        if (!file.type.startsWith('image/')) {
-            await uiUtils.showCustomAlert('画像ファイルを選択してください。');
-            elements.chatAiIconInput.value = '';
-            return;
-        }
-        
-        try {
-            // 既存のURLを解放
-            if (state.aiIconUrl) {
-                URL.revokeObjectURL(state.aiIconUrl);
+    if (elements.chatAiIconInput) {
+        elements.chatAiIconInput.addEventListener('change', async (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            
+            // ファイルサイズチェック
+            const maxSize = 1 * 1024 * 1024; // 1MB
+            if (file.size > maxSize) {
+                await uiUtils.showCustomAlert('ファイルサイズは1MB以下にしてください。');
+                elements.chatAiIconInput.value = '';
+                return;
             }
             
-            // 新しいBlobを設定
-            state.settings.aiIconBlob = file;
-            await dbUtils.saveSetting('aiIconBlob', file);
-            
-            // プレビューを更新
-            state.aiIconUrl = URL.createObjectURL(file);
-            elements.chatAiIconPreview.src = state.aiIconUrl;
-            elements.chatAiIconPreview.style.display = 'inline-block';
-            elements.chatAiIconRemove.style.display = 'inline-block';
-            
-            // AIアイコンサムネイルを更新
-            const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
-            if (aiIconThumbnail) {
-                aiIconThumbnail.src = state.aiIconUrl;
-                aiIconThumbnail.style.display = 'block';
+            // ファイルタイプチェック
+            if (!file.type.startsWith('image/')) {
+                await uiUtils.showCustomAlert('画像ファイルを選択してください。');
+                elements.chatAiIconInput.value = '';
+                return;
             }
             
-        } catch (error) {
-            console.error('AIアイコンのアップロードに失敗しました:', error);
-            await uiUtils.showCustomAlert('AIアイコンのアップロードに失敗しました。');
-        }
-    });
+            try {
+                // 既存のURLを解放
+                if (state.aiIconUrl) {
+                    URL.revokeObjectURL(state.aiIconUrl);
+                }
+                
+                // 新しいBlobを設定
+                state.settings.aiIconBlob = file;
+                await dbUtils.saveSetting('aiIconBlob', file);
+                
+                // プレビューを更新
+                state.aiIconUrl = URL.createObjectURL(file);
+                if (elements.chatAiIconPreview) {
+                    elements.chatAiIconPreview.src = state.aiIconUrl;
+                    elements.chatAiIconPreview.style.display = 'inline-block';
+                }
+                if (elements.chatAiIconRemove) {
+                    elements.chatAiIconRemove.style.display = 'inline-block';
+                }
+                
+                // AIアイコンサムネイルを更新
+                const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
+                if (aiIconThumbnail) {
+                    aiIconThumbnail.src = state.aiIconUrl;
+                    aiIconThumbnail.style.display = 'block';
+                }
+                
+            } catch (error) {
+                console.error('AIアイコンのアップロードに失敗しました:', error);
+                await uiUtils.showCustomAlert('AIアイコンのアップロードに失敗しました。');
+            }
+        });
+    }
     
     // AIアイコン削除ボタン
-    elements.chatAiIconRemove.addEventListener('click', async () => {
-        chatSettingsModal.removeIcon();
-        await dbUtils.saveSetting('aiIconBlob', null);
-    });
+    if (elements.chatAiIconRemove) {
+        elements.chatAiIconRemove.addEventListener('click', async () => {
+            chatSettingsModal.removeIcon();
+            await dbUtils.saveSetting('aiIconBlob', null);
+        });
+    }
     
     // ESCキーでモーダルを閉じる
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && elements.chatSettingsModal.style.display === 'flex') {
+        if (e.key === 'Escape' && elements.chatSettingsModal && elements.chatSettingsModal.style.display === 'flex') {
             chatSettingsModal.hide();
         }
     });
     
-    window.chatSettingsModal = chatSettingsModal;
+        window.chatSettingsModal = chatSettingsModal;
+    }
+    
+    // DOMContentLoadedイベントでチャット設定モーダルを初期化
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeChatSettingsModal);
+    } else {
+        initializeChatSettingsModal();
+    }
 </script>
 
 <!-- チャット設定モーダル -->
