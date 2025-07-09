@@ -6018,6 +6018,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             title: title,
                             characterName: characterName,
                         };
+                        console.log('Saving chat data, messages:', messagesToSave.map(m => ({ role: m.role, content: m.content?.substring(0, 50) })));
                         if (state.settings.persistMessageCollapseState) {
                             chatData.collapsedStates = Object.fromEntries(state.messageCollapsedStates);
                         } else if (existingChatData && existingChatData.collapsedStates) {
@@ -10155,10 +10156,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     uiUtils.updateToggleAllContentButton();
                     
                     // システムプロンプトを復元
+                    console.log('Loading chat, messages:', state.currentMessages.map(m => ({ role: m.role, content: m.content?.substring(0, 50) })));
                     const systemMessage = state.currentMessages.find(m => m.role === 'system');
                     if (systemMessage) {
                         state.settings.commonSystemPrompt = systemMessage.content;
+                        // 設定画面のテキストエリアも更新
+                        if (elements.commonSystemPromptDefaultTextarea) {
+                            elements.commonSystemPromptDefaultTextarea.value = systemMessage.content;
+                        }
                         console.log('Restored system prompt from message:', systemMessage.content.substring(0, 100) + '...');
+                    } else {
+                        console.log('No system message found in loaded chat');
                     }
                     
                     // キャラクター情報を復元
@@ -10309,8 +10317,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                  let exportText = '';
                  if (chat.messages) {
-                     chat.messages.forEach(msg => {
+                     console.log('Exporting chat messages:', chat.messages.map(m => ({ role: m.role, content: m.content?.substring(0, 50) })));
+                    chat.messages.forEach(msg => {
                          if (msg.role === 'user' || msg.role === 'model' || msg.role === 'character' || msg.role === 'system') {
+                             console.log('Processing message for export:', { role: msg.role, content: msg.content?.substring(0, 50) });
                              let attributes = '';
                              if (msg.role === 'model') {
                                  if (msg.isCascaded) attributes += ' isCascaded';
@@ -10535,6 +10545,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             };
                             state.currentMessages.push(systemMessage);
                             console.log('Added system message:', systemPrompt.substring(0, 100) + '...');
+                            console.log('Current messages after adding system:', state.currentMessages.map(m => ({ role: m.role, content: m.content?.substring(0, 50) })));
                         }
                         
                         // キャラクター情報を追加
