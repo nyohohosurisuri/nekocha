@@ -3359,6 +3359,188 @@ document.addEventListener('DOMContentLoaded', async () => {
         #settings-screen.auto-save-mode .app-header .js-save-settings-btn {
             display: none !important;
         }
+        
+        /* チャット設定モーダル */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(2px);
+        }
+        
+        .modal-content {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border-secondary);
+        }
+        
+        .modal-header h3 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 18px;
+        }
+        
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.2s ease;
+        }
+        
+        .modal-close-btn:hover {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .settings-section {
+            margin-bottom: 20px;
+        }
+        
+        .settings-section h4 {
+            margin: 0 0 16px 0;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .setting-item {
+            margin-bottom: 16px;
+        }
+        
+        .setting-item label {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .setting-item input[type="text"],
+        .setting-item textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid var(--border-primary);
+            border-radius: 4px;
+            background-color: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        
+        .setting-item textarea {
+            min-height: 80px;
+            resize: vertical;
+        }
+        
+        .setting-item input[type="text"]:focus,
+        .setting-item textarea:focus {
+            outline: none;
+            border-color: var(--bg-button);
+            box-shadow: 0 0 0 2px rgba(var(--bg-button-rgb), 0.2);
+        }
+        
+        .ai-icon-upload-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .ai-icon-upload-container input[type="file"] {
+            flex: 1;
+        }
+        
+        .ai-icon-preview {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 1px solid var(--border-primary);
+        }
+        
+        .icon-remove-btn {
+            padding: 6px 12px;
+            background-color: var(--bg-button-delete);
+            color: var(--text-light);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .icon-remove-btn:hover {
+            background-color: var(--bg-button-delete-hover);
+        }
+        
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            padding: 16px 20px;
+            border-top: 1px solid var(--border-secondary);
+        }
+        
+        .btn-primary {
+            background-color: var(--bg-button);
+            color: var(--text-light);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--bg-button-hover);
+        }
+        
+        .btn-secondary {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-primary);
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .btn-secondary:hover {
+            background-color: var(--bg-tertiary);
+        }
     </style>
     <script src="marked.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
@@ -3394,6 +3576,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <button id="toggle-all-content-btn" class="header-button" aria-label="全メッセージ表示切替" title="全メッセージの表示/非表示を切り替え">🖼️</button>
                 <button id="toggle-clipboard-stack-btn" class="header-button" aria-label="クリップボードスタックを開閉">🗒️</button>
                 <button id="toggle-memo-btn" class="header-button" aria-label="メモを開閉">📝</button>
+                <button id="chat-settings-btn" class="header-button" aria-label="チャット設定" title="チャット設定">🔧</button>
                 <button id="goto-settings-btn" class="header-button" aria-label="設定へ">⚙</button>
             </header>
 
@@ -5429,6 +5612,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             addXaiApiKeyBtn: document.getElementById('add-xai-api-key-btn'),
             llmaggregatorApiKeysList: document.getElementById('llmaggregator-api-keys-list'),
             addLlmaggregatorApiKeyBtn: document.getElementById('add-llmaggregator-api-key-btn'),
+            
+            // チャット設定モーダル
+            chatSettingsModal: document.getElementById('chat-settings-modal'),
+            chatSettingsBtn: document.getElementById('chat-settings-btn'),
+            chatAiNameInput: document.getElementById('chat-ai-name'),
+            chatAiIconInput: document.getElementById('chat-ai-icon'),
+            chatAiIconPreview: document.getElementById('chat-ai-icon-preview'),
+            chatAiIconRemove: document.getElementById('chat-ai-icon-remove'),
+            chatSystemPromptTextarea: document.getElementById('chat-system-prompt'),
+            chatSettingsSaveBtn: document.getElementById('chat-settings-save'),
+            chatSettingsCancelBtn: document.getElementById('chat-settings-cancel'),
         };
 
         const state = {
@@ -6065,6 +6259,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             characterName: characterName,
                             aiName: state.settings.aiName || "AI",
                             aiIconBlob: state.settings.aiIconBlob || null,
+                            chatSystemPrompt: state.chatSystemPrompt || null,
                         };
                         if (state.settings.persistMessageCollapseState) {
                             chatData.collapsedStates = Object.fromEntries(state.messageCollapsedStates);
@@ -10475,6 +10670,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                             aiIconThumbnail.style.display = 'none';
                         }
                     }
+                    
+                    // チャット専用システムプロンプトを復元
+                    if (chat.chatSystemPrompt) {
+                        state.chatSystemPrompt = chat.chatSystemPrompt;
+                        console.log('Restored chat system prompt from chat data');
+                    } else {
+                        state.chatSystemPrompt = null;
+                    }
+                    
                     state.messageCollapsedStates.clear();
                     state.thoughtSummaryOpenStates.clear();
                     if (state.settings.persistMessageCollapseState && chat.collapsedStates) {
@@ -15596,6 +15800,219 @@ document.addEventListener('DOMContentLoaded', async () => {
     errorRecovery.init();
 
     window.errorRecovery = errorRecovery;
+    
+    // チャット設定モーダル機能
+    const chatSettingsModal = {
+        show() {
+            // 現在の値を設定
+            elements.chatAiNameInput.value = state.settings.aiName || '';
+            elements.chatSystemPromptTextarea.value = state.chatSystemPrompt || '';
+            
+            // AIアイコンプレビューを表示
+            if (state.settings.aiIconBlob) {
+                if (state.aiIconUrl) {
+                    elements.chatAiIconPreview.src = state.aiIconUrl;
+                    elements.chatAiIconPreview.style.display = 'inline-block';
+                    elements.chatAiIconRemove.style.display = 'inline-block';
+                } else if (state.settings.aiIconBlob instanceof Blob) {
+                    const url = URL.createObjectURL(state.settings.aiIconBlob);
+                    elements.chatAiIconPreview.src = url;
+                    elements.chatAiIconPreview.style.display = 'inline-block';
+                    elements.chatAiIconRemove.style.display = 'inline-block';
+                }
+            } else {
+                elements.chatAiIconPreview.style.display = 'none';
+                elements.chatAiIconRemove.style.display = 'none';
+            }
+            
+            elements.chatSettingsModal.style.display = 'flex';
+        },
+        
+        hide() {
+            elements.chatSettingsModal.style.display = 'none';
+        },
+        
+        async save() {
+            try {
+                // AI名を更新
+                const aiName = elements.chatAiNameInput.value.trim() || 'AI';
+                state.settings.aiName = aiName;
+                await dbUtils.saveSetting('aiName', aiName);
+                
+                // AI名入力フィールドを更新
+                const aiNameInput = document.getElementById('ai-name-input');
+                if (aiNameInput) {
+                    aiNameInput.value = aiName;
+                }
+                
+                // システムプロンプトを更新
+                const systemPrompt = elements.chatSystemPromptTextarea.value.trim();
+                state.chatSystemPrompt = systemPrompt || null;
+                
+                // チャットを保存（設定を反映）
+                if (state.currentChatId && state.currentMessages && state.currentMessages.length > 0) {
+                    await dbUtils.saveChat();
+                }
+                
+                // メッセージを再描画してAI名を反映
+                uiUtils.renderChatMessages();
+                
+                this.hide();
+                
+                // 成功メッセージを表示
+                await uiUtils.showCustomAlert('チャット設定を保存しました。');
+                
+            } catch (error) {
+                console.error('チャット設定の保存に失敗しました:', error);
+                await uiUtils.showCustomAlert('チャット設定の保存に失敗しました。');
+            }
+        },
+        
+        removeIcon() {
+            state.settings.aiIconBlob = null;
+            if (state.aiIconUrl) {
+                URL.revokeObjectURL(state.aiIconUrl);
+                state.aiIconUrl = null;
+            }
+            elements.chatAiIconPreview.style.display = 'none';
+            elements.chatAiIconRemove.style.display = 'none';
+            elements.chatAiIconInput.value = '';
+            
+            // AIアイコンサムネイルを更新
+            const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
+            if (aiIconThumbnail) {
+                aiIconThumbnail.style.display = 'none';
+            }
+        }
+    };
+    
+    // イベントリスナー設定
+    elements.chatSettingsBtn.addEventListener('click', () => {
+        chatSettingsModal.show();
+    });
+    
+    elements.chatSettingsSaveBtn.addEventListener('click', () => {
+        chatSettingsModal.save();
+    });
+    
+    elements.chatSettingsCancelBtn.addEventListener('click', () => {
+        chatSettingsModal.hide();
+    });
+    
+    // モーダルクローズボタン
+    elements.chatSettingsModal.querySelector('.modal-close-btn').addEventListener('click', () => {
+        chatSettingsModal.hide();
+    });
+    
+    // オーバーレイクリックで閉じる
+    elements.chatSettingsModal.addEventListener('click', (e) => {
+        if (e.target === elements.chatSettingsModal) {
+            chatSettingsModal.hide();
+        }
+    });
+    
+    // AIアイコンファイル選択
+    elements.chatAiIconInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        // ファイルサイズチェック
+        const maxSize = 1 * 1024 * 1024; // 1MB
+        if (file.size > maxSize) {
+            await uiUtils.showCustomAlert('ファイルサイズは1MB以下にしてください。');
+            elements.chatAiIconInput.value = '';
+            return;
+        }
+        
+        // ファイルタイプチェック
+        if (!file.type.startsWith('image/')) {
+            await uiUtils.showCustomAlert('画像ファイルを選択してください。');
+            elements.chatAiIconInput.value = '';
+            return;
+        }
+        
+        try {
+            // 既存のURLを解放
+            if (state.aiIconUrl) {
+                URL.revokeObjectURL(state.aiIconUrl);
+            }
+            
+            // 新しいBlobを設定
+            state.settings.aiIconBlob = file;
+            await dbUtils.saveSetting('aiIconBlob', file);
+            
+            // プレビューを更新
+            state.aiIconUrl = URL.createObjectURL(file);
+            elements.chatAiIconPreview.src = state.aiIconUrl;
+            elements.chatAiIconPreview.style.display = 'inline-block';
+            elements.chatAiIconRemove.style.display = 'inline-block';
+            
+            // AIアイコンサムネイルを更新
+            const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
+            if (aiIconThumbnail) {
+                aiIconThumbnail.src = state.aiIconUrl;
+                aiIconThumbnail.style.display = 'block';
+            }
+            
+        } catch (error) {
+            console.error('AIアイコンのアップロードに失敗しました:', error);
+            await uiUtils.showCustomAlert('AIアイコンのアップロードに失敗しました。');
+        }
+    });
+    
+    // AIアイコン削除ボタン
+    elements.chatAiIconRemove.addEventListener('click', async () => {
+        chatSettingsModal.removeIcon();
+        await dbUtils.saveSetting('aiIconBlob', null);
+    });
+    
+    // ESCキーでモーダルを閉じる
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && elements.chatSettingsModal.style.display === 'flex') {
+            chatSettingsModal.hide();
+        }
+    });
+    
+    window.chatSettingsModal = chatSettingsModal;
 </script>
+
+<!-- チャット設定モーダル -->
+<div id="chat-settings-modal" class="modal-overlay" style="display: none;">
+    <div class="modal-content chat-settings-modal">
+        <div class="modal-header">
+            <h3>チャット設定</h3>
+            <button class="modal-close-btn" aria-label="閉じる">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="settings-section">
+                <h4>AI設定</h4>
+                
+                <div class="setting-item">
+                    <label for="chat-ai-name">AI名</label>
+                    <input type="text" id="chat-ai-name" placeholder="AI名を入力">
+                </div>
+                
+                <div class="setting-item">
+                    <label for="chat-ai-icon">AIアイコン</label>
+                    <div class="ai-icon-upload-container">
+                        <input type="file" id="chat-ai-icon" accept="image/*">
+                        <img id="chat-ai-icon-preview" class="ai-icon-preview" style="display: none;">
+                        <button type="button" id="chat-ai-icon-remove" class="icon-remove-btn" style="display: none;">削除</button>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <label for="chat-system-prompt">システムプロンプト</label>
+                    <textarea id="chat-system-prompt" placeholder="このチャット専用のシステムプロンプトを入力"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button id="chat-settings-save" class="btn-primary">保存</button>
+            <button id="chat-settings-cancel" class="btn-secondary">キャンセル</button>
+        </div>
+    </div>
+</div>
+
 </body>
 </html>
