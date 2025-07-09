@@ -3472,6 +3472,28 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                     
                     <div class="setting-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" id="show-ai-icon-checkbox" checked>
+                            AIアイコンを表示する
+                        </label>
+                        <div class="image-upload-controls" style="margin-top: 5px;">
+                            <input type="file" id="prompt-ai-icon-input" accept="image/jpeg, image/png, image/gif, image/webp" class="hidden">
+                            <button id="prompt-upload-ai-icon-btn" class="settings-action-button" type="button">AIアイコン選択...</button>
+                            <img id="prompt-ai-icon-thumbnail" src="" alt="AIアイコンプレビュー" class="icon-thumbnail hidden">
+                            <button id="prompt-delete-ai-icon-btn" class="settings-delete-button hidden" type="button">削除</button>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <label for="ai-name-input">AI名:</label>
+                        <input type="text" id="ai-name-input" class="setting-input" placeholder="AI名を入力" maxlength="20" style="width: 200px;">
+                        <label class="checkbox-label" style="margin-left: 10px;">
+                            <input type="checkbox" id="show-ai-name-checkbox" checked>
+                            AI名を表示する
+                        </label>
+                    </div>
+                    
+                    <div class="setting-group">
                         <label for="user-name-input">ユーザーの名前(呼び名):</label>
                         <input type="text" id="user-name-input" aria-label="ユーザーの名前">
                     </div>
@@ -5243,6 +5265,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             startChatBtn: document.getElementById('start-chat-btn'),
             selectHistoryBtn: document.getElementById('select-history-btn'),
             characterSelect: document.getElementById('character-select'),
+            promptAiIconInput: document.getElementById('prompt-ai-icon-input'),
+            promptUploadAiIconBtn: document.getElementById('prompt-upload-ai-icon-btn'),
+            promptAiIconThumbnail: document.getElementById('prompt-ai-icon-thumbnail'),
+            promptDeleteAiIconBtn: document.getElementById('prompt-delete-ai-icon-btn'),
+            aiNameInput: document.getElementById('ai-name-input'),
+            showAiIconCheckbox: document.getElementById('show-ai-icon-checkbox'),
+            showAiNameCheckbox: document.getElementById('show-ai-name-checkbox'),
             userRelationshipSelect: document.getElementById('user-relationship-select'),
             promptSetupSystemPrompt: document.getElementById('prompt-setup-system-prompt'),
             promptPreview: document.getElementById('prompt-preview'),
@@ -8291,10 +8320,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (elements.promptSetupSystemPrompt) {
                         elements.promptSetupSystemPrompt.value = '';
                     }
-                    // ユーザー名を設定から読み込み
+                    // 設定から各種項目を読み込み
                     if (elements.userNameInput) {
                         elements.userNameInput.value = state.settings.userName || '';
                     }
+                    if (elements.aiNameInput) {
+                        elements.aiNameInput.value = state.settings.aiName || '';
+                    }
+                    if (elements.showAiIconCheckbox) {
+                        elements.showAiIconCheckbox.checked = state.settings.showAiIcon !== false;
+                    }
+                    if (elements.showAiNameCheckbox) {
+                        elements.showAiNameCheckbox.checked = state.settings.showAiName !== false;
+                    }
+                    
+                    // AIアイコンの表示状態を更新
+                    this.updatePromptAiIconDisplay();
                     // プレビューを更新
                     this.updatePromptPreview();
                 } else if (screenName === 'settings') {
@@ -8427,6 +8468,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     console.log(`Successfully loaded character: ${characterValue}`);
                     
                     elements.promptSetupSystemPrompt.value = prompt;
+                    
+                    // キャラクター名をAI名に自動入力
+                    if (elements.aiNameInput) {
+                        elements.aiNameInput.value = characterValue;
+                    }
+                    
                     this.updatePromptPreview();
                 } catch (error) {
                     console.error('キャラクタープロンプト読み込みエラー:', error);
@@ -8437,6 +8484,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             updatePromptPreview() {
                 const relationship = elements.userRelationshipSelect.value;
                 const systemPrompt = elements.promptSetupSystemPrompt.value;
+                const aiName = elements.aiNameInput ? elements.aiNameInput.value.trim() || 'AI' : 'AI';
                 
                 const relationshipText = {
                     'first-meeting': '初対面',
@@ -8452,7 +8500,51 @@ document.addEventListener('DOMContentLoaded', async () => {
                     combinedPrompt += `\nユーザーの名前は${userName}です。`;
                 }
                 
+                // AI名を追加
+                if (aiName && aiName !== 'AI') {
+                    combinedPrompt += `\nあなたの名前は${aiName}です。`;
+                }
+                
                 elements.promptPreview.textContent = combinedPrompt;
+            },
+            updatePromptAiIconDisplay() {
+                const aiIcon = state.settings.aiIcon;
+                const thumbnail = elements.promptAiIconThumbnail;
+                const deleteBtn = elements.promptDeleteAiIconBtn;
+                
+                if (aiIcon && thumbnail) {
+                    thumbnail.src = aiIcon;
+                    thumbnail.classList.remove('hidden');
+                    if (deleteBtn) {
+                        deleteBtn.classList.remove('hidden');
+                    }
+                } else {
+                    if (thumbnail) {
+                        thumbnail.classList.add('hidden');
+                    }
+                    if (deleteBtn) {
+                        deleteBtn.classList.add('hidden');
+                    }
+                }
+            },
+            async handlePromptAiIconUpload(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                try {
+                    const dataUrl = await dbUtils.fileToDataUrl(file);
+                    state.settings.aiIcon = dataUrl;
+                    await dbUtils.saveSettings();
+                    this.updatePromptAiIconDisplay();
+                } catch (error) {
+                    console.error('AIアイコンアップロードエラー:', error);
+                    await this.showCustomAlert('AIアイコンのアップロードに失敗しました。');
+                }
+            },
+            async deletePromptAiIcon() {
+                state.settings.aiIcon = null;
+                await dbUtils.saveSettings();
+                this.updatePromptAiIconDisplay();
             },
             async startChatWithPrompt() {
                 try {
@@ -8479,6 +8571,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (userName && userName.trim() !== '') {
                         combinedPrompt += `\nユーザーの名前は${userName}です。`;
                     }
+                    
+                    // AI名を追加
+                    const aiName = elements.aiNameInput ? elements.aiNameInput.value.trim() || 'AI' : 'AI';
+                    if (aiName && aiName !== 'AI') {
+                        combinedPrompt += `\nあなたの名前は${aiName}です。`;
+                    }
+                    
+                    // 設定を更新
+                    state.settings.aiName = aiName;
+                    state.settings.showAiIcon = elements.showAiIconCheckbox ? elements.showAiIconCheckbox.checked : true;
+                    state.settings.showAiName = elements.showAiNameCheckbox ? elements.showAiNameCheckbox.checked : true;
                     
                     // 設定に反映
                     state.settings.commonSystemPrompt = combinedPrompt;
@@ -9120,6 +9223,43 @@ document.addEventListener('DOMContentLoaded', async () => {
                         state.settings.userName = elements.userNameInput.value.trim();
                         await appLogic.saveSettings(false);
                         uiUtils.updatePromptPreview();
+                    });
+                }
+                
+                if (elements.aiNameInput) {
+                    elements.aiNameInput.addEventListener('input', () => {
+                        uiUtils.updatePromptPreview();
+                    });
+                }
+                
+                if (elements.showAiIconCheckbox) {
+                    elements.showAiIconCheckbox.addEventListener('change', () => {
+                        uiUtils.updatePromptPreview();
+                    });
+                }
+                
+                if (elements.showAiNameCheckbox) {
+                    elements.showAiNameCheckbox.addEventListener('change', () => {
+                        uiUtils.updatePromptPreview();
+                    });
+                }
+                
+                // プロンプト作成画面のAIアイコンアップロード
+                if (elements.promptUploadAiIconBtn) {
+                    elements.promptUploadAiIconBtn.addEventListener('click', () => {
+                        elements.promptAiIconInput.click();
+                    });
+                }
+                
+                if (elements.promptAiIconInput) {
+                    elements.promptAiIconInput.addEventListener('change', async (event) => {
+                        await uiUtils.handlePromptAiIconUpload(event);
+                    });
+                }
+                
+                if (elements.promptDeleteAiIconBtn) {
+                    elements.promptDeleteAiIconBtn.addEventListener('click', async () => {
+                        await uiUtils.deletePromptAiIcon();
                     });
                 }
                 elements.toggleMemoBtn.addEventListener('click', () => this.toggleMemo());
