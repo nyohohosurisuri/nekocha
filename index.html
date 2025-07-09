@@ -3463,7 +3463,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     <div class="setting-group">
                         <label for="user-name-input">ユーザーの名前(呼び名):</label>
-                        <input type="text" id="user-name-input" placeholder="例: 田中太郎" aria-label="ユーザーの名前">
+                        <input type="text" id="user-name-input" aria-label="ユーザーの名前">
                     </div>
                     
                     <div class="setting-group">
@@ -4893,7 +4893,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const DEFAULT_CLIPBOARD_STACK_HEIGHT = '300px';
         const DEFAULT_MESSAGE_ICON_SIZE = 50;
         const DEFAULT_MESSAGE_ICON_OFFSET_Y = -30;
-        const DEFAULT_USER_NAME = "あなた";
+        const DEFAULT_USER_NAME = "";
         const DEFAULT_AI_NAME = "AI";
         const DEFAULT_ICON_NAME_FONT_SIZE = 15;
         const DEFAULT_ICON_NAME_OFFSET_Y = -30;
@@ -8270,7 +8270,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         return;
                     }
                     
-                    const filename = `${characterValue}.txt`;
+                    const filename = `systemprompt/${characterValue}.txt`;
                     const res = await fetch(`./${filename}`);
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const prompt = (await res.text()).trim();
@@ -8280,7 +8280,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } catch (error) {
                     console.error('キャラクタープロンプト読み込みエラー:', error);
                     elements.promptSetupSystemPrompt.value = '';
-                    await this.showCustomAlert(`キャラクタープロンプト(${characterValue}.txt)の読み込みに失敗しました。`);
+                    await this.showCustomAlert(`キャラクタープロンプト(systemprompt/${characterValue}.txt)の読み込みに失敗しました。`);
                 }
             },
             updatePromptPreview() {
