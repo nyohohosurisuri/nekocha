@@ -10154,6 +10154,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     state.areAllMessagesHidden = false;
                     uiUtils.updateToggleAllContentButton();
                     
+                    // システムプロンプトを復元
+                    const systemMessage = state.currentMessages.find(m => m.role === 'system');
+                    if (systemMessage) {
+                        state.settings.commonSystemPrompt = systemMessage.content;
+                        console.log('Restored system prompt from message:', systemMessage.content.substring(0, 100) + '...');
+                    }
+                    
                     // キャラクター情報を復元
                     if (chat.characterName) {
                         state.pendingCharacterName = chat.characterName;
@@ -10303,7 +10310,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                  let exportText = '';
                  if (chat.messages) {
                      chat.messages.forEach(msg => {
-                         if (msg.role === 'user' || msg.role === 'model' || msg.role === 'character') {
+                         if (msg.role === 'user' || msg.role === 'model' || msg.role === 'character' || msg.role === 'system') {
                              let attributes = '';
                              if (msg.role === 'model') {
                                  if (msg.isCascaded) attributes += ' isCascaded';
@@ -10515,16 +10522,32 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     uiUtils.renderChatMessages(true);
                 } else {
-                    // 新しいチャットの場合、キャラクター情報をシステムメッセージとして追加
-                    if (state.currentMessages.length === 0 && state.pendingCharacterName) {
-                        const characterMessage = {
-                            role: 'character',
-                            content: state.pendingCharacterName,
-                            timestamp: Date.now(),
-                            generatedByApiProvider: null
-                        };
-                        state.currentMessages.push(characterMessage);
-                        console.log('Added character message:', state.pendingCharacterName);
+                    // 新しいチャットの場合、システムプロンプトとキャラクター情報を追加
+                    if (state.currentMessages.length === 0) {
+                        // システムプロンプトを追加
+                        const systemPrompt = state.settings.commonSystemPrompt;
+                        if (systemPrompt && systemPrompt.trim()) {
+                            const systemMessage = {
+                                role: 'system',
+                                content: systemPrompt.trim(),
+                                timestamp: Date.now(),
+                                generatedByApiProvider: null
+                            };
+                            state.currentMessages.push(systemMessage);
+                            console.log('Added system message:', systemPrompt.substring(0, 100) + '...');
+                        }
+                        
+                        // キャラクター情報を追加
+                        if (state.pendingCharacterName) {
+                            const characterMessage = {
+                                role: 'character',
+                                content: state.pendingCharacterName,
+                                timestamp: Date.now(),
+                                generatedByApiProvider: null
+                            };
+                            state.currentMessages.push(characterMessage);
+                            console.log('Added character message:', state.pendingCharacterName);
+                        }
                     }
                     
                     const userMessage = {
@@ -11638,6 +11661,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const characterMessage = importedMessages.find(m => m.role === 'character');
                     const characterName = characterMessage ? characterMessage.content : null;
                     
+                    // システムプロンプトを設定に反映
+                    const systemMessage = importedMessages.find(m => m.role === 'system');
+                    if (systemMessage) {
+                        state.settings.commonSystemPrompt = systemMessage.content;
+                        console.log('Restored system prompt from import:', systemMessage.content.substring(0, 100) + '...');
+                    }
+                    
                     const newChatData = {
                         messages: importedMessages,
                         updatedAt: Date.now(), createdAt: Date.now(),
@@ -11671,7 +11701,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const attributesString = match[2].trim();
                 const content = match[3].trim();
 
-                if ((role === 'user' || role === 'model' || role === 'character') && (content || attributesString.includes('attachments'))) {
+                if ((role === 'user' || role === 'model' || role === 'character' || role === 'system') && (content || attributesString.includes('attachments'))) {
                     const messageData = {
                         role: role, content: content, timestamp: Date.now(), attachments: []
                     };
