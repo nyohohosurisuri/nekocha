@@ -8895,6 +8895,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         elements.commonSystemPromptDefaultTextarea.value = combinedPrompt;
                     }
                     
+                    // チャット専用システムプロンプトとして保存
+                    state.chatSystemPrompt = combinedPrompt;
+                    
                     // 設定を保存
                     await appLogic.saveSettings(false);
                     
@@ -10540,6 +10543,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             
             state.pendingAttachments = [];
+            
+            // プロンプト作成画面から来た場合以外は、チャット専用システムプロンプトをクリア
+            if (state.currentScreen !== 'prompt-setup') {
+                state.chatSystemPrompt = null;
+            }
+            
             state.pendingCharacterName = null;
             state.isMemoVisible = false;
             elements.memoArea.classList.add('hidden');
@@ -15846,7 +15855,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     chatAiNameInput.value = state.settings.aiName || '';
                 }
                 if (chatSystemPromptTextarea) {
-                    chatSystemPromptTextarea.value = state.chatSystemPrompt || '';
+                    const systemPromptValue = state.chatSystemPrompt || state.settings.commonSystemPrompt || '';
+                    chatSystemPromptTextarea.value = systemPromptValue;
                 }
                 
                 // AIアイコンプレビューを表示
@@ -15908,8 +15918,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     
                     // システムプロンプトを更新
-                    const systemPrompt = elements.chatSystemPromptTextarea ? 
-                        elements.chatSystemPromptTextarea.value.trim() : '';
+                    const chatSystemPromptTextarea = document.getElementById('chat-system-prompt');
+                    const systemPrompt = chatSystemPromptTextarea ? 
+                        chatSystemPromptTextarea.value.trim() : '';
                     state.chatSystemPrompt = systemPrompt || null;
                     
                     // チャットを保存（設定を反映）
