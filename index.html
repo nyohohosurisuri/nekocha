@@ -15909,8 +15909,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             async save() {
                 try {
                     // AI名を更新
-                    const aiName = elements.chatAiNameInput ? 
-                        (elements.chatAiNameInput.value.trim() || 'AI') : 'AI';
+                    const chatAiNameInput = document.getElementById('chat-ai-name');
+                    const aiName = chatAiNameInput ? 
+                        (chatAiNameInput.value.trim() || 'AI') : 'AI';
                     state.settings.aiName = aiName;
                     await dbUtils.saveSetting('aiName', aiName);
                     
@@ -15928,8 +15929,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     // AIアイコンの状態を確認（既にファイル選択時に保存済み）
                     // 削除された場合の処理
-                    if (elements.chatAiIconInput && elements.chatAiIconInput.value === '' && 
-                        elements.chatAiIconPreview && elements.chatAiIconPreview.style.display === 'none') {
+                    const chatAiIconInput = document.getElementById('chat-ai-icon');
+                    const chatAiIconPreview = document.getElementById('chat-ai-icon-preview');
+                    if (chatAiIconInput && chatAiIconInput.value === '' && 
+                        chatAiIconPreview && chatAiIconPreview.style.display === 'none') {
                         // アイコンが削除されている場合
                         state.settings.aiIconBlob = null;
                         if (state.aiIconUrl) {
@@ -16091,6 +16094,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         aiIconThumbnail.style.display = 'block';
                     }
                     
+                    // チャット画面のメッセージを再描画してアイコンを反映
+                    if (uiUtils && uiUtils.renderChatMessages) {
+                        uiUtils.renderChatMessages(true);
+                    }
+                    
                 } catch (error) {
                     console.error('AIアイコンのアップロードに失敗しました:', error);
                     await uiUtils.showCustomAlert('AIアイコンのアップロードに失敗しました。');
@@ -16103,6 +16111,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             elements.chatAiIconRemove.addEventListener('click', async () => {
                 chatSettingsModal.removeIcon();
                 await dbUtils.saveSetting('aiIconBlob', null);
+                
+                // チャット画面のメッセージを再描画してアイコンを反映
+                if (uiUtils && uiUtils.renderChatMessages) {
+                    uiUtils.renderChatMessages(true);
+                }
             });
         }
         
