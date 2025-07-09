@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GeminiPWA</title>
+    <title>NekoCha</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" id="theme-color-meta" content="#4a90e2">
     <style>
@@ -3355,7 +3355,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         <div id="home-screen" class="screen active">
             <header class="app-header">
-                <h1>GeminiPWA</h1>
+                <h1>NekoCha</h1>
                 <button id="home-goto-settings-btn" class="header-button" aria-label="設定へ">⚙</button>
             </header>
             <main class="main-content">
@@ -7162,7 +7162,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const displayTitle = isNewChat ? titleText : `: ${titleText}`;
                 elements.chatTitle.textContent = displayTitle;
-                document.title = `GeminiPWA - ${titleText}`;
+                document.title = `NekoCha - ${titleText}`;
             },
             formatDate(timestamp) {
                 if (!timestamp) return '';
@@ -8269,7 +8269,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     elements.homeScreen.style.transform = 'translateX(100%)';
                     elements.chatScreen.style.transform = 'translateX(100%)';
                     elements.historyScreen.style.transform = 'translateX(0)';
-                    elements.promptSetupScreen.style.transform = 'translateX(300%)';
+                    elements.promptSetupScreen.style.transform = 'translateY(100%)';
                     elements.settingsScreen.style.transform = 'translateX(200%)';
                     this.renderHistoryList();
                 } else if (screenName === 'prompt-setup') {
@@ -8278,7 +8278,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     elements.chatScreen.style.transform = 'translateY(100%)';
                     elements.historyScreen.style.transform = 'translateX(-200%)';
                     elements.promptSetupScreen.style.transform = 'translateX(0)';
-                    elements.settingsScreen.style.transform = 'translateX(200%)';
+                    elements.settingsScreen.style.transform = 'translateX(100%)';
                     // キャラクター選択肢を読み込み
                     await this.loadCharacterOptions();
                     // プロンプト設定画面の入力フィールドをクリア
@@ -8302,7 +8302,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     elements.homeScreen.style.transform = 'translateX(-100%)';
                     elements.chatScreen.style.transform = 'translateX(-100%)';
                     elements.historyScreen.style.transform = 'translateX(-200%)';
-                    elements.promptSetupScreen.style.transform = 'translateX(-200%)';
+                    elements.promptSetupScreen.style.transform = 'translateY(100%)';
                     elements.settingsScreen.style.transform = 'translateX(0)';
                     this.applySettingsToUI();
                 }
