@@ -2091,6 +2091,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             display: block;
             color: var(--text-primary);
         }
+        .history-item-character {
+            font-size: 13px;
+            font-weight: normal;
+            margin-bottom: 0px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            display: block;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
         .history-item-bottom-row {
             display: flex;
             justify-content: space-between;
@@ -3424,6 +3435,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <li class="js-history-item-template history-item">
                         <div class="history-item-details">
                             <span class="history-item-title"></span>
+                            <span class="history-item-character"></span>
                         </div>
                         <div class="history-item-bottom-row">
                             <div class="history-item-dates">
@@ -5990,6 +6002,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             messages: messagesToSave,
                             updatedAt: now, createdAt: existingChatData ? existingChatData.createdAt : now,
                             title: title,
+                            characterName: existingChatData ? existingChatData.characterName : null,
                         };
                         if (state.settings.persistMessageCollapseState) {
                             chatData.collapsedStates = Object.fromEntries(state.messageCollapsedStates);
@@ -7158,6 +7171,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                             const titleText = chat.title || `履歴 ${chat.id}`;
                             const titleEl = li.querySelector('.history-item-title');
                             titleEl.textContent = titleText;
+                            
+                            // キャラクター名を表示
+                            const characterEl = li.querySelector('.history-item-character');
+                            if (chat.characterName) {
+                                characterEl.textContent = `🎭 ${chat.characterName}`;
+                                characterEl.style.display = 'block';
+                            } else {
+                                characterEl.style.display = 'none';
+                            }
                             titleEl.title = titleText;
 
                             li.querySelector('.created-date').textContent = `作成: ${this.formatDate(chat.createdAt)}`;
@@ -8422,6 +8444,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     // 設定を保存
                     await appLogic.saveSettings(false);
+                    
+                    // 現在のチャットにキャラクター名を設定
+                    if (state.currentChatId && characterValue) {
+                        const currentChat = state.chats[state.currentChatId];
+                        if (currentChat) {
+                            currentChat.characterName = characterValue;
+                            await dbUtils.saveChat(state.currentChatId, currentChat);
+                        }
+                    }
                     
                     // チャット画面に移行
                     await this.showScreen('chat');
