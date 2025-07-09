@@ -5578,9 +5578,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 userIconBlob: null,
                 showUserName: false,
                 userName: DEFAULT_USER_NAME,
-                showAiIcon: false,
+                showAiIcon: true,
                 aiIconBlob: null,
-                showAiName: false,
+                showAiName: true,
                 aiName: DEFAULT_AI_NAME,
                 iconNameFontSize: DEFAULT_ICON_NAME_FONT_SIZE,
                 iconNameOffsetY: DEFAULT_ICON_NAME_OFFSET_Y,
@@ -7803,6 +7803,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 elements.showClipboardStackButtonToggle.checked = state.settings.showClipboardStackButton;
                 elements.showUserIconToggle.checked = state.settings.showUserIcon;
                 elements.showUserNameToggle.checked = state.settings.showUserName;
+                // 設定が未定義の場合にデフォルト値を設定
+                if (state.settings.showAiIcon === undefined) {
+                    state.settings.showAiIcon = true;
+                }
+                if (state.settings.showAiName === undefined) {
+                    state.settings.showAiName = true;
+                }
+                
                 elements.showAiIconToggle.checked = state.settings.showAiIcon;
                 elements.showAiNameToggle.checked = state.settings.showAiName;
                 elements.aiNameInput.value = state.settings.aiName || '';
@@ -8332,6 +8340,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     if (elements.showAiNameCheckbox) {
                         elements.showAiNameCheckbox.checked = state.settings.showAiName !== false;
+                    }
+                    
+                    // 設定が未定義の場合にデフォルト値を設定
+                    if (state.settings.showAiIcon === undefined) {
+                        state.settings.showAiIcon = true;
+                    }
+                    if (state.settings.showAiName === undefined) {
+                        state.settings.showAiName = true;
                     }
                     
                     // AIアイコンの表示状態を更新
