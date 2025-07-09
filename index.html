@@ -7729,7 +7729,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 elements.showClipboardStackButtonToggle.checked = state.settings.showClipboardStackButton;
                 elements.showUserIconToggle.checked = state.settings.showUserIcon;
                 elements.showUserNameToggle.checked = state.settings.showUserName;
-                elements.userNameInput.value = state.settings.userName || '';
                 elements.showAiIconToggle.checked = state.settings.showAiIcon;
                 elements.showAiNameToggle.checked = state.settings.showAiName;
                 elements.aiNameInput.value = state.settings.aiName || '';
@@ -8952,8 +8951,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     elements.promptSetupSystemPrompt.addEventListener('input', () => uiUtils.updatePromptPreview());
                 }
                 if (elements.userNameInput) {
-                    elements.userNameInput.addEventListener('input', () => {
+                    elements.userNameInput.addEventListener('input', async () => {
                         state.settings.userName = elements.userNameInput.value.trim();
+                        await appLogic.saveSettings(false);
                         uiUtils.updatePromptPreview();
                     });
                 }
@@ -11965,8 +11965,7 @@ document.addEventListener('DOMContentLoaded', async () => {
              newSettings.clipboardStackHeight = state.settings.clipboardStackHeight;
              newSettings.showUserIcon = elements.showUserIconToggle.checked;
              newSettings.showUserName = elements.showUserNameToggle.checked;
-             newSettings.userName = elements.userNameInput.value.trim() || DEFAULT_USER_NAME;
-             newSettings.showAiIcon = elements.showAiIconToggle.checked;
+              newSettings.showAiIcon = elements.showAiIconToggle.checked;
              newSettings.showAiName = elements.showAiNameToggle.checked;
              newSettings.aiName = elements.aiNameInput.value.trim() || DEFAULT_AI_NAME;
              newSettings.iconNameFontSize = parseInt(elements.iconNameFontSizeInput.value, 10) || DEFAULT_ICON_NAME_FONT_SIZE;
