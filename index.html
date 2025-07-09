@@ -8281,14 +8281,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                     elements.settingsScreen.style.transform = 'translateX(200%)';
                     // キャラクター選択肢を読み込み
                     await this.loadCharacterOptions();
+                    // プロンプト設定画面の入力フィールドをクリア
+                    if (elements.characterSelect) {
+                        elements.characterSelect.value = '';
+                    }
+                    if (elements.userRelationshipSelect) {
+                        elements.userRelationshipSelect.value = 'first-meeting';
+                    }
+                    if (elements.promptSetupSystemPrompt) {
+                        elements.promptSetupSystemPrompt.value = '';
+                    }
                     // ユーザー名を設定から読み込み
                     if (elements.userNameInput) {
                         elements.userNameInput.value = state.settings.userName || '';
                     }
-                    // 初期表示時はプレビューを更新
-                    if (elements.promptSetupSystemPrompt.value) {
-                        this.updatePromptPreview();
-                    }
+                    // プレビューを更新
+                    this.updatePromptPreview();
                 } else if (screenName === 'settings') {
                     activeScreen = elements.settingsScreen;
                     elements.homeScreen.style.transform = 'translateX(-100%)';
@@ -8470,12 +8478,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // 設定を保存
                     await appLogic.saveSettings(false);
                     
+                    // 新規チャットを開始
+                    appLogic.startNewChat();
+                    
                     // キャラクター名を一時保存（新しいチャット作成時に使用）
                     if (characterValue) {
                         state.pendingCharacterName = characterValue;
                         console.log('Pending character name set to:', characterValue);
+                        // チャットタイトルを更新
+                        uiUtils.updateChatTitle(`新しいチャット (${characterValue})`);
                     } else {
                         state.pendingCharacterName = null;
+                        uiUtils.updateChatTitle('新しいチャット');
                     }
                     
                     // チャット画面に移行
@@ -9113,10 +9127,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 elements.pasteToInputBtn.addEventListener('click', () => this.pasteToUserInput());
                 elements.rollDiceBtn.addEventListener('click', () => this.rollDiceAndInput());
 
-                elements.newChatBtn.addEventListener('click', () => {
-                    uiUtils.showCustomConfirm("現在のチャットを保存して新規チャットを開始しますか？").then(confirmed => {
-                        if (confirmed) this.confirmStartNewChat();
-                    });
+                elements.newChatBtn.addEventListener('click', async () => {
+                    // 現在のチャットを保存してからプロンプト設定画面に移行
+                    await dbUtils.saveChat();
+                    await uiUtils.showScreen('prompt-setup');
                 });
                 elements.deleteSessionBtn.addEventListener('click', () => this.confirmDeleteCurrentSession());
                 elements.copySessionBtn.addEventListener('click', () => this.copyCurrentSessionText());
