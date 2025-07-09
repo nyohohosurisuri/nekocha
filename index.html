@@ -5646,7 +5646,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 modelName: DEFAULT_MODEL,
                 additionalModels: '',
                 commonSystemPrompt: '',
-                enableCommonSystemPromptDefault: true,
+                enableCommonSystemPromptDefault: false,
                 geminiSystemPrompt: '',
                 geminiEnableSystemPromptDefault: true,
                 geminiTemperature: null,
@@ -11145,7 +11145,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     commonPrompt = state.settings.commonSystemPrompt.trim();
                 }
                 
-                if (individualPrompt) {
+                // チャット専用システムプロンプトを最優先で使用
+                if (state.chatSystemPrompt && state.chatSystemPrompt.trim()) {
+                    currentContextSystemPrompt = state.chatSystemPrompt.trim();
+                } else if (individualPrompt) {
                     currentContextSystemPrompt = individualPrompt;
                 } else if (commonPrompt) {
                     currentContextSystemPrompt = commonPrompt;
@@ -12979,7 +12982,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     defaultSettingsCopy.modelName = DEFAULT_MODEL;
                     defaultSettingsCopy.additionalModels = '';
                     defaultSettingsCopy.commonSystemPrompt = '';
-                    defaultSettingsCopy.enableCommonSystemPromptDefault = true;
+                    defaultSettingsCopy.enableCommonSystemPromptDefault = false;
                     defaultSettingsCopy.deepSeekApiKey = '';
                     defaultSettingsCopy.deepSeekModelName = DEFAULT_DEEPSEEK_MODEL;
                     defaultSettingsCopy.deepSeekAdditionalModels = '';
