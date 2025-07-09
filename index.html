@@ -8246,7 +8246,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const header = elements.chatScreen.querySelector('.app-header');
                 if (!header) return;
             
-                const allButtons = Array.from(header.querySelectorAll('button:not(#goto-history-btn):not(#goto-settings-btn)'));
+                const allButtons = Array.from(header.querySelectorAll('button:not(#goto-history-btn):not(#goto-settings-btn):not(#chat-settings-btn)'));
                 allButtons.forEach(btn => btn.classList.remove('layout-hidden'));
             
                 requestAnimationFrame(() => {
@@ -8256,7 +8256,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let isOverflowing = settingsBtnRect.right > headerRect.right - 5;
             
                     const buttonPriority = [
-                        '#toggle-clipboard-stack-btn', '#toggle-memo-btn', '#scroll-to-top-btn',
+                        '#toggle-clipboard-stack-btn', '#toggle-memo-btn', '#chat-settings-btn', '#scroll-to-top-btn',
                         '#scroll-to-bottom-btn', '#toggle-all-content-btn', '#header-api-provider-toggle-btn',
                         '#copy-session-btn', '#delete-session-btn', '#new-chat-btn'
                     ];
@@ -15803,6 +15803,22 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // チャット設定モーダル機能の初期化
     function initializeChatSettingsModal() {
+        console.log('チャット設定モーダルの初期化を開始');
+        
+        // 要素の存在確認
+        const chatSettingsBtn = document.getElementById('chat-settings-btn');
+        const chatSettingsModal = document.getElementById('chat-settings-modal');
+        console.log('chatSettingsBtn:', chatSettingsBtn);
+        console.log('chatSettingsModal:', chatSettingsModal);
+        
+        // ボタンのスタイル情報を確認
+        if (chatSettingsBtn) {
+            const style = getComputedStyle(chatSettingsBtn);
+            console.log('ボタンのdisplay:', style.display);
+            console.log('ボタンのvisibility:', style.visibility);
+            console.log('ボタンのpointer-events:', style.pointerEvents);
+        }
+        
         // チャット設定モーダル機能
         const chatSettingsModal = {
         show() {
@@ -15923,10 +15939,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     
     // イベントリスナー設定（null チェック付き）
-    if (elements.chatSettingsBtn) {
-        elements.chatSettingsBtn.addEventListener('click', () => {
+    const chatSettingsBtn = document.getElementById('chat-settings-btn');
+    if (chatSettingsBtn) {
+        console.log('チャット設定ボタンにイベントリスナーを登録');
+        chatSettingsBtn.addEventListener('click', () => {
+            console.log('チャット設定ボタンがクリックされました');
             chatSettingsModal.show();
         });
+    } else {
+        console.error('チャット設定ボタンが見つかりません');
     }
     
     if (elements.chatSettingsSaveBtn) {
@@ -16033,9 +16054,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // DOMContentLoadedイベントでチャット設定モーダルを初期化
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializeChatSettingsModal);
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(initializeChatSettingsModal, 100);
+        });
     } else {
-        initializeChatSettingsModal();
+        setTimeout(initializeChatSettingsModal, 100);
     }
 </script>
 
