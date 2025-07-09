@@ -8159,7 +8159,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.documentElement.style.setProperty('--code-block-font-size', `${state.settings.codeBlockFontSize || DEFAULT_CODE_BLOCK_FONT_SIZE}px`);
                 document.documentElement.style.setProperty('--thought-summary-font-size', `${state.settings.thoughtSummaryFontSize || DEFAULT_THOUGHT_SUMMARY_FONT_SIZE}px`);
             },
-            showScreen(screenName, fromPopState = false) {
+            async showScreen(screenName, fromPopState = false) {
                 if (state.editingMessageIndex !== null) {
                      const messageElement = elements.messageContainer.querySelector(`.message[data-index="${state.editingMessageIndex}"]`);
                      if (messageElement) {
@@ -8383,7 +8383,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     await appLogic.saveSettings(false);
                     
                     // チャット画面に移行
-                    this.showScreen('chat');
+                    await this.showScreen('chat');
                 } catch (error) {
                     console.error('プロンプト設定エラー:', error);
                     await this.showCustomAlert('プロンプト設定中にエラーが発生しました。');
@@ -8912,7 +8912,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     history.replaceState({ screen: 'home' }, '', '#home');
                     state.currentScreen = 'home';
-                    uiUtils.showScreen('home');
+                    await uiUtils.showScreen('home');
                     
                     console.log('Home screen shown');
                     
@@ -8949,31 +8949,31 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } 
             },
             setupEventListeners() {
-                elements.gotoHistoryBtn.addEventListener('click', () => uiUtils.showScreen('history'));
-                elements.gotoSettingsBtn.addEventListener('click', () => uiUtils.showScreen('settings'));
+                elements.gotoHistoryBtn.addEventListener('click', async () => await uiUtils.showScreen('history'));
+                elements.gotoSettingsBtn.addEventListener('click', async () => await uiUtils.showScreen('settings'));
                 if (elements.homeGotoSettingsBtn) {
-                    elements.homeGotoSettingsBtn.addEventListener('click', () => uiUtils.showScreen('settings'));
+                    elements.homeGotoSettingsBtn.addEventListener('click', async () => await uiUtils.showScreen('settings'));
                 }
                 if (elements.gotoHomeBtn) {
-                    elements.gotoHomeBtn.addEventListener('click', () => {
+                    elements.gotoHomeBtn.addEventListener('click', async () => {
                         console.log('Home button clicked');
-                        uiUtils.showScreen('home');
+                        await uiUtils.showScreen('home');
                     });
                 } else {
                     console.error('gotoHomeBtn element not found');
                 }
                 if (elements.startChatBtn) {
-                    elements.startChatBtn.addEventListener('click', () => {
+                    elements.startChatBtn.addEventListener('click', async () => {
                         console.log('Start chat button clicked');
-                        uiUtils.showScreen('prompt-setup');
+                        await uiUtils.showScreen('prompt-setup');
                     });
                 } else {
                     console.error('startChatBtn element not found');
                 }
                 if (elements.selectHistoryBtn) {
-                    elements.selectHistoryBtn.addEventListener('click', () => {
+                    elements.selectHistoryBtn.addEventListener('click', async () => {
                         console.log('Select history button clicked');
-                        uiUtils.showScreen('history');
+                        await uiUtils.showScreen('history');
                     });
                 } else {
                     console.error('selectHistoryBtn element not found');
