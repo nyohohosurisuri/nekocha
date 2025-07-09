@@ -5998,11 +5998,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                             title = firstUserMessage ? firstUserMessage.content.substring(0, 50) : "無題のチャット";
                         }
                         const chatIdForOperation = existingChatData ? existingChatData.id : state.currentChatId;
+                        // キャラクター名を取得（メッセージからまたはpendingから）
+                        let characterName = null;
+                        if (existingChatData && existingChatData.characterName) {
+                            characterName = existingChatData.characterName;
+                        } else {
+                            // メッセージからキャラクター情報を取得
+                            const characterMessage = state.currentMessages.find(m => m.role === 'character');
+                            if (characterMessage) {
+                                characterName = characterMessage.content;
+                            } else if (state.pendingCharacterName) {
+                                characterName = state.pendingCharacterName;
+                            }
+                        }
+                        
                         const chatData = {
                             messages: messagesToSave,
                             updatedAt: now, createdAt: existingChatData ? existingChatData.createdAt : now,
                             title: title,
-                            characterName: existingChatData ? existingChatData.characterName : (state.pendingCharacterName || null),
+                            characterName: characterName,
                         };
                         if (state.settings.persistMessageCollapseState) {
                             chatData.collapsedStates = Object.fromEntries(state.messageCollapsedStates);
@@ -6025,7 +6039,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                             // 新しいチャットが作成されたらpendingCharacterNameをクリア
                             if (!existingChatData && state.pendingCharacterName) {
                                 console.log('New chat created with character:', state.pendingCharacterName);
-                                state.pendingCharacterName = null;
+                                // キャラクター情報が保存されたので、pendingをクリア
+                                setTimeout(() => {
+                                    state.pendingCharacterName = null;
+                                }, 100);
                             }
                             resolve(state.currentChatId || savedId);
                         };
@@ -10122,6 +10139,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                     state.pendingAttachments = [];
                     state.areAllMessagesHidden = false;
                     uiUtils.updateToggleAllContentButton();
+                    
+                    // キャラクター情報を復元
+                    if (chat.characterName) {
+                        state.pendingCharacterName = chat.characterName;
+                        console.log('Restored character from chat data:', chat.characterName);
+                    } else {
+                        // メッセージからキャラクター情報を復元
+                        const characterMessage = state.currentMessages.find(m => m.role === 'character');
+                        if (characterMessage) {
+                            state.pendingCharacterName = characterMessage.content;
+                            console.log('Restored character from message:', characterMessage.content);
+                        } else {
+                            state.pendingCharacterName = null;
+                        }
+                    }
                     state.messageCollapsedStates.clear();
                     state.thoughtSummaryOpenStates.clear();
                     if (state.settings.persistMessageCollapseState && chat.collapsedStates) {
@@ -10257,7 +10289,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                  let exportText = '';
                  if (chat.messages) {
                      chat.messages.forEach(msg => {
-                         if (msg.role === 'user' || msg.role === 'model') {
+                         if (msg.role === 'user' || msg.role === 'model' || msg.role === 'character') {
                              let attributes = '';
                              if (msg.role === 'model') {
                                  if (msg.isCascaded) attributes += ' isCascaded';
@@ -10469,6 +10501,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     uiUtils.renderChatMessages(true);
                 } else {
+                    // 新しいチャットの場合、キャラクター情報をシステムメッセージとして追加
+                    if (state.currentMessages.length === 0 && state.pendingCharacterName) {
+                        const characterMessage = {
+                            role: 'character',
+                            content: state.pendingCharacterName,
+                            timestamp: Date.now(),
+                            generatedByApiProvider: null
+                        };
+                        state.currentMessages.push(characterMessage);
+                        console.log('Added character message:', state.pendingCharacterName);
+                    }
+                    
                     const userMessage = {
                         role: 'user', content: text, timestamp: Date.now(),
                         attachments: attachmentsToSend, generatedByApiProvider: null
@@ -11576,10 +11620,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const titlePrefix = state.settings.addPrefixOnImport ? IMPORT_PREFIX : '';
                     const newTitle = titlePrefix + (fileNameWithoutExt || `Imported_${Date.now()}`);
 
+                    // キャラクター情報を取得
+                    const characterMessage = importedMessages.find(m => m.role === 'character');
+                    const characterName = characterMessage ? characterMessage.content : null;
+                    
                     const newChatData = {
                         messages: importedMessages,
                         updatedAt: Date.now(), createdAt: Date.now(),
-                        title: newTitle.substring(0, 100)
+                        title: newTitle.substring(0, 100),
+                        characterName: characterName
                     };
                     const newChatId = await new Promise((resolve, reject) => {
                         const store = dbUtils._getStore(CHATS_STORE, 'readwrite');
@@ -11600,7 +11649,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
         parseImportedHistory(text) {
             const messages = [];
-            const blockRegex = /<\|#\|(system|user|model)\|#\|([^>]*)>([\s\S]*?)<\|#\|\/\1\|#\|>/g;
+            const blockRegex = /<\|#\|(system|user|model|character)\|#\|([^>]*)>([\s\S]*?)<\|#\|\/\1\|#\|>/g;
             let match;
 
             while ((match = blockRegex.exec(text)) !== null) {
@@ -11608,7 +11657,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const attributesString = match[2].trim();
                 const content = match[3].trim();
 
-                if ((role === 'user' || role === 'model') && (content || attributesString.includes('attachments'))) {
+                if ((role === 'user' || role === 'model' || role === 'character') && (content || attributesString.includes('attachments'))) {
                     const messageData = {
                         role: role, content: content, timestamp: Date.now(), attachments: []
                     };
