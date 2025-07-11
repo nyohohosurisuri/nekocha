@@ -8681,32 +8681,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                             throw new Error('characterlist.txt not found');
                         }
                     } catch (error) {
-                        console.warn('Failed to load characterlist.txt, using fallback:', error);
-                        // フォールバック: 既知のキャラクターリスト
-                        const fallbackCharacters = [
-                            'アイシャ', 'アリーゼ', 'イクシア', 'エプリル', 'キアラ', 'キュア', 'クロノア', 'サヤ', 'シェリル', 'シャルロット', 
-                            'セツナ', 'セルピナ', 'セーラ', 'ティナ', 'トワ', 'ノクタリカ', 'フェイ', 
-                            'リスティ', 'リリー', 'リルテット', 'リーチェ', 'ルウシェ', 'ルカ', 'ルナ'
-                        ];
-                        
-                        for (const charName of fallbackCharacters) {
-                            try {
-                                const encodedName = encodeURIComponent(charName);
-                                const fileRes = await fetch(`./systemprompt/${encodedName}.txt`, { method: 'HEAD' });
-                                if (fileRes.ok) {
-                                    availableCharacters.push(charName);
-                                }
-                            } catch (error) {
-                                // 無視
-                            }
-                        }
+                        console.warn('Failed to load characterlist.txt:', error);
+                        // characterlist.txtが見つからない場合は空のリストにする
+                        availableCharacters = [];
                     }
                     
                     if (characterSelect) {
                         characterSelect.innerHTML = '<option value="">-- キャラクターを選択してください --</option>';
                         characterSelect.disabled = false;
                         
-                        availableCharacters.forEach(char => {
+                        // 五十音順でソート
+                        const sortedCharacters = availableCharacters.sort((a, b) => {
+                            return a.localeCompare(b, 'ja', { sensitivity: 'base' });
+                        });
+                        
+                        sortedCharacters.forEach(char => {
                             const option = document.createElement('option');
                             option.value = char;
                             option.textContent = char;
@@ -8744,19 +8733,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                             throw new Error('characterlist.txt not found');
                         }
                     } catch (error) {
-                        console.warn('Failed to load characterlist.txt, using fallback for individual load');
-                        // 個別読み込み用フォールバック
-                        const encodedCharacterValue = encodeURIComponent(characterValue);
-                        const res = await fetch(`./systemprompt/${encodedCharacterValue}.txt`);
-                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                        const prompt = (await res.text()).trim();
-                        
-                        elements.promptSetupSystemPrompt.value = prompt;
-                        if (elements.aiNameInput) {
-                            elements.aiNameInput.value = characterValue;
-                        }
-                        this.updatePromptPreview();
-                        return;
+                        console.error('Failed to load characterlist.txt:', error);
+                        throw new Error('characterlist.txt is required for character loading');
                     }
                     
                     // ②すべてのキャラクターファイルを一括読み込み
