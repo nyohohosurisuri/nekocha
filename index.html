@@ -8653,21 +8653,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // systempromptフォルダのディレクトリリストを取得
                     let availableCharacters = [];
                     
-                    // まず全てのknownCharactersを実際にテストして存在するものを検出
-                    const allKnownCharacters = [
-                        'アイシャ', 'エプリル', 'キアラ', 'キュア', 'シェリル', 'シャルロット', 'セツナ', 'セーラ', 
+                    // 動的ファイル検出 - 可能な限り多くのファイルパターンを試す
+                    const potentialCharacters = [
+                        // 既知の日本語ファイル名
+                        'アイシャ', 'エプリル', 'キアラ', 'キュア', 'シェリル', 'シャルロット', 'セツナ', 'セルピナ', 'セーラ', 
                         'ティナ', 'テスト', 'トワ', 'ノクタリカ', 'フェイ', 'リスティ', 'リリー', 'リルテット', 
-                        'リーチェ', 'ルウシェ', 'ルカ', 'ルナ'
+                        'リーチェ', 'ルウシェ', 'ルカ', 'ルナ', '新キャラ',
+                        // 英語ファイル名のパターン
+                        'serpina', 'aisha', 'april', 'kiara', 'cure', 'sheryl', 'charlotte', 'setsuna', 'sera',
+                        'tina', 'test', 'towa', 'noctarica', 'fay', 'risty', 'lily', 'lirutet', 
+                        'riche', 'ruushe', 'luka', 'luna', 'newchar'
                     ];
                     
-                    console.log('Dynamic character detection');
-                    for (const char of allKnownCharacters) {
+                    console.log('Dynamic character detection - testing multiple patterns');
+                    for (const char of potentialCharacters) {
                         try {
                             // 複数のエンコーディングパターンを試す
                             const encodingPatterns = [
+                                char,
                                 encodeURIComponent(char),
-                                encodeURI(char),
-                                char
+                                encodeURI(char)
                             ];
                             
                             let fileFound = false;
@@ -8676,8 +8681,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 try {
                                     const res = await fetch(url);
                                     if (res.ok) {
-                                        console.log(`File found: ${char}`);
-                                        availableCharacters.push(char);
+                                        console.log(`File found: ${char} (${url})`);
+                                        // 重複チェック
+                                        if (!availableCharacters.includes(char)) {
+                                            availableCharacters.push(char);
+                                        }
                                         fileFound = true;
                                         break;
                                     }
