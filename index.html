@@ -16120,17 +16120,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 
                 try {
-                    // 既存のURLを解放
-                    if (state.aiIconUrl) {
-                        URL.revokeObjectURL(state.aiIconUrl);
-                    }
+                    // 新しいURLを先に作成
+                    const newIconUrl = URL.createObjectURL(file);
+                    const oldIconUrl = state.aiIconUrl;
                     
                     // 新しいBlobを設定
                     state.settings.aiIconBlob = file;
+                    state.aiIconUrl = newIconUrl;
+                    
+                    // 設定を保存
                     await dbUtils.saveSetting('aiIconBlob', file);
                     
                     // プレビューを更新
-                    state.aiIconUrl = URL.createObjectURL(file);
                     if (elements.chatAiIconPreview) {
                         elements.chatAiIconPreview.src = state.aiIconUrl;
                         elements.chatAiIconPreview.style.display = 'inline-block';
@@ -16146,9 +16147,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                         aiIconThumbnail.style.display = 'block';
                     }
                     
+                    // アイコン設定UIを更新
+                    if (uiUtils && uiUtils.updateIconSettingsUI) {
+                        uiUtils.updateIconSettingsUI();
+                    }
+                    
                     // チャット画面のメッセージを再描画してアイコンを反映
                     if (uiUtils && uiUtils.renderChatMessages) {
                         uiUtils.renderChatMessages(true);
+                    }
+                    
+                    // 古いURLを解放（最後に実行）
+                    if (oldIconUrl) {
+                        setTimeout(() => URL.revokeObjectURL(oldIconUrl), 1000);
                     }
                     
                 } catch (error) {
