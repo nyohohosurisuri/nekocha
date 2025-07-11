@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (e) {
     console.error(e);
     alert('アプリの初期化に失敗しました');
+    // エラーの場合でも初期化は実行
     if (typeof appLogic !== 'undefined') {
       appLogic.initializeApp();
     }
@@ -49,11 +50,39 @@ document.addEventListener('DOMContentLoaded', async () => {
             --bg-button-action-hover: #555555;
             --bg-button-delete: #e53935;
             --bg-button-delete-hover: #c62828;
+            --bg-button-retry: #43a047;
+            --bg-button-retry-hover: #2e7d32;
+            --bg-button-edit: #ff9800;
+            --bg-button-edit-hover: #f57c00;
+            --bg-button-copy: #e91e63;
+            --bg-button-copy-hover: #c2185b;
+            --bg-button-paste: #00bcd4;
+            --bg-button-paste-hover: #0097a7;
+            --bg-button-duplicate: #546e7a;
+            --bg-button-duplicate-hover: #37474f;
+            --bg-button-export: #1e88e5;
+            --bg-button-export-hover: #1565c0;
             --bg-button-save: #30d158;
             --bg-button-save-hover: #24a345;
             --bg-button-cancel: #f44336;
             --bg-button-cancel-hover: #d32f2f;
+            --bg-button-update: #1976d2;
+            --bg-button-update-hover: #115293;
             --bg-header: #4a90e2;
+            --overlay-base-rgb: 255, 255, 255;
+            --chat-overlay-alpha: 0.65;
+            --bg-cascade-button: var(--bg-button-action);
+            --bg-cascade-button-hover: var(--bg-button-action-hover);
+            --bg-cascade-delete-button: var(--bg-button-delete);
+            --bg-cascade-delete-button-hover: var(--bg-button-delete-hover);
+            --text-cascade-indicator: var(--text-secondary);
+            --bg-button-header-delete: #e53935;
+            --bg-button-header-delete-hover: #c62828;
+            --bg-button-header-copy: #e91e63;
+            --bg-button-header-copy-hover: #c2185b;
+            --bg-code-copy-button: var(--bg-button-action);
+            --bg-code-copy-button-hover: var(--bg-button-action-hover);
+            --text-code-copy-button: var(--text-light);
 
             --text-primary: #333333;
             --text-secondary: #777777;
@@ -72,7 +101,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             --border-danger: #ffcdd2;
             --border-system: #add8e6;
 
-            --shadow: rgba(0, 0, 0, 0.1);
+            --shadow-primary: rgba(0, 0, 0, 0.1);
+            --shadow-secondary: rgba(0,0,0,0.1);
 
             --message-max-width: 85%;
             --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -167,10 +197,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             --bg-button-action-hover: #888888;
             --bg-button-delete: #ff3b30;
             --bg-button-delete-hover: #d12c23;
+            --bg-button-retry: #34c759;
+            --bg-button-retry-hover: #249a41;
+            --bg-button-edit: #ff9500;
+            --bg-button-edit-hover: #d17d00;
+            --bg-button-copy: #f06292;
+            --bg-button-copy-hover: #ec407a;
+            --bg-button-paste: #4dd0e1;
+            --bg-button-paste-hover: #26c6da;
+            --bg-button-duplicate: #8e8e93;
+            --bg-button-duplicate-hover: #6b6b70;
+            --bg-button-export: #0a84ff;
+            --bg-button-export-hover: #0069d1;
             --bg-button-save: #30d158;
             --bg-button-save-hover: #24a345;
             --bg-button-cancel: #ff453a;
             --bg-button-cancel-hover: #d1332b;
+            --bg-button-update: #0a84ff;
+            --bg-button-update-hover: #0069d1;
             --bg-header: #007aff;
             --overlay-base-rgb: 30, 30, 30;
             --bg-memo: #2c2c2e;
@@ -6206,10 +6250,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                             title = firstUserMessage ? firstUserMessage.content.substring(0, 50) : "無題のチャット";
                         }
                         const chatIdForOperation = existingChatData ? existingChatData.id : state.currentChatId;
+                        // キャラクター名を取得（メッセージからまたはpendingから）
                         let characterName = null;
                         if (existingChatData && existingChatData.characterName) {
                             characterName = existingChatData.characterName;
                         } else {
+                            // メッセージからキャラクター情報を取得
                             const characterMessage = state.currentMessages.find(m => m.role === 'character');
                             if (characterMessage) {
                                 characterName = characterMessage.content;
@@ -8018,6 +8064,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 elements.showClipboardStackButtonToggle.checked = state.settings.showClipboardStackButton;
                 elements.showUserIconToggle.checked = state.settings.showUserIcon;
                 elements.showUserNameToggle.checked = state.settings.showUserName;
+                // 設定が未定義の場合にデフォルト値を設定
                 if (state.settings.showAiIcon === undefined) {
                     state.settings.showAiIcon = true;
                 }
@@ -8560,7 +8607,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         elements.showAiNameCheckbox.checked = state.settings.showAiName !== false;
                     }
                     
-                        if (state.settings.showAiIcon === undefined) {
+                    // 設定が未定義の場合にデフォルト値を設定
+                    if (state.settings.showAiIcon === undefined) {
                         state.settings.showAiIcon = true;
                     }
                     if (state.settings.showAiName === undefined) {
@@ -8592,126 +8640,65 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 state.currentScreen = screenName;
             },
-            async detectCharactersComprehensive() {
-                const characters = [];
-                const knownCharacters = [
-                    'アイシャ', 'イクシア', 'エプリル', 'キアラ', 'キュア', 'サヤ', 'シェリル', 'シャルロット', 
-                    'セツナ', 'セルピナ', 'セーラ', 'ティナ', 'テスト', 'トワ', 'ノクタリカ', 'フェイ', 
-                    'リスティ', 'リリー', 'リルテット', 'リーチェ', 'ルウシェ', 'ルカ', 'ルナ', '新キャラ'
-                ];
-                
-                await this.batchCheckCharacters(knownCharacters, characters);
-                
-                const variations = [];
-                for (let i = 1; i <= 100; i++) {
-                    variations.push(`テスト${i}`, `test${i}`, `キャラ${i}`, `character${i}`);
-                }
-                variations.push('User', 'Assistant', 'AI', 'Bot', 'Demo', 'さくら', 'ゆい', 'Alice', 'Bob');
-                
-                await this.batchCheckCharacters(variations, characters);
-                return characters;
-            },
-            
-            async batchCheckCharacters(candidateNames, foundCharacters) {
-                const batchSize = 30;
-                const uniqueCandidates = [...new Set(candidateNames)];
-                
-                for (let i = 0; i < uniqueCandidates.length; i += batchSize) {
-                    const batch = uniqueCandidates.slice(i, i + batchSize);
-                    const promises = batch.map(async (name) => {
-                        try {
-                            const res = await fetch(`./systemprompt/${encodeURIComponent(name)}.txt`, { method: 'HEAD' });
-                            return res.ok ? name : null;
-                        } catch { return null; }
-                    });
-                    
-                    const results = await Promise.all(promises);
-                    results.forEach(name => name && !foundCharacters.includes(name) && foundCharacters.push(name));
-                }
-            },
             async loadCharacterOptions() {
                 try {
-                    // キャラクターリスト読み込み中の表示
                     const characterSelect = elements.characterSelect;
                     if (characterSelect) {
-                        // 読み込み中状態を設定
                         characterSelect.innerHTML = '<option value="" disabled selected>キャラクターリスト読み込み中...</option>';
                         characterSelect.disabled = true;
                     }
 
-                    // systempromptフォルダのディレクトリリストを取得
                     let availableCharacters = [];
                     
                     try {
-                        const res = await fetch('./systemprompt/');
-                        if (res.ok) {
-                            const html = await res.text();
-                            console.log('Directory HTML response received');
-                            const parser = new DOMParser();
-                            const doc = parser.parseFromString(html, 'text/html');
+                        // ①characterlist.txtからキャラクターリストを読み込み
+                        const listRes = await fetch('./systemprompt/characterlist.txt');
+                        if (listRes.ok) {
+                            const listText = await listRes.text();
+                            const characterNames = listText.split('\n')
+                                .map(name => name.trim())
+                                .filter(name => name.length > 0);
                             
-                            // 複数のパターンでリンクを検索
-                            const txtSelectors = [
-                                'a[href$=".txt"]',
-                                'a[href*=".txt"]',
-                                'a:contains(".txt")',
-                                'td a', // テーブル形式の場合
-                                'pre a' // プレーンテキスト形式の場合
-                            ];
+                            console.log(`Found ${characterNames.length} characters in characterlist.txt:`, characterNames);
                             
-                            let links = [];
-                            for (const selector of txtSelectors) {
+                            // ②各キャラクターファイルの存在確認
+                            for (const charName of characterNames) {
                                 try {
-                                    const foundLinks = doc.querySelectorAll(selector);
-                                    foundLinks.forEach(link => {
-                                        const href = link.getAttribute('href');
-                                        const text = link.textContent || '';
-                                        if ((href && href.includes('.txt')) || text.includes('.txt')) {
-                                            links.push(link);
-                                        }
-                                    });
-                                } catch (e) {
-                                    // セレクタがサポートされない場合は無視
+                                    const encodedName = encodeURIComponent(charName);
+                                    const fileRes = await fetch(`./systemprompt/${encodedName}.txt`, { method: 'HEAD' });
+                                    if (fileRes.ok) {
+                                        availableCharacters.push(charName);
+                                        console.log(`✓ Verified: ${charName}`);
+                                    } else {
+                                        console.warn(`✗ Missing file: ${charName}`);
+                                    }
+                                } catch (error) {
+                                    console.warn(`✗ Error checking: ${charName}`, error);
                                 }
                             }
-                            
-                            console.log(`Found ${links.length} potential .txt links`);
-                            
-                            const foundNames = new Set();
-                            links.forEach(link => {
-                                const href = link.getAttribute('href');
-                                const text = link.textContent || '';
-                                
-                                if (href && href.includes('.txt')) {
-                                    const filename = href.split('/').pop();
-                                    if (filename && filename.endsWith('.txt')) {
-                                        foundNames.add(decodeURIComponent(filename).replace('.txt', ''));
-                                    }
-                                }
-                                
-                                if (text.includes('.txt') && text.trim().endsWith('.txt')) {
-                                    foundNames.add(text.trim().replace('.txt', ''));
-                                }
-                            });
-                            
-                            availableCharacters = Array.from(foundNames);
-                            console.log(`Extracted characters from directory:`, availableCharacters);
                         } else {
-                            console.warn('Directory fetch failed with status:', res.status);
+                            console.warn('characterlist.txt not found, using fallback method');
+                            throw new Error('characterlist.txt not found');
                         }
-                    } catch (dirError) {
-                        console.warn('ディレクトリリストの取得に失敗:', dirError);
-                    }
-                    
-                    if (availableCharacters.length === 0) {
-                        try {
-                            availableCharacters = await this.detectCharactersComprehensive();
-                        } catch (error) {
-                            availableCharacters = [
-                                'アイシャ', 'イクシア', 'エプリル', 'キアラ', 'キュア', 'サヤ', 'シェリル', 'シャルロット', 
-                                'セツナ', 'セルピナ', 'セーラ', 'ティナ', 'テスト', 'トワ', 'ノクタリカ', 'フェイ', 
-                                'リスティ', 'リリー', 'リルテット', 'リーチェ', 'ルウシェ', 'ルカ', 'ルナ', '新キャラ'
-                            ];
+                    } catch (error) {
+                        console.warn('Failed to load characterlist.txt, using fallback:', error);
+                        // フォールバック: 既知のキャラクターリスト
+                        const fallbackCharacters = [
+                            'アイシャ', 'アリーゼ', 'イクシア', 'エプリル', 'キアラ', 'キュア', 'クロノア', 'サヤ', 'シェリル', 'シャルロット', 
+                            'セツナ', 'セルピナ', 'セーラ', 'ティナ', 'トワ', 'ノクタリカ', 'フェイ', 
+                            'リスティ', 'リリー', 'リルテット', 'リーチェ', 'ルウシェ', 'ルカ', 'ルナ'
+                        ];
+                        
+                        for (const charName of fallbackCharacters) {
+                            try {
+                                const encodedName = encodeURIComponent(charName);
+                                const fileRes = await fetch(`./systemprompt/${encodedName}.txt`, { method: 'HEAD' });
+                                if (fileRes.ok) {
+                                    availableCharacters.push(charName);
+                                }
+                            } catch (error) {
+                                // 無視
+                            }
                         }
                     }
                     
@@ -8727,9 +8714,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         });
                         
                         if (availableCharacters.length === 0) {
-                            console.warn('使用可能なキャラクターファイルが見つかりません');
-                            // キャラクターが見つからない場合のメッセージ
                             characterSelect.innerHTML = '<option value="" disabled selected>キャラクターファイルが見つかりません</option>';
+                        } else {
+                            console.log(`Loaded ${availableCharacters.length} characters successfully`);
                         }
                     }
                 } catch (error) {
@@ -8743,27 +8730,86 @@ document.addEventListener('DOMContentLoaded', async () => {
                         return;
                     }
                     
-                    // URLエンコードを使用して日本語ファイル名に対応
-                    const encodedCharacterValue = encodeURIComponent(characterValue);
-                    const filename = `systemprompt/${encodedCharacterValue}.txt`;
-                    console.log(`Loading character file: ${characterValue} -> ${filename}`);
-                    const res = await fetch(`./${filename}`);
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    const prompt = (await res.text()).trim();
-                    console.log(`Successfully loaded character: ${characterValue}`);
+                    // ①characterlist.txtからキャラクターリストを読み込み
+                    let characterList = [];
+                    try {
+                        const listRes = await fetch('./systemprompt/characterlist.txt');
+                        if (listRes.ok) {
+                            const listText = await listRes.text();
+                            characterList = listText.split('\n')
+                                .map(name => name.trim())
+                                .filter(name => name.length > 0);
+                            console.log(`Character list loaded: ${characterList.length} characters`);
+                        } else {
+                            throw new Error('characterlist.txt not found');
+                        }
+                    } catch (error) {
+                        console.warn('Failed to load characterlist.txt, using fallback for individual load');
+                        // 個別読み込み用フォールバック
+                        const encodedCharacterValue = encodeURIComponent(characterValue);
+                        const res = await fetch(`./systemprompt/${encodedCharacterValue}.txt`);
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        const prompt = (await res.text()).trim();
+                        
+                        elements.promptSetupSystemPrompt.value = prompt;
+                        if (elements.aiNameInput) {
+                            elements.aiNameInput.value = characterValue;
+                        }
+                        this.updatePromptPreview();
+                        return;
+                    }
                     
-                    elements.promptSetupSystemPrompt.value = prompt;
+                    // ②すべてのキャラクターファイルを一括読み込み
+                    const allCharacterData = {};
+                    const batchSize = 10; // 一度に10個ずつ並列読み込み
+                    
+                    for (let i = 0; i < characterList.length; i += batchSize) {
+                        const batch = characterList.slice(i, i + batchSize);
+                        const promises = batch.map(async (charName) => {
+                            try {
+                                const encodedName = encodeURIComponent(charName);
+                                const res = await fetch(`./systemprompt/${encodedName}.txt`);
+                                if (res.ok) {
+                                    const content = await res.text();
+                                    return { name: charName, content: content.trim() };
+                                }
+                            } catch (error) {
+                                console.warn(`Failed to load: ${charName}`, error);
+                            }
+                            return null;
+                        });
+                        
+                        const results = await Promise.all(promises);
+                        results.forEach(result => {
+                            if (result) {
+                                allCharacterData[result.name] = result.content;
+                            }
+                        });
+                    }
+                    
+                    console.log(`Loaded ${Object.keys(allCharacterData).length} character files`);
+                    
+                    // ③選択されたキャラクターのデータを表示
+                    if (allCharacterData[characterValue]) {
+                        elements.promptSetupSystemPrompt.value = allCharacterData[characterValue];
+                        console.log(`Successfully loaded character: ${characterValue}`);
+                    } else {
+                        throw new Error(`Character data not found: ${characterValue}`);
+                    }
                     
                     // キャラクター名をAI名に自動入力
                     if (elements.aiNameInput) {
                         elements.aiNameInput.value = characterValue;
                     }
                     
+                    // グローバルにキャラクターデータを保存（オプション）
+                    window.characterDataCache = allCharacterData;
+                    
                     this.updatePromptPreview();
                 } catch (error) {
                     console.error('キャラクタープロンプト読み込みエラー:', error);
                     elements.promptSetupSystemPrompt.value = '';
-                    await this.showCustomAlert(`キャラクタープロンプト(systemprompt/${characterValue}.txt)の読み込みに失敗しました。`);
+                    await this.showCustomAlert(`キャラクタープロンプト(${characterValue})の読み込みに失敗しました。`);
                 }
             },
             updatePromptPreview() {
