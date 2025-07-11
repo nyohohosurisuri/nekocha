@@ -1170,6 +1170,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         .home-button:active {
             transform: scale(0.98);
         }
+        .home-version-display {
+            position: absolute;
+            bottom: 15px;
+            right: 15px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: normal;
+            opacity: 0.7;
+        }
 
         .prompt-setup-container {
             max-width: 600px;
@@ -3573,6 +3582,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <button id="start-chat-btn" class="home-button">会話を始める</button>
                     <button id="select-history-btn" class="home-button">履歴から選択</button>
                 </div>
+                <div class="home-version-display">v1.0.0</div>
             </main>
         </div>
 
@@ -10577,6 +10587,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             // プロンプト作成画面から来た場合以外は、チャット専用システムプロンプトをクリア
             if (state.currentScreen !== 'prompt-setup') {
                 state.chatSystemPrompt = null;
+                
+                // チャット固有のAIアイコンもクリア（グローバル設定のAIアイコンは保持）
+                if (state.aiIconUrl) {
+                    URL.revokeObjectURL(state.aiIconUrl);
+                    state.aiIconUrl = null;
+                }
+                
+                // AIアイコンを設定から復元
+                if (state.settings.aiIconBlob instanceof Blob) {
+                    try {
+                        state.aiIconUrl = URL.createObjectURL(state.settings.aiIconBlob);
+                    } catch (e) {
+                        console.error('Error creating AI icon URL:', e);
+                    }
+                }
             }
             
             state.pendingCharacterName = null;
