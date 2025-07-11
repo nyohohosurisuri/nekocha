@@ -8692,37 +8692,107 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (availableCharacters.length === 0) {
                         console.log('Starting comprehensive file detection...');
                         
-                        // 一般的な文字パターンを生成
+                        // 包括的なファイルパターン生成システム
                         const commonPatterns = [];
                         
-                        // 日本語の文字パターン（ひらがな、カタカナ、漢字の組み合わせ）
+                        // 既存の日本語の文字パターン
                         const japanesePatterns = [
                             'アイシャ', 'アリーゼ', 'エプリル', 'キアラ', 'キュア', 'サヤ', 'シェリル', 'シャルロット', 'セツナ', 'セルピナ', 'セーラ', 
                             'ティナ', 'テスト', 'トワ', 'ノクタリカ', 'フェイ', 'リスティ', 'リリー', 'リルテット', 
                             'リーチェ', 'ルウシェ', 'ルカ', 'ルナ', '新キャラ'
                         ];
                         
-                        // 英語の文字パターン
+                        // 拡張された日本語パターン（より多くの組み合わせ）
+                        const extendedJapanesePatterns = [];
+                        const kanaChars = ['ア', 'イ', 'ウ', 'エ', 'オ', 'カ', 'キ', 'ク', 'ケ', 'コ', 'サ', 'シ', 'ス', 'セ', 'ソ', 
+                                          'タ', 'チ', 'ツ', 'テ', 'ト', 'ナ', 'ニ', 'ヌ', 'ネ', 'ノ', 'ハ', 'ヒ', 'フ', 'ヘ', 'ホ',
+                                          'マ', 'ミ', 'ム', 'メ', 'モ', 'ヤ', 'ユ', 'ヨ', 'ラ', 'リ', 'ル', 'レ', 'ロ', 'ワ', 'ヲ', 'ン'];
+                        const suffixes = ['', 'ちゃん', 'さん', 'くん', 'リン', 'ナ', 'カ', 'コ', 'ミ', 'エ'];
+                        
+                        // カタカナの2-4文字組み合わせを生成
+                        for (let i = 0; i < kanaChars.length; i++) {
+                            for (let j = 0; j < kanaChars.length; j++) {
+                                extendedJapanesePatterns.push(kanaChars[i] + kanaChars[j]);
+                                for (let k = 0; k < kanaChars.length; k++) {
+                                    if (extendedJapanesePatterns.length < 500) {
+                                        extendedJapanesePatterns.push(kanaChars[i] + kanaChars[j] + kanaChars[k]);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // 英語の文字パターン（拡張版）
                         const englishPatterns = [
                             'serpina', 'aisha', 'april', 'kiara', 'cure', 'sheryl', 'charlotte', 'setsuna', 'sera',
                             'tina', 'test', 'towa', 'noctarica', 'fay', 'risty', 'lily', 'lirutet', 
                             'riche', 'ruushe', 'luka', 'luna', 'newchar'
                         ];
                         
-                        // 数字パターン（char1, char2, etc.）
-                        const numberedPatterns = [];
-                        for (let i = 1; i <= 50; i++) {
-                            numberedPatterns.push(`char${i}`, `character${i}`, `キャラ${i}`, `test${i}`);
-                        }
+                        // 拡張された英語パターン
+                        const extendedEnglishPatterns = [];
+                        const consonants = ['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z'];
+                        const vowels = ['a', 'e', 'i', 'o', 'u'];
                         
-                        // 一般的な名前パターン
-                        const namePatterns = [
+                        // 一般的な名前パターンを大幅拡張
+                        const commonNames = [
                             'alice', 'bob', 'carol', 'dave', 'eve', 'frank', 'grace', 'henry', 'iris', 'jack',
                             'kate', 'liam', 'mary', 'noah', 'olivia', 'peter', 'quinn', 'ruby', 'sarah', 'tom',
-                            'uma', 'victor', 'wendy', 'xavier', 'yuki', 'zoe'
+                            'uma', 'victor', 'wendy', 'xavier', 'yuki', 'zoe', 'anna', 'bella', 'chloe', 'diana',
+                            'emma', 'faith', 'gina', 'hana', 'ivy', 'jade', 'kira', 'luna', 'mia', 'nina',
+                            'amy', 'ben', 'cam', 'dan', 'eli', 'fin', 'guy', 'hal', 'ian', 'joe', 'kim', 'leo',
+                            'max', 'neo', 'owen', 'pat', 'ray', 'sam', 'tim', 'val', 'will', 'axel', 'blake',
+                            'cole', 'drew', 'eric', 'ford', 'gray', 'hugh', 'ivan', 'jude', 'kyle', 'luke'
                         ];
                         
-                        commonPatterns.push(...japanesePatterns, ...englishPatterns, ...numberedPatterns, ...namePatterns);
+                        // CV/CVC/CVCVパターンを生成（一般的な音韻パターン）
+                        for (let i = 0; i < consonants.length && extendedEnglishPatterns.length < 300; i++) {
+                            for (let j = 0; j < vowels.length; j++) {
+                                extendedEnglishPatterns.push(consonants[i] + vowels[j]); // CV
+                                for (let k = 0; k < consonants.length && extendedEnglishPatterns.length < 300; k++) {
+                                    extendedEnglishPatterns.push(consonants[i] + vowels[j] + consonants[k]); // CVC
+                                }
+                            }
+                        }
+                        
+                        // 数字パターン（拡張版）
+                        const numberedPatterns = [];
+                        for (let i = 1; i <= 100; i++) {
+                            numberedPatterns.push(`char${i}`, `character${i}`, `キャラ${i}`, `test${i}`, `user${i}`, `bot${i}`, `ai${i}`, `file${i}`);
+                        }
+                        
+                        // 特殊パターン
+                        const specialPatterns = [
+                            'default', 'main', 'primary', 'secondary', 'backup', 'temp', 'temporary', 'sample', 'example',
+                            'demo', 'prototype', 'beta', 'alpha', 'final', 'v1', 'v2', 'v3', 'new', 'old', 'latest',
+                            'custom', 'personal', 'private', 'public', 'system', 'admin', 'guest', 'anonymous',
+                            'unknown', 'untitled', 'unnamed', 'noname', '名前なし', '無題', 'テンプレート'
+                        ];
+                        
+                        // 日付パターン
+                        const datePatterns = [];
+                        const currentYear = new Date().getFullYear();
+                        for (let year = currentYear - 2; year <= currentYear + 1; year++) {
+                            for (let month = 1; month <= 12; month++) {
+                                for (let day = 1; day <= 31; day++) {
+                                    if (datePatterns.length < 100) {
+                                        datePatterns.push(`${year}${month.toString().padStart(2, '0')}${day.toString().padStart(2, '0')}`);
+                                        datePatterns.push(`${month}${day}`);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // 全てのパターンを結合
+                        commonPatterns.push(
+                            ...japanesePatterns, 
+                            ...extendedJapanesePatterns.slice(0, 800), // 最大800個に制限
+                            ...englishPatterns, 
+                            ...extendedEnglishPatterns,
+                            ...commonNames,
+                            ...numberedPatterns, 
+                            ...specialPatterns,
+                            ...datePatterns
+                        );
                         
                         console.log(`Testing ${commonPatterns.length} potential file patterns...`);
                         
