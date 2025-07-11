@@ -8653,75 +8653,44 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // systempromptフォルダのディレクトリリストを取得
                     let availableCharacters = [];
                     
-                    try {
-                        const res = await fetch('./systemprompt/');
-                        if (res.ok) {
-                            const html = await res.text();
-                            console.log('Directory HTML response received');
-                            const parser = new DOMParser();
-                            const doc = parser.parseFromString(html, 'text/html');
-                            const links = doc.querySelectorAll('a[href$=".txt"]');
-                            console.log(`Found ${links.length} .txt links`);
-                            
-                            links.forEach(link => {
-                                const filename = link.getAttribute('href');
-                                if (filename && filename.endsWith('.txt')) {
-                                    // URLデコードを使用して日本語ファイル名に対応
-                                    const decodedFilename = decodeURIComponent(filename);
-                                    const characterName = decodedFilename.replace('.txt', '');
-                                    console.log(`Found character: ${characterName}`);
-                                    availableCharacters.push(characterName);
-                                }
-                            });
-                        } else {
-                            console.warn('Directory fetch failed with status:', res.status);
-                        }
-                    } catch (dirError) {
-                        console.warn('ディレクトリリストの取得に失敗:', dirError);
-                    }
+                    // まず全てのknownCharactersを実際にテストして存在するものを検出
+                    const allKnownCharacters = [
+                        'アイシャ', 'エプリル', 'キアラ', 'キュア', 'シェリル', 'シャルロット', 'セツナ', 'セルピナ', 'セーラ', 
+                        'ティナ', 'テスト', 'トワ', 'ノクタリカ', 'フェイ', 'リスティ', 'リリー', 'リルテット', 
+                        'リーチェ', 'ルウシェ', 'ルカ', 'ルナ', '新キャラ'
+                    ];
                     
-                    // ディレクトリリストが取得できない場合のフォールバック
-                    if (availableCharacters.length === 0) {
-                        const knownCharacters = [
-                            'アイシャ', 'エプリル', 'キアラ', 'キュア', 'シェリル', 'シャルロット', 'セツナ', 'セルピナ', 'セーラ', 
-                            'ティナ', 'テスト', 'トワ', 'ノクタリカ', 'フェイ', 'リスティ', 'リリー', 'リルテット', 
-                            'リーチェ', 'ルウシェ', 'ルカ', 'ルナ', '新キャラ'
-                        ];
-                        
-                        // 各ファイルの存在確認
-                        console.log('Using fallback character detection');
-                        for (const char of knownCharacters) {
-                            try {
-                                // 複数のエンコーディングパターンを試す
-                                const encodingPatterns = [
-                                    encodeURIComponent(char),
-                                    encodeURI(char),
-                                    char
-                                ];
-                                
-                                let fileFound = false;
-                                for (const encodedChar of encodingPatterns) {
-                                    const url = `./systemprompt/${encodedChar}.txt`;
-                                    console.log(`Checking file: ${char} -> ${url}`);
-                                    try {
-                                        const res = await fetch(url);
-                                        if (res.ok) {
-                                            console.log(`File found: ${char}`);
-                                            availableCharacters.push(char);
-                                            fileFound = true;
-                                            break;
-                                        }
-                                    } catch (fetchError) {
-                                        console.log(`Fetch error for ${char} with encoding ${encodedChar}:`, fetchError);
+                    console.log('Dynamic character detection');
+                    for (const char of allKnownCharacters) {
+                        try {
+                            // 複数のエンコーディングパターンを試す
+                            const encodingPatterns = [
+                                encodeURIComponent(char),
+                                encodeURI(char),
+                                char
+                            ];
+                            
+                            let fileFound = false;
+                            for (const encodedChar of encodingPatterns) {
+                                const url = `./systemprompt/${encodedChar}.txt`;
+                                try {
+                                    const res = await fetch(url);
+                                    if (res.ok) {
+                                        console.log(`File found: ${char}`);
+                                        availableCharacters.push(char);
+                                        fileFound = true;
+                                        break;
                                     }
+                                } catch (fetchError) {
+                                    // 静かに失敗
                                 }
-                                
-                                if (!fileFound) {
-                                    console.log(`File not found: ${char} (tried all encoding patterns)`);
-                                }
-                            } catch (error) {
-                                console.log(`Error checking file: ${char}`, error);
                             }
+                            
+                            if (!fileFound) {
+                                console.log(`File not found: ${char}`);
+                            }
+                        } catch (error) {
+                            console.log(`Error checking file: ${char}`, error);
                         }
                     }
                     
