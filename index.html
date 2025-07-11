@@ -15990,14 +15990,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                         await dbUtils.saveChat();
                     }
                     
-                    // メッセージを再描画してAI名とアイコンを反映
-                    if (uiUtils && uiUtils.renderChatMessages) {
-                        uiUtils.renderChatMessages();
-                    }
-                    
                     // アイコン表示の更新
                     if (uiUtils && uiUtils.updateIconSettingsUI) {
                         uiUtils.updateIconSettingsUI();
+                    }
+                    
+                    // メッセージを再描画してAI名とアイコンを反映
+                    if (uiUtils && uiUtils.renderChatMessages) {
+                        uiUtils.renderChatMessages(true);
+                    }
                     }
                     
                     this.hide();
@@ -16015,12 +16016,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             },
         
-            removeIcon() {
+            async removeIcon() {
                 state.settings.aiIconBlob = null;
                 if (state.aiIconUrl) {
                     URL.revokeObjectURL(state.aiIconUrl);
                     state.aiIconUrl = null;
                 }
+                
+                // 設定データベースを更新
+                await dbUtils.saveSetting('aiIconBlob', null);
+                
                 if (elements.chatAiIconPreview) {
                     elements.chatAiIconPreview.style.display = 'none';
                 }
@@ -16035,6 +16040,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
                 if (aiIconThumbnail) {
                     aiIconThumbnail.style.display = 'none';
+                }
+                
+                // アイコン表示UIを更新
+                if (uiUtils && uiUtils.updateIconSettingsUI) {
+                    uiUtils.updateIconSettingsUI();
                 }
             }
     };
@@ -16152,8 +16162,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // AIアイコン削除ボタン
         if (elements.chatAiIconRemove) {
             elements.chatAiIconRemove.addEventListener('click', async () => {
-                chatSettingsModal.removeIcon();
-                await dbUtils.saveSetting('aiIconBlob', null);
+                await chatSettingsModal.removeIcon();
                 
                 // チャット画面のメッセージを再描画してアイコンを反映
                 if (uiUtils && uiUtils.renderChatMessages) {
