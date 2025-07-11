@@ -15536,7 +15536,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const errorRecovery = {
         errorCount: 0,
         errorTimeWindow: 60000,
-        maxErrors: 3,
+        maxErrors: /iPad|iPhone|iPod/.test(navigator.userAgent) ? 8 : 3, // iOS では連続エラー許容数を増加
         lastErrorTime: 0,
         isRecovering: false,
         errorLog: [],
@@ -15608,6 +15608,40 @@ document.addEventListener('DOMContentLoaded', async () => {
                     this.handleError('Service Worker Error', event);
                 });
             }
+
+            // iPhone向け強制リロード検知
+            window.addEventListener('pagehide', () => {
+                try {
+                    const debugInfo = {
+                        timestamp: performance.now(),
+                        currentChatAiName: state.currentChatAiName || 'null',
+                        settingsAiName: state.settings?.aiName || 'null',
+                        currentCharacterName: state.currentCharacterName || 'null',
+                        hasAiIconUrl: !!state.aiIconUrl,
+                        userAgent: navigator.userAgent,
+                        url: window.location.href
+                    };
+                    localStorage.setItem('nekocha_pagehide_debug', JSON.stringify(debugInfo));
+                } catch (e) {
+                    console.error('pagehide デバッグ情報保存失敗:', e);
+                }
+            });
+
+            // ページ読み込み時に前回の強制リロード情報をチェック
+            this.checkPreviousPagehide();
+        },
+
+        checkPreviousPagehide() {
+            try {
+                const debugInfo = localStorage.getItem('nekocha_pagehide_debug');
+                if (debugInfo) {
+                    const data = JSON.parse(debugInfo);
+                    console.log('[errorRecovery] 前回pagehide情報:', data);
+                    localStorage.removeItem('nekocha_pagehide_debug');
+                }
+            } catch (e) {
+                console.error('前回pagehide情報読み込み失敗:', e);
+            }
         },
 
         handleError(type, errorInfo) {
@@ -15631,20 +15665,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
 
         isCriticalError(errorInfo) {
+            // iPhone/Safari で頻発する非致命的エラーを除外
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            
             const criticalPatterns = [
                 /Cannot read prop/i,
                 /Cannot access before initialization/i,
                 /is not defined/i,
                 /IndexedDB/i,
-                /QuotaExceededError/i,
                 /localStorage/i,
                 /sessionStorage/i,
                 /Service Worker/i,
-                /Failed to fetch/i,
-                /NetworkError/i
+                /Failed to fetch/i
             ];
-                        const errorMessage = JSON.stringify(errorInfo).toLowerCase();
-            return criticalPatterns.some(pattern => pattern.test(errorMessage));
+            
+            // iOS以外、または明らかに致命的な場合のみQuotaExceededError/NetworkErrorを致命的と判定
+            if (!isIOS) {
+                criticalPatterns.push(/QuotaExceededError/i, /NetworkError/i);
+            }
+            
+            const errorMessage = JSON.stringify(errorInfo).toLowerCase();
+            const isCritical = criticalPatterns.some(pattern => pattern.test(errorMessage));
+            
+            // デバッグ用ログ（iOS向けに詳細ログ）
+            if (isIOS) {
+                console.log('[errorRecovery] iOS エラー判定:', {
+                    isCritical,
+                    errorMessage,
+                    originalError: errorInfo
+                });
+            }
+            
+            return isCritical;
         },
 
         async triggerForceReload(errorType, errorInfo, isCritical) {
