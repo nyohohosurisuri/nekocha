@@ -7454,6 +7454,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const preservedSettingsAiName = state.settings.aiName;
                 const preservedSettingsAiIconBlob = state.settings.aiIconBlob;
                 const preservedCurrentCharacterName = state.currentCharacterName;
+                const preservedAiIconUrl = state.aiIconUrl;
+                const preservedChatSystemPrompt = state.chatSystemPrompt;
+                const preservedCurrentCharacterPrompt = state.currentCharacterPrompt;
                 
                 const errorIndex = state.currentMessages.length;
                 this.appendMessage('error', `エラー: ${message}`, errorIndex);
@@ -7464,6 +7467,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 state.settings.aiName = preservedSettingsAiName;
                 state.settings.aiIconBlob = preservedSettingsAiIconBlob;
                 state.currentCharacterName = preservedCurrentCharacterName;
+                state.aiIconUrl = preservedAiIconUrl;
+                state.chatSystemPrompt = preservedChatSystemPrompt;
+                state.currentCharacterPrompt = preservedCurrentCharacterPrompt;
                 
                 elements.loadingIndicator.classList.add('hidden');
                 this.setSendingState(false);
@@ -12210,6 +12216,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const preservedSettingsAiName = state.settings.aiName;
                 const preservedSettingsAiIconBlob = state.settings.aiIconBlob;
                 const preservedCurrentCharacterName = state.currentCharacterName;
+                const preservedAiIconUrl = state.aiIconUrl;
+                const preservedChatSystemPrompt = state.chatSystemPrompt;
+                const preservedCurrentCharacterPrompt = state.currentCharacterPrompt;
 
                 let partialThoughtContentOnError, partialContentOnError;
                 partialThoughtContentOnError = state.partialThoughtStreamContent;
@@ -12265,6 +12274,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                              state.settings.aiName = preservedSettingsAiName;
                              state.settings.aiIconBlob = preservedSettingsAiIconBlob;
                              state.currentCharacterName = preservedCurrentCharacterName;
+                             state.aiIconUrl = preservedAiIconUrl;
+                             state.chatSystemPrompt = preservedChatSystemPrompt;
+                             state.currentCharacterPrompt = preservedCurrentCharacterPrompt;
                          }
                     } else {
                          uiUtils.displayError(displayErrorMessage, !isAbort);
