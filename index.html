@@ -6276,13 +6276,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }
                         }
                         
+                        // AI名とAIアイコンの状態検証・修復
+                        let aiName = state.settings.aiName;
+                        if (!aiName || aiName.trim() === '') {
+                            aiName = "AI";
+                            state.settings.aiName = aiName;
+                        }
+                        
+                        let aiIconBlob = state.settings.aiIconBlob;
+                        if (aiIconBlob && !(aiIconBlob instanceof Blob)) {
+                            console.warn('Invalid aiIconBlob detected, setting to null');
+                            aiIconBlob = null;
+                            state.settings.aiIconBlob = null;
+                        }
+                        
                         const chatData = {
                             messages: messagesToSave,
                             updatedAt: now, createdAt: existingChatData ? existingChatData.createdAt : now,
                             title: title,
                             characterName: characterName,
-                            aiName: state.settings.aiName || "AI",
-                            aiIconBlob: state.settings.aiIconBlob || null,
+                            aiName: aiName,
+                            aiIconBlob: aiIconBlob,
                             chatSystemPrompt: state.chatSystemPrompt || null,
                         };
                         if (state.settings.persistMessageCollapseState) {
@@ -6528,20 +6542,44 @@ document.addEventListener('DOMContentLoaded', async () => {
                         messageDiv.appendChild(nameSpan);
                     }
                 } else if (role === 'model') {
-                    if (state.settings.showAiIcon && state.aiIconUrl) {
-                        const iconImg = document.createElement('img');
-                        iconImg.src = state.aiIconUrl;
-                        iconImg.alt = "AI Icon";
-                        iconImg.classList.add('message-icon');
-                        messageDiv.appendChild(iconImg);
+                    // AIアイコンの表示
+                    if (state.settings.showAiIcon) {
+                        let iconUrl = state.aiIconUrl;
+                        
+                        // アイコンURLが無効な場合、設定から再作成を試行
+                        if (!iconUrl && state.settings.aiIconBlob instanceof Blob) {
+                            try {
+                                iconUrl = URL.createObjectURL(state.settings.aiIconBlob);
+                                state.aiIconUrl = iconUrl;
+                            } catch (e) {
+                                console.error('Error recreating AI icon URL:', e);
+                            }
+                        }
+                        
+                        if (iconUrl) {
+                            const iconImg = document.createElement('img');
+                            iconImg.src = iconUrl;
+                            iconImg.alt = "AI Icon";
+                            iconImg.classList.add('message-icon');
+                            messageDiv.appendChild(iconImg);
+                        }
                     }
-                    if (state.settings.showAiName && state.settings.aiName) {
+                    
+                    // AI名の表示
+                    if (state.settings.showAiName) {
+                        let aiName = state.settings.aiName;
+                        
+                        // AI名が空の場合、デフォルト値を使用
+                        if (!aiName || aiName.trim() === '') {
+                            aiName = 'AI';
+                        }
+                        
                         const nameSpan = document.createElement('span');
                         nameSpan.classList.add('message-icon-name');
                         if (state.settings.showAiNameBubble) {
                             nameSpan.classList.add('has-bubble');
                         }
-                        nameSpan.textContent = state.settings.aiName;
+                        nameSpan.textContent = aiName;
                         messageDiv.appendChild(nameSpan);
                     }
                 }
