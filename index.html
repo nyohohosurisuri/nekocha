@@ -5900,6 +5900,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentScreen: 'home',
             selectedFilesForUpload: [],
             pendingAttachments: [],
+            pendingCharacterName: null,
+            currentChatAiName: null,
+            currentChatAiIconBlob: null,
             isMemoVisible: false,
             isClipboardStackVisible: false,
             clipboardStackContent: "",
@@ -15964,7 +15967,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const chatSystemPromptTextarea = document.getElementById('chat-system-prompt');
                 
                 if (chatAiNameInput) {
-                    chatAiNameInput.value = state.settings.aiName || '';
+                    chatAiNameInput.value = state.currentChatAiName || state.settings.aiName || '';
                 }
                 if (chatSystemPromptTextarea) {
                     const systemPromptValue = state.chatSystemPrompt || state.settings.commonSystemPrompt || '';
@@ -15975,7 +15978,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const chatAiIconPreview = document.getElementById('chat-ai-icon-preview');
                 const chatAiIconRemove = document.getElementById('chat-ai-icon-remove');
                 
-                if (state.settings.aiIconBlob) {
+                const currentAiIconBlob = state.currentChatAiIconBlob || state.settings.aiIconBlob;
+                if (currentAiIconBlob) {
                     if (state.aiIconUrl) {
                         if (chatAiIconPreview) {
                             chatAiIconPreview.src = state.aiIconUrl;
@@ -15984,8 +15988,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         if (chatAiIconRemove) {
                             chatAiIconRemove.style.display = 'inline-block';
                         }
-                    } else if (state.settings.aiIconBlob instanceof Blob) {
-                        const url = URL.createObjectURL(state.settings.aiIconBlob);
+                    } else if (currentAiIconBlob instanceof Blob) {
+                        const url = URL.createObjectURL(currentAiIconBlob);
                         if (chatAiIconPreview) {
                             chatAiIconPreview.src = url;
                             chatAiIconPreview.style.display = 'inline-block';
@@ -16017,18 +16021,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             async save() {
                 try {
-                    // AI名を更新
+                    // AI名を更新（チャット固有として保存）
                     const chatAiNameInput = document.getElementById('chat-ai-name');
                     const aiName = chatAiNameInput ? 
                         (chatAiNameInput.value.trim() || 'AI') : 'AI';
-                    state.settings.aiName = aiName;
-                    await dbUtils.saveSetting('aiName', aiName);
-                    
-                    // AI名入力フィールドを更新
-                    const aiNameInput = document.getElementById('ai-name-input');
-                    if (aiNameInput) {
-                        aiNameInput.value = aiName;
-                    }
+                    state.currentChatAiName = aiName;
+                    // グローバル設定は変更しない
                     
                     // システムプロンプトを更新
                     const chatSystemPromptTextarea = document.getElementById('chat-system-prompt');
@@ -16070,14 +16068,21 @@ document.addEventListener('DOMContentLoaded', async () => {
             },
         
             async removeIcon() {
-                state.settings.aiIconBlob = null;
+                // チャット固有のAIアイコンを削除
+                state.currentChatAiIconBlob = null;
                 if (state.aiIconUrl) {
                     URL.revokeObjectURL(state.aiIconUrl);
                     state.aiIconUrl = null;
                 }
                 
-                // 設定データベースを更新
-                await dbUtils.saveSetting('aiIconBlob', null);
+                // グローバル設定のAIアイコンがあれば復元
+                if (state.settings.aiIconBlob instanceof Blob) {
+                    try {
+                        state.aiIconUrl = URL.createObjectURL(state.settings.aiIconBlob);
+                    } catch (e) {
+                        console.error('Error creating AI icon URL from global settings:', e);
+                    }
+                }
                 
                 if (elements.chatAiIconPreview) {
                     elements.chatAiIconPreview.style.display = 'none';
@@ -16178,12 +16183,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const newIconUrl = URL.createObjectURL(file);
                     const oldIconUrl = state.aiIconUrl;
                     
-                    // 新しいBlobを設定
-                    state.settings.aiIconBlob = file;
+                    // 新しいBlobを設定（チャット固有として保存）
+                    state.currentChatAiIconBlob = file;
                     state.aiIconUrl = newIconUrl;
                     
-                    // 設定を保存
-                    await dbUtils.saveSetting('aiIconBlob', file);
+                    // グローバル設定は変更しない
                     
                     // プレビューを更新
                     if (elements.chatAiIconPreview) {
