@@ -6,6 +6,130 @@
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     /* ★ 初期化処理のみ実行（プロンプト読み込みはキャラクター選択時に行う） */
+    
+    // アイコン管理クラス
+    class IconManager {
+        constructor() {
+            this.iconCache = new Map(); // chatId -> base64
+            this.urlCache = new Map();  // base64 -> URL
+        }
+
+        // BlobをBase64に変換
+        async blobToBase64(blob) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+            });
+        }
+
+        // Base64からBlob URLを生成（キャッシュ付き）
+        base64ToUrl(base64) {
+            if (!base64) return null;
+            
+            // キャッシュチェック
+            if (this.urlCache.has(base64)) {
+                return this.urlCache.get(base64);
+            }
+            
+            try {
+                // base64からBlobを作成
+                const arr = base64.split(',');
+                const mime = arr[0].match(/:(.*?);/)[1];
+                const bstr = atob(arr[1]);
+                let n = bstr.length;
+                const u8arr = new Uint8Array(n);
+                while(n--) {
+                    u8arr[n] = bstr.charCodeAt(n);
+                }
+                const blob = new Blob([u8arr], {type: mime});
+                const url = URL.createObjectURL(blob);
+                
+                // キャッシュに保存
+                this.urlCache.set(base64, url);
+                
+                return url;
+            } catch (e) {
+                console.error('Base64 to URL conversion failed:', e);
+                return null;
+            }
+        }
+
+        // アイコンの保存（Blobからbase64に変換して保存）
+        async saveIcon(chatId, blob) {
+            if (!blob || !(blob instanceof Blob)) return null;
+            
+            try {
+                const base64 = await this.blobToBase64(blob);
+                this.iconCache.set(chatId, base64);
+                return base64;
+            } catch (e) {
+                console.error('Icon save failed:', e);
+                return null;
+            }
+        }
+
+        // アイコンの取得（base64を返す）
+        getIcon(chatId) {
+            return this.iconCache.get(chatId) || null;
+        }
+
+        // URLキャッシュのクリア
+        clearUrlCache() {
+            for (const url of this.urlCache.values()) {
+                try {
+                    URL.revokeObjectURL(url);
+                } catch (e) {
+                    // エラーは無視
+                }
+            }
+            this.urlCache.clear();
+        }
+    }
+
+    // 状態管理クラス（排他制御付き）
+    class StateManager {
+        constructor() {
+            this.locked = false;
+            this.queue = [];
+        }
+
+        // 排他制御付き状態更新
+        async updateState(updateFn) {
+            if (this.locked) {
+                // ロック中はキューに追加
+                return new Promise((resolve) => {
+                    this.queue.push({ updateFn, resolve });
+                });
+            }
+
+            this.locked = true;
+            try {
+                const result = await updateFn();
+                
+                // キューの処理
+                while (this.queue.length > 0) {
+                    const { updateFn: queuedFn, resolve } = this.queue.shift();
+                    try {
+                        const queuedResult = await queuedFn();
+                        resolve(queuedResult);
+                    } catch (e) {
+                        resolve(null);
+                    }
+                }
+                
+                return result;
+            } finally {
+                this.locked = false;
+            }
+        }
+    }
+
+    // グローバルインスタンス
+    window.iconManager = new IconManager();
+    window.stateManager = new StateManager();
+    
     window.state        ??= {};   // state がまだ無い場合に備え
     state.settings      ??= {};
     
@@ -20,6 +144,54 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (typeof appLogic !== 'undefined') {
       appLogic.initializeApp();
     }
+  }
+
+  // iPhone専用のメモリ管理処理
+  if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+    // 定期的なメモリクリーンアップ
+    setInterval(() => {
+      // URLキャッシュをクリア
+      iconManager.clearUrlCache();
+      
+      // ガベージコレクションのヒント
+      if (window.gc) {
+        window.gc();
+      }
+      
+      console.log('[iPhone Memory] 定期クリーンアップ実行');
+    }, 60000); // 1分ごと
+
+    // ページ非表示時のクリーンアップ
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        iconManager.clearUrlCache();
+        console.log('[iPhone Memory] visibilitychange クリーンアップ実行');
+      }
+    });
+
+    // メモリプレッシャー検知（experimental）
+    if ('memory' in performance) {
+      setInterval(() => {
+        const memInfo = performance.memory;
+        const usage = memInfo.usedJSHeapSize / memInfo.jsHeapSizeLimit;
+        
+        if (usage > 0.8) { // 80%を超えた場合
+          console.warn('[iPhone Memory] メモリ使用率高:', Math.round(usage * 100) + '%');
+          iconManager.clearUrlCache();
+          
+          // 古いメッセージのDOM要素を削除（オプション）
+          const messages = document.querySelectorAll('.message');
+          if (messages.length > 100) {
+            for (let i = 0; i < 50; i++) {
+              messages[i].remove();
+            }
+            console.log('[iPhone Memory] 古いメッセージを削除');
+          }
+        }
+      }, 30000); // 30秒ごとにチェック
+    }
+
+    console.log('[iPhone Memory] メモリ管理機能を初期化しました');
   }
 });
 </script>
@@ -6555,48 +6727,43 @@ document.addEventListener('DOMContentLoaded', async () => {
                         messageDiv.appendChild(nameSpan);
                     }
                 } else if (role === 'model') {
-                    // AIアイコンの表示
+                    // AIアイコンの表示（base64対応）
                     if (state.settings.showAiIcon) {
-                        let iconUrl = state.aiIconUrl;
+                        // base64からアイコンを取得
+                        const base64Icon = state.currentChatAiIconBase64 || 
+                                          iconManager.getIcon(state.currentChatId) ||
+                                          state.settings.aiIconBase64;
                         
-                        // アイコンURLが無効な場合、チャット固有またはグローバル設定から再作成を試行
-                        if (!iconUrl) {
-                            const iconBlob = state.currentChatAiIconBlob || state.settings.aiIconBlob;
-                            if (iconBlob instanceof Blob) {
-                                try {
-                                    iconUrl = URL.createObjectURL(iconBlob);
-                                    // エラー処理中でない場合のみ状態を更新
-                                    if (!window.isProcessingError) {
-                                        state.aiIconUrl = iconUrl;
-                                    }
-                                } catch (e) {
-                                    console.error('Error recreating AI icon URL:', e);
-                                }
-                            }
-                        }
-                        
-                        if (iconUrl) {
+                        if (base64Icon) {
+                            // base64から直接img要素を作成
                             const iconImg = document.createElement('img');
-                            iconImg.src = iconUrl;
+                            iconImg.src = base64Icon; // base64データURLを直接設定
                             iconImg.alt = "AI Icon";
                             iconImg.classList.add('message-icon');
+                            
+                            // エラーハンドリング
                             iconImg.onerror = function() {
-                                // iPhone でのURL失効に対する対策
-                                const iconBlob = state.currentChatAiIconBlob || state.settings.aiIconBlob;
-                                if (iconBlob instanceof Blob) {
-                                    try {
-                                        const newUrl = URL.createObjectURL(iconBlob);
-                                        this.src = newUrl;
-                                        // エラー処理中でない場合のみ状態を更新
-                                        if (!window.isProcessingError) {
-                                            state.aiIconUrl = newUrl;
-                                        }
-                                    } catch (e) {
-                                        console.error('Error recreating AI icon URL on error:', e);
-                                    }
-                                }
+                                console.warn('AI icon failed to load from base64');
+                                this.style.display = 'none';
                             };
+                            
                             messageDiv.appendChild(iconImg);
+                        } else {
+                            // 後方互換性: Blobが存在する場合はbase64に変換
+                            const iconBlob = state.currentChatAiIconBlob || state.settings.aiIconBlob;
+                            if (iconBlob instanceof Blob && state.currentChatId) {
+                                iconManager.saveIcon(state.currentChatId, iconBlob).then(base64 => {
+                                    if (base64) {
+                                        state.currentChatAiIconBase64 = base64;
+                                        // 再描画をトリガー
+                                        if (typeof uiUtils !== 'undefined' && uiUtils.renderChatMessages) {
+                                            uiUtils.renderChatMessages();
+                                        }
+                                    }
+                                }).catch(e => {
+                                    console.error('Blob to base64 conversion failed:', e);
+                                });
+                            }
                         }
                     }
                     
@@ -9496,6 +9663,137 @@ document.addEventListener('DOMContentLoaded', async () => {
             },
         };
 
+        // チャット設定の保存処理
+        async function saveChatSettings(chatId, settings) {
+            return stateManager.updateState(async () => {
+                try {
+                    // アイコンの処理
+                    if (settings.aiIconBlob instanceof Blob) {
+                        // Blobをbase64に変換して保存
+                        const base64Icon = await iconManager.saveIcon(chatId, settings.aiIconBlob);
+                        settings.aiIconBase64 = base64Icon;
+                        delete settings.aiIconBlob; // Blobは保存しない
+                    }
+
+                    // IndexedDBに保存
+                    const db = await dbUtils.openDB();
+                    const transaction = db.transaction(['chats'], 'readwrite');
+                    const store = transaction.objectStore('chats');
+                    
+                    // 既存のチャットを取得して設定を追加
+                    let chat = await store.get(chatId);
+                    if (!chat) {
+                        chat = {
+                            id: chatId,
+                            title: 'New Chat',
+                            messages: [],
+                            timestamp: Date.now()
+                        };
+                    }
+                    
+                    // 設定をチャットオブジェクトに統合
+                    chat.aiName = settings.aiName;
+                    chat.aiIconBase64 = settings.aiIconBase64;
+                    chat.characterName = settings.characterName;
+                    chat.characterPrompt = settings.characterPrompt;
+                    chat.chatSystemPrompt = settings.chatSystemPrompt;
+                    chat.settingsTimestamp = Date.now();
+
+                    await store.put(chat);
+                    await transaction.complete;
+
+                    // メモリ上の状態も更新
+                    state.currentChatAiName = settings.aiName;
+                    state.currentChatAiIconBase64 = settings.aiIconBase64;
+                    state.currentCharacterName = settings.characterName;
+                    state.currentCharacterPrompt = settings.characterPrompt;
+                    state.chatSystemPrompt = settings.chatSystemPrompt;
+
+                    console.log('[saveChatSettings] 保存完了:', {
+                        chatId,
+                        aiName: settings.aiName,
+                        hasIcon: !!settings.aiIconBase64
+                    });
+
+                    return true;
+                } catch (error) {
+                    console.error('[saveChatSettings] エラー:', error);
+                    return false;
+                }
+            });
+        }
+
+        // チャット設定の読み込み処理
+        async function loadChatSettings(chatId) {
+            try {
+                const db = await dbUtils.openDB();
+                const transaction = db.transaction(['chats'], 'readonly');
+                const store = transaction.objectStore('chats');
+                
+                const chat = await store.get(chatId);
+                
+                if (chat && chat.aiName !== undefined) {
+                    // base64アイコンをキャッシュに読み込み
+                    if (chat.aiIconBase64) {
+                        iconManager.iconCache.set(chatId, chat.aiIconBase64);
+                    }
+
+                    // 状態に反映
+                    state.currentChatAiName = chat.aiName;
+                    state.currentChatAiIconBase64 = chat.aiIconBase64;
+                    state.currentCharacterName = chat.characterName;
+                    state.currentCharacterPrompt = chat.characterPrompt;
+                    state.chatSystemPrompt = chat.chatSystemPrompt;
+
+                    console.log('[loadChatSettings] 読み込み完了:', {
+                        chatId,
+                        aiName: chat.aiName,
+                        hasIcon: !!chat.aiIconBase64
+                    });
+
+                    return {
+                        aiName: chat.aiName,
+                        aiIconBase64: chat.aiIconBase64,
+                        characterName: chat.characterName,
+                        characterPrompt: chat.characterPrompt,
+                        chatSystemPrompt: chat.chatSystemPrompt
+                    };
+                }
+
+                return null;
+            } catch (error) {
+                console.error('[loadChatSettings] エラー:', error);
+                return null;
+            }
+        }
+
+        // チャット初期化処理
+        async function initializeChat(chatId) {
+            try {
+                // 設定を読み込み
+                const settings = await loadChatSettings(chatId);
+                
+                if (!settings) {
+                    // 新規チャットの場合はデフォルト設定を保存
+                    await saveChatSettings(chatId, {
+                        aiName: state.settings.aiName || 'AI',
+                        aiIconBase64: state.settings.aiIconBase64,
+                        characterName: state.currentCharacterName || '',
+                        characterPrompt: state.currentCharacterPrompt || '',
+                        chatSystemPrompt: state.chatSystemPrompt || ''
+                    });
+                }
+
+                // UIの更新
+                if (typeof uiUtils !== 'undefined' && uiUtils.updateChatHeader) {
+                    uiUtils.updateChatHeader();
+                }
+                
+            } catch (error) {
+                console.error('[initializeChat] エラー:', error);
+            }
+        }
+
         // 状態復元用のヘルパー関数
         function restorePreservedState(preservedState) {
             try {
@@ -11209,6 +11507,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             const isBackgroundProcess = !!sourceSessionContext;
             const selectedApiProvider = isBackgroundProcess ? (sourceSessionContext.apiProvider || state.settings.apiProvider) : state.settings.apiProvider;
 
+            // 送信前に現在の設定を保存（非バックグラウンド処理のみ）
+            if (!isBackgroundProcess && state.currentChatId) {
+                try {
+                    await saveChatSettings(state.currentChatId, {
+                        aiName: state.currentChatAiName || state.settings.aiName,
+                        aiIconBase64: state.currentChatAiIconBase64 || state.settings.aiIconBase64,
+                        aiIconBlob: state.currentChatAiIconBlob, // Blobがある場合は変換される
+                        characterName: state.currentCharacterName,
+                        characterPrompt: state.currentCharacterPrompt,
+                        chatSystemPrompt: state.chatSystemPrompt
+                    });
+                } catch (saveError) {
+                    console.warn('[handleSend] 設定保存に失敗:', saveError);
+                }
+            }
+
             let text = '';
             let attachmentsToSend = [];
             if (isBackgroundProcess) {
@@ -12236,104 +12550,31 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 }
             } catch (error) {
+                console.error('[handleSend] エラー:', error);
+                
                 const isAbort = error.message === "リクエストがキャンセルされました。" || modelResponseMetadata.finishReason === 'ABORTED';
-                const displayErrorMessage = isAbort ? error.message : (error.message || "不明なエラーが発生しました");
+                const displayErrorMessage = isAbort ? error.message : (error.message || "不明なエラーが発生しました。");
 
-                // エラー処理フラグを設定
-                window.isProcessingError = true;
-
-                // 状態保護: より包括的に保護
-                const preservedState = {
-                    currentChatAiName: state.currentChatAiName,
-                    currentChatAiIconBlob: state.currentChatAiIconBlob,
-                    settingsAiName: state.settings.aiName,
-                    settingsAiIconBlob: state.settings.aiIconBlob,
-                    currentCharacterName: state.currentCharacterName,
-                    aiIconUrl: state.aiIconUrl,
-                    chatSystemPrompt: state.chatSystemPrompt,
-                    currentCharacterPrompt: state.currentCharacterPrompt,
-                    currentChatId: state.currentChatId,
-                    currentChat: state.currentChat ? {...state.currentChat} : null
-                };
-
-                // デバッグログ: エラー発生時の状態を詳細にログ出力
-                console.log('[handleSend] エラー発生:', {
-                    timestamp: new Date().toISOString(),
-                    error: error.message,
-                    currentChatAiName: state.currentChatAiName,
-                    settingsAiName: state.settings?.aiName,
-                    hasAiIconBlob: !!state.currentChatAiIconBlob,
-                    hasAiIconUrl: !!state.aiIconUrl,
-                    currentChatId: state.currentChatId
-                });
-
-                let partialThoughtContentOnError, partialContentOnError;
-                partialThoughtContentOnError = state.partialThoughtStreamContent;
-                partialContentOnError = state.partialStreamContent;
-
-                if (isBackgroundProcess) {
-                     throw error;
+                // エラー時は保存された設定を再読み込み
+                if (!isBackgroundProcess && state.currentChatId) {
+                    try {
+                        await loadChatSettings(state.currentChatId);
+                        console.log('[handleSend] エラー後に設定を復元しました');
+                    } catch (loadError) {
+                        console.error('[handleSend] 設定復元に失敗:', loadError);
+                    }
                 }
 
-                if ((partialContentOnError || partialContentOnError) && useStreamingForThisCall && modelMessageObjectForStream) {
-                     const finalPartialContent = partialContentOnError + `\n\n(${isAbort ? '中断されました' : 'エラーが発生しました'})`;
-                     let finalPartialThoughtValue = null;
-                     if (selectedApiProvider === 'gemini' && partialThoughtContentOnError && contextGeminiIncludeThoughts) {
-                         finalPartialThoughtValue = partialThoughtContentOnError + `\n\n(${isAbort ? '中断されました' : 'エラーが発生しました'})`;
-                     } else if ((selectedApiProvider === 'deepseek' || selectedApiProvider === 'llmaggregator') && partialThoughtContentOnError && contextDeepSeekIncludeThoughts) {
-                         finalPartialThoughtValue = partialThoughtContentOnError + `\n\n(${isAbort ? '中断されました' : 'エラーが発生しました'})`;
-                     } else if (selectedApiProvider === 'claude' && partialThoughtContentOnError && contextClaudeIncludeThoughts) {
-                         finalPartialThoughtValue = partialThoughtContentOnError + `\n\n(${isAbort ? '中断されました' : 'エラーが発生しました'})`;
-                     } else if (selectedApiProvider === 'xai' && partialThoughtContentOnError && contextXaiIncludeThoughts) {
-                         finalPartialThoughtValue = partialThoughtContentOnError + `\n\n(${isAbort ? '中断されました' : 'エラーが発生しました'})`;
-                     }
+                // バックグラウンド処理の場合は例外を再スロー
+                if (isBackgroundProcess) {
+                    throw error;
+                }
 
-                    const streamingMessageIndex = state.currentMessages.indexOf(modelMessageObjectForStream);
-                    if (streamingMessageIndex !== -1) {
-                        const msgToUpdate = state.currentMessages[streamingMessageIndex];
-                        msgToUpdate.content = finalPartialContent;
-                        msgToUpdate.timestamp = Date.now();
-                        msgToUpdate.error = true;
-                        msgToUpdate.finishReason = isAbort ? 'ABORTED' : (modelResponseMetadata.finishReason || 'ERROR');
-                        msgToUpdate.safetyRatings = modelResponseMetadata.safetyRatings;
-                        msgToUpdate.usageMetadata = finalUsageMetadataFromStream;
-                        msgToUpdate.generatedByApiProvider = selectedApiProvider;
-
-                        if (selectedApiProvider === 'gemini') {
-                            msgToUpdate.thoughtSummary = finalPartialThoughtValue;
-                            msgToUpdate.groundingMetadata = currentGroundingMetadata;
-                        } else if (selectedApiProvider === 'deepseek' || selectedApiProvider === 'llmaggregator') {
-                            msgToUpdate.deepSeekThoughtSummary = finalPartialThoughtValue;
-                        } else if (selectedApiProvider === 'claude') {
-                            msgToUpdate.thoughtSummary = finalPartialThoughtValue;
-                        } else if (selectedApiProvider === 'xai') {
-                            msgToUpdate.xaiThoughtSummary = finalPartialThoughtValue;
-                        }
-
-                         try {
-                            uiUtils.finalizeStreamingMessage(streamingMessageIndex);
-                            await dbUtils.saveChat();
-                         } catch (saveError) {
-                             uiUtils.displayError(displayErrorMessage, !isAbort);
-                         }
-                    } else {
-                         uiUtils.displayError(displayErrorMessage, !isAbort);
-                    }
-                } else {
-                    if (useStreamingForThisCall && !isAbort && modelMessageObjectForStream) {
-                        const tempPlaceholderIndex = state.currentMessages.indexOf(modelMessageObjectForStream);
-                        const placeholderElement = document.getElementById(`streaming-message-${tempPlaceholderIndex}`);
-                        if (placeholderElement) placeholderElement.remove();
-                        if(tempPlaceholderIndex !== -1) state.currentMessages.splice(tempPlaceholderIndex, 1);
-                    }
+                // エラー表示
+                if (!isBackgroundProcess) {
                     uiUtils.displayError(displayErrorMessage, !isAbort);
                 }
             } finally {
-                // 状態復元: finally節で確実に実行
-                if (typeof preservedState !== 'undefined') {
-                    restorePreservedState(preservedState);
-                }
-                
                 // エラー処理フラグをリセット
                 window.isProcessingError = false;
                 
