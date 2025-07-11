@@ -16,7 +16,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (e) {
     console.error(e);
     alert('アプリの初期化に失敗しました');
-    // エラーの場合でも初期化は実行
     if (typeof appLogic !== 'undefined') {
       appLogic.initializeApp();
     }
@@ -50,39 +49,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             --bg-button-action-hover: #555555;
             --bg-button-delete: #e53935;
             --bg-button-delete-hover: #c62828;
-            --bg-button-retry: #43a047;
-            --bg-button-retry-hover: #2e7d32;
-            --bg-button-edit: #ff9800;
-            --bg-button-edit-hover: #f57c00;
-            --bg-button-copy: #e91e63;
-            --bg-button-copy-hover: #c2185b;
-            --bg-button-paste: #00bcd4;
-            --bg-button-paste-hover: #0097a7;
-            --bg-button-duplicate: #546e7a;
-            --bg-button-duplicate-hover: #37474f;
-            --bg-button-export: #1e88e5;
-            --bg-button-export-hover: #1565c0;
             --bg-button-save: #30d158;
             --bg-button-save-hover: #24a345;
             --bg-button-cancel: #f44336;
             --bg-button-cancel-hover: #d32f2f;
-            --bg-button-update: #1976d2;
-            --bg-button-update-hover: #115293;
             --bg-header: #4a90e2;
-            --overlay-base-rgb: 255, 255, 255;
-            --chat-overlay-alpha: 0.65;
-            --bg-cascade-button: var(--bg-button-action);
-            --bg-cascade-button-hover: var(--bg-button-action-hover);
-            --bg-cascade-delete-button: var(--bg-button-delete);
-            --bg-cascade-delete-button-hover: var(--bg-button-delete-hover);
-            --text-cascade-indicator: var(--text-secondary);
-            --bg-button-header-delete: #e53935;
-            --bg-button-header-delete-hover: #c62828;
-            --bg-button-header-copy: #e91e63;
-            --bg-button-header-copy-hover: #c2185b;
-            --bg-code-copy-button: var(--bg-button-action);
-            --bg-code-copy-button-hover: var(--bg-button-action-hover);
-            --text-code-copy-button: var(--text-light);
 
             --text-primary: #333333;
             --text-secondary: #777777;
@@ -101,8 +72,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             --border-danger: #ffcdd2;
             --border-system: #add8e6;
 
-            --shadow-primary: rgba(0, 0, 0, 0.1);
-            --shadow-secondary: rgba(0,0,0,0.1);
+            --shadow: rgba(0, 0, 0, 0.1);
 
             --message-max-width: 85%;
             --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -197,24 +167,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             --bg-button-action-hover: #888888;
             --bg-button-delete: #ff3b30;
             --bg-button-delete-hover: #d12c23;
-            --bg-button-retry: #34c759;
-            --bg-button-retry-hover: #249a41;
-            --bg-button-edit: #ff9500;
-            --bg-button-edit-hover: #d17d00;
-            --bg-button-copy: #f06292;
-            --bg-button-copy-hover: #ec407a;
-            --bg-button-paste: #4dd0e1;
-            --bg-button-paste-hover: #26c6da;
-            --bg-button-duplicate: #8e8e93;
-            --bg-button-duplicate-hover: #6b6b70;
-            --bg-button-export: #0a84ff;
-            --bg-button-export-hover: #0069d1;
             --bg-button-save: #30d158;
             --bg-button-save-hover: #24a345;
             --bg-button-cancel: #ff453a;
             --bg-button-cancel-hover: #d1332b;
-            --bg-button-update: #0a84ff;
-            --bg-button-update-hover: #0069d1;
             --bg-header: #007aff;
             --overlay-base-rgb: 30, 30, 30;
             --bg-memo: #2c2c2e;
@@ -6250,12 +6206,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                             title = firstUserMessage ? firstUserMessage.content.substring(0, 50) : "無題のチャット";
                         }
                         const chatIdForOperation = existingChatData ? existingChatData.id : state.currentChatId;
-                        // キャラクター名を取得（メッセージからまたはpendingから）
                         let characterName = null;
                         if (existingChatData && existingChatData.characterName) {
                             characterName = existingChatData.characterName;
                         } else {
-                            // メッセージからキャラクター情報を取得
                             const characterMessage = state.currentMessages.find(m => m.role === 'character');
                             if (characterMessage) {
                                 characterName = characterMessage.content;
@@ -8064,7 +8018,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 elements.showClipboardStackButtonToggle.checked = state.settings.showClipboardStackButton;
                 elements.showUserIconToggle.checked = state.settings.showUserIcon;
                 elements.showUserNameToggle.checked = state.settings.showUserName;
-                // 設定が未定義の場合にデフォルト値を設定
                 if (state.settings.showAiIcon === undefined) {
                     state.settings.showAiIcon = true;
                 }
@@ -8607,8 +8560,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         elements.showAiNameCheckbox.checked = state.settings.showAiName !== false;
                     }
                     
-                    // 設定が未定義の場合にデフォルト値を設定
-                    if (state.settings.showAiIcon === undefined) {
+                        if (state.settings.showAiIcon === undefined) {
                         state.settings.showAiIcon = true;
                     }
                     if (state.settings.showAiName === undefined) {
@@ -8641,122 +8593,40 @@ document.addEventListener('DOMContentLoaded', async () => {
                 state.currentScreen = screenName;
             },
             async detectCharactersComprehensive() {
-                // GitHub Pages対応: 統一的で効率的なキャラクターファイル検出
                 const characters = [];
-                
-                // 段階的検出アプローチ
-                console.log('Starting comprehensive character detection...');
-                
-                // フェーズ1: 既知のキャラクター確認（確実性重視）
                 const knownCharacters = [
                     'アイシャ', 'イクシア', 'エプリル', 'キアラ', 'キュア', 'サヤ', 'シェリル', 'シャルロット', 
                     'セツナ', 'セルピナ', 'セーラ', 'ティナ', 'テスト', 'トワ', 'ノクタリカ', 'フェイ', 
                     'リスティ', 'リリー', 'リルテット', 'リーチェ', 'ルウシェ', 'ルカ', 'ルナ', '新キャラ'
                 ];
                 
-                console.log('Phase 1: Checking known characters...');
                 await this.batchCheckCharacters(knownCharacters, characters);
                 
-                // フェーズ2: 最も現実的なパターン（効率重視）
-                const realisticVariations = [];
-                
-                // 高確率パターン: 数字付きキーワード（1-50に制限）
-                for (let i = 1; i <= 50; i++) {
-                    realisticVariations.push(
-                        `テスト${i}`, `test${i}`, `キャラ${i}`, `character${i}`, `新キャラ${i}`
-                    );
+                const variations = [];
+                for (let i = 1; i <= 100; i++) {
+                    variations.push(`テスト${i}`, `test${i}`, `キャラ${i}`, `character${i}`);
                 }
+                variations.push('User', 'Assistant', 'AI', 'Bot', 'Demo', 'さくら', 'ゆい', 'Alice', 'Bob');
                 
-                // 実用的な名前のみ（厳選）
-                const practicalNames = [
-                    // 人気の日本語名
-                    'さくら', 'ゆい', 'あい', 'みか', 'えみ', 'かな', 'りな', 'はるか',
-                    'サクラ', 'ユイ', 'アイ', 'ミカ', 'エミ', 'カナ', 'リナ', 'ハルカ',
-                    // 人気の英語名
-                    'Alice', 'Anna', 'Emma', 'Sara', 'Lisa', 'Mary',
-                    'Alex', 'Bob', 'John', 'Mike', 'Tom',
-                    // よく使われるキーワード
-                    'User', 'Assistant', 'AI', 'Bot', 'Helper', 'Demo', 'Sample',
-                    // バリエーション
-                    'あらた', '新しい', 'new', 'New', 'NEW'
-                ];
-                
-                realisticVariations.push(...practicalNames);
-                
-                console.log('Phase 2: Checking realistic variations...');
-                await this.batchCheckCharacters(realisticVariations, characters);
-                
-                // フェーズ3: 追加パターン（見つかったファイルが少ない場合のみ）
-                if (characters.length < 30) {
-                    console.log('Phase 3: Additional pattern search...');
-                    const additionalPatterns = [];
-                    
-                    // より多くの数字パターン
-                    for (let i = 51; i <= 200; i++) {
-                        additionalPatterns.push(`test${i}`, `キャラ${i}`, `character${i}`);
-                        if (i <= 100) {
-                            additionalPatterns.push(`テスト${i}`, `新キャラ${i}`);
-                        }
-                    }
-                    
-                    // 追加の実用的な名前
-                    const moreNames = [
-                        // 日本語
-                        'まり', 'ゆき', 'なお', 'りか', 'あき', 'みき', 'ちか', 'まな',
-                        'マリ', 'ユキ', 'ナオ', 'リカ', 'アキ', 'ミキ', 'チカ', 'マナ',
-                        // 英語
-                        'Jane', 'Kate', 'Rose', 'Eva', 'Amy', 'Grace', 'Nina',
-                        'Paul', 'Jack', 'Nick', 'Dave', 'Mark', 'Luke',
-                        // キーワード
-                        'admin', 'guest', 'player', 'user', 'client', 'friend'
-                    ];
-                    
-                    additionalPatterns.push(...moreNames);
-                    
-                    // 最大300パターンに制限
-                    await this.batchCheckCharacters(additionalPatterns.slice(0, 300), characters);
-                }
-                
-                console.log(`Comprehensive detection completed. Found ${characters.length} characters:`, characters);
+                await this.batchCheckCharacters(variations, characters);
                 return characters;
             },
             
             async batchCheckCharacters(candidateNames, foundCharacters) {
-                const batchSize = 30; // GitHub Pages に最適化されたバッチサイズ
-                const uniqueCandidates = [...new Set(candidateNames)]; // 重複除去
+                const batchSize = 30;
+                const uniqueCandidates = [...new Set(candidateNames)];
                 
                 for (let i = 0; i < uniqueCandidates.length; i += batchSize) {
                     const batch = uniqueCandidates.slice(i, i + batchSize);
                     const promises = batch.map(async (name) => {
                         try {
-                            const encodedName = encodeURIComponent(name);
-                            const url = `./systemprompt/${encodedName}.txt`;
-                            // HEAD リクエストで軽量かつ高速チェック
-                            const res = await fetch(url, { 
-                                method: 'HEAD',
-                                cache: 'no-cache' // キャッシュを無効化して最新状態を確認
-                            });
-                            if (res.ok) {
-                                console.log(`✓ Found: ${name}`);
-                                return name;
-                            }
-                        } catch (error) {
-                            // 404やネットワークエラーは無視
-                        }
-                        return null;
+                            const res = await fetch(`./systemprompt/${encodeURIComponent(name)}.txt`, { method: 'HEAD' });
+                            return res.ok ? name : null;
+                        } catch { return null; }
                     });
                     
                     const results = await Promise.all(promises);
-                    results.forEach(name => {
-                        if (name && !foundCharacters.includes(name)) {
-                            foundCharacters.push(name);
-                        }
-                    });
-                    
-                    // 進行状況の定期表示
-                    if (i % 60 === 0 && i > 0) {
-                        console.log(`Progress: ${Math.min(i + batchSize, uniqueCandidates.length)}/${uniqueCandidates.length} checked, ${foundCharacters.length} found`);
-                    }
+                    results.forEach(name => name && !foundCharacters.includes(name) && foundCharacters.push(name));
                 }
             },
             async loadCharacterOptions() {
@@ -8807,29 +8677,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                             
                             console.log(`Found ${links.length} potential .txt links`);
                             
-                            // リンクから文字情報を抽出
                             const foundNames = new Set();
                             links.forEach(link => {
                                 const href = link.getAttribute('href');
                                 const text = link.textContent || '';
                                 
-                                // href から抽出
                                 if (href && href.includes('.txt')) {
                                     const filename = href.split('/').pop();
                                     if (filename && filename.endsWith('.txt')) {
-                                        const decodedFilename = decodeURIComponent(filename);
-                                        const characterName = decodedFilename.replace('.txt', '');
-                                        foundNames.add(characterName);
+                                        foundNames.add(decodeURIComponent(filename).replace('.txt', ''));
                                     }
                                 }
                                 
-                                // テキストから抽出
-                                if (text.includes('.txt')) {
-                                    const filename = text.trim();
-                                    if (filename.endsWith('.txt')) {
-                                        const characterName = filename.replace('.txt', '');
-                                        foundNames.add(characterName);
-                                    }
+                                if (text.includes('.txt') && text.trim().endsWith('.txt')) {
+                                    foundNames.add(text.trim().replace('.txt', ''));
                                 }
                             });
                             
@@ -8842,14 +8703,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         console.warn('ディレクトリリストの取得に失敗:', dirError);
                     }
                     
-                    // GitHub Pages対応: 統一的な動的検出アプローチ
                     if (availableCharacters.length === 0) {
-                        console.log('Directory listing unavailable, attempting comprehensive character detection...');
                         try {
                             availableCharacters = await this.detectCharactersComprehensive();
                         } catch (error) {
-                            console.warn('Comprehensive detection failed:', error);
-                            // 緊急フォールバック: 既知のキャラクターのみ表示
                             availableCharacters = [
                                 'アイシャ', 'イクシア', 'エプリル', 'キアラ', 'キュア', 'サヤ', 'シェリル', 'シャルロット', 
                                 'セツナ', 'セルピナ', 'セーラ', 'ティナ', 'テスト', 'トワ', 'ノクタリカ', 'フェイ', 
@@ -8858,13 +8715,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                     }
                     
-                    // 読み込み完了後、選択肢を更新
                     if (characterSelect) {
-                        // 読み込み完了後、選択肢を再構築
                         characterSelect.innerHTML = '<option value="">-- キャラクターを選択してください --</option>';
                         characterSelect.disabled = false;
                         
-                        // 見つかったファイルから選択肢を生成
                         availableCharacters.forEach(char => {
                             const option = document.createElement('option');
                             option.value = char;
