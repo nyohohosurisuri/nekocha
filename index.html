@@ -8782,46 +8782,107 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }
                         }
                         
+                        // Unicode文字範囲での包括的検索パターン
+                        const unicodePatterns = [];
+                        
+                        // ひらがな範囲（U+3041-U+3096）の組み合わせ
+                        for (let i = 0x3041; i <= 0x3096 && unicodePatterns.length < 200; i++) {
+                            for (let j = 0x3041; j <= 0x3096 && unicodePatterns.length < 200; j++) {
+                                unicodePatterns.push(String.fromCharCode(i) + String.fromCharCode(j));
+                            }
+                        }
+                        
+                        // カタカナ範囲（U+30A1-U+30F6）の組み合わせ
+                        for (let i = 0x30A1; i <= 0x30F6 && unicodePatterns.length < 400; i++) {
+                            for (let j = 0x30A1; j <= 0x30F6 && unicodePatterns.length < 400; j++) {
+                                unicodePatterns.push(String.fromCharCode(i) + String.fromCharCode(j));
+                            }
+                        }
+                        
+                        // 英数字の全組み合わせパターン
+                        const alphanumericPatterns = [];
+                        const allChars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                        for (let i = 0; i < allChars.length && alphanumericPatterns.length < 300; i++) {
+                            for (let j = 0; j < allChars.length && alphanumericPatterns.length < 300; j++) {
+                                alphanumericPatterns.push(allChars[i] + allChars[j]);
+                                for (let k = 0; k < allChars.length && alphanumericPatterns.length < 300; k++) {
+                                    alphanumericPatterns.push(allChars[i] + allChars[j] + allChars[k]);
+                                }
+                            }
+                        }
+                        
+                        // ランダム文字列パターン（よくあるパターン）
+                        const randomPatterns = [];
+                        const words = ['test', 'new', 'temp', 'sample', 'demo', 'user', 'char', 'bot', 'ai'];
+                        const numbers = ['1', '2', '3', '01', '02', '03', '001', '002', '003'];
+                        words.forEach(word => {
+                            numbers.forEach(num => {
+                                randomPatterns.push(word + num, num + word, word + '_' + num, word + '-' + num);
+                            });
+                        });
+                        
                         // 全てのパターンを結合
                         commonPatterns.push(
                             ...japanesePatterns, 
-                            ...extendedJapanesePatterns.slice(0, 800), // 最大800個に制限
+                            ...extendedJapanesePatterns.slice(0, 600),
+                            ...unicodePatterns.slice(0, 400),
                             ...englishPatterns, 
                             ...extendedEnglishPatterns,
+                            ...alphanumericPatterns.slice(0, 300),
                             ...commonNames,
                             ...numberedPatterns, 
                             ...specialPatterns,
-                            ...datePatterns
+                            ...datePatterns,
+                            ...randomPatterns
                         );
                         
                         console.log(`Testing ${commonPatterns.length} potential file patterns...`);
                         
-                        // 並列処理でファイル存在をチェック
-                        const checkPromises = commonPatterns.map(async (pattern) => {
-                            const encodingVariants = [
-                                pattern,
-                                encodeURIComponent(pattern),
-                                encodeURI(pattern)
-                            ];
-                            
-                            for (const encoded of encodingVariants) {
-                                try {
-                                    const url = `./systemprompt/${encoded}.txt`;
-                                    const res = await fetch(url, { method: 'HEAD' }); // HEADリクエストで高速化
-                                    if (res.ok) {
-                                        console.log(`Found file: ${pattern} (${url})`);
-                                        return pattern;
-                                    }
-                                } catch (e) {
-                                    // 静かに失敗
-                                }
-                            }
-                            return null;
-                        });
+                        // 段階的検索システム（効率化のため）
+                        let foundPatterns = [];
+                        const batchSize = 100;
                         
-                        // 全ての検索を並列実行
-                        const results = await Promise.all(checkPromises);
-                        availableCharacters = results.filter(result => result !== null);
+                        for (let i = 0; i < commonPatterns.length; i += batchSize) {
+                            const batch = commonPatterns.slice(i, i + batchSize);
+                            console.log(`Searching batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(commonPatterns.length/batchSize)}...`);
+                            
+                            const batchPromises = batch.map(async (pattern) => {
+                                const encodingVariants = [
+                                    pattern,
+                                    encodeURIComponent(pattern),
+                                    encodeURI(pattern),
+                                    pattern.toLowerCase(),
+                                    pattern.toUpperCase(),
+                                    pattern.charAt(0).toUpperCase() + pattern.slice(1).toLowerCase()
+                                ];
+                                
+                                for (const encoded of encodingVariants) {
+                                    try {
+                                        const url = `./systemprompt/${encoded}.txt`;
+                                        const res = await fetch(url, { method: 'HEAD' });
+                                        if (res.ok) {
+                                            console.log(`Found file: ${pattern} (${url})`);
+                                            return pattern;
+                                        }
+                                    } catch (e) {
+                                        // 静かに失敗
+                                    }
+                                }
+                                return null;
+                            });
+                            
+                            const batchResults = await Promise.all(batchPromises);
+                            const newFound = batchResults.filter(result => result !== null);
+                            foundPatterns.push(...newFound);
+                            
+                            // 早期終了条件（十分なファイルが見つかった場合）
+                            if (foundPatterns.length > 50) {
+                                console.log(`Early termination: Found ${foundPatterns.length} files, stopping search.`);
+                                break;
+                            }
+                        }
+                        
+                        availableCharacters = foundPatterns;
                         
                         console.log(`Dynamic detection complete. Found ${availableCharacters.length} files:`, availableCharacters);
                     }
