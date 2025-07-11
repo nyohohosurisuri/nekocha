@@ -8685,7 +8685,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const knownCharacters = [
                             'アイシャ', 'エプリル', 'キアラ', 'キュア', 'シェリル', 'セツナ', 'セーラ', 
                             'ティナ', 'テスト', 'ノクタリカ', 'フェイ', 'リリー', 'リルテット', 
-                            'リーチェ', 'ルウシェ', 'ルナ'
+                            'リーチェ', 'ルウシェ', 'ルナ', '新キャラ'
                         ];
                         
                         // 各ファイルの存在確認
@@ -10848,20 +10848,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                  }
 
                  let exportText = '';
+                 
+                 // キャラクター名を追加
+                 if (chat.characterName || chat.aiName) {
+                     const characterName = chat.characterName || chat.aiName || 'AI';
+                     exportText += `<|#|character|#|>\n${characterName}\n<|#|/character|#|>\n\n`;
+                 }
+                 
+                 // システムプロンプトを追加
+                 if (chat.chatSystemPrompt) {
+                     exportText += `<|#|system|#|>\n${chat.chatSystemPrompt}\n<|#|/system|#|>\n\n`;
+                 }
+                 // メッセージを追加
                  if (chat.messages) {
                      chat.messages.forEach(msg => {
-                         if (msg.role === 'user' || msg.role === 'model' || msg.role === 'character' || msg.role === 'system') {
-                             let attributes = '';
-                             if (msg.role === 'model') {
-                                 if (msg.isCascaded) attributes += ' isCascaded';
-                                 if (msg.isSelected) attributes += ' isSelected';
-                                 if (msg.thoughtSummaryOpen) attributes += ' thoughtOpen';
-                             }
-                             if (msg.role === 'user' && msg.attachments && msg.attachments.length > 0) {
-                                 const fileNames = msg.attachments.map(a => a.name).join(';');
-                                 attributes += ` attachments="${fileNames.replace(/"/g, '"')}"`;
-                             }
-                             exportText += `<|#|${msg.role}|#|${attributes.trim()}>\n${msg.content}\n<|#|/${msg.role}|#|>\n\n`;
+                         if (msg.role === 'user') {
+                             exportText += `<|#|user|#|>\n${msg.content}\n<|#|/user|#|>\n\n`;
+                         } else if (msg.role === 'model') {
+                             exportText += `<|#|model|#|>\n${msg.content}\n<|#|/model|#|>\n\n`;
                          }
                      });
                  }
@@ -12236,48 +12240,38 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
         parseImportedHistory(text) {
             const messages = [];
-            const blockRegex = /<\|#\|(system|user|model|character)\|#\|([^>]*)>([\s\S]*?)<\|#\|\/\1\|#\|>/g;
+            let characterName = null;
+            let systemPrompt = null;
+            
+            const blockRegex = /<\|#\|(system|user|model|character)\|#\|>([\s\S]*?)<\|#\|\/\1\|#\|>/g;
             let match;
 
             while ((match = blockRegex.exec(text)) !== null) {
                 const role = match[1];
-                const attributesString = match[2].trim();
-                const content = match[3].trim();
+                const content = match[2].trim();
 
-                if ((role === 'user' || role === 'model' || role === 'character' || role === 'system') && (content || attributesString.includes('attachments'))) {
-                    const messageData = {
-                        role: role, content: content, timestamp: Date.now(), attachments: []
-                    };
-                    const attributes = {};
-                    attributesString.split(/\s+/).forEach(attr => {
-                        const eqIndex = attr.indexOf('=');
-                        if (eqIndex > 0) {
-                            const key = attr.substring(0, eqIndex);
-                            let value = attr.substring(eqIndex + 1);
-                            if (value.startsWith('"') && value.endsWith('"')) {
-                                value = value.substring(1, value.length - 1);
-                            }
-                            attributes[key] = value.replace(/&quot;/g, '"');
-                        } else if (attr) {
-                            attributes[attr] = true;
-                        }
+                if (role === 'character' && content) {
+                    characterName = content;
+                } else if (role === 'system' && content) {
+                    systemPrompt = content;
+                } else if (role === 'user' && content) {
+                    messages.push({
+                        role: 'user',
+                        content: content,
+                        timestamp: Date.now(),
+                        attachments: []
                     });
-
-                    if (role === 'model') {
-                        messageData.isCascaded = attributes['isCascaded'] === true;
-                        messageData.isSelected = attributes['isSelected'] === true;
-                        messageData.thoughtSummaryOpen = attributes['thoughtOpen'] === true;
-                    }
-                    if (role === 'user' && attributes['attachments']) {
-                        const fileNames = attributes['attachments'].split(';');
-                        messageData.attachments = fileNames.map(name => ({
-                            name: name, mimeType: 'unknown/unknown', base64Data: ''
-                        }));
-                    }
-                    messages.push(messageData);
+                } else if (role === 'model' && content) {
+                    messages.push({
+                        role: 'model',
+                        content: content,
+                        timestamp: Date.now(),
+                        attachments: []
+                    });
                 }
             }
-            return { messages };
+            
+            return { messages, characterName, systemPrompt };
         },
         async exportAllSessions() {
             const confirmed = await uiUtils.showCustomConfirm("全てのセッションを1つのJSONファイルとしてエクスポートしますか？");
