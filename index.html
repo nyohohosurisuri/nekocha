@@ -7448,8 +7448,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             },
             displayError(message, isApiError = false) {
+                // 状態保護: エラー表示時に重要な状態変数を保護
+                const preservedCurrentChatAiName = state.currentChatAiName;
+                const preservedCurrentChatAiIconBlob = state.currentChatAiIconBlob;
+                const preservedSettingsAiName = state.settings.aiName;
+                const preservedSettingsAiIconBlob = state.settings.aiIconBlob;
+                const preservedCurrentCharacterName = state.currentCharacterName;
+                
                 const errorIndex = state.currentMessages.length;
                 this.appendMessage('error', `エラー: ${message}`, errorIndex);
+                
+                // 状態復元: appendMessage後に保護した状態を復元
+                state.currentChatAiName = preservedCurrentChatAiName;
+                state.currentChatAiIconBlob = preservedCurrentChatAiIconBlob;
+                state.settings.aiName = preservedSettingsAiName;
+                state.settings.aiIconBlob = preservedSettingsAiIconBlob;
+                state.currentCharacterName = preservedCurrentCharacterName;
+                
                 elements.loadingIndicator.classList.add('hidden');
                 this.setSendingState(false);
                 this.scrollToBottom();
@@ -12189,6 +12204,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const isAbort = error.message === "リクエストがキャンセルされました。" || modelResponseMetadata.finishReason === 'ABORTED';
                 const displayErrorMessage = isAbort ? error.message : (error.message || "不明なエラーが発生しました");
 
+                // 状態保護: エラー時に重要な状態変数を保護
+                const preservedCurrentChatAiName = state.currentChatAiName;
+                const preservedCurrentChatAiIconBlob = state.currentChatAiIconBlob;
+                const preservedSettingsAiName = state.settings.aiName;
+                const preservedSettingsAiIconBlob = state.settings.aiIconBlob;
+                const preservedCurrentCharacterName = state.currentCharacterName;
+
                 let partialThoughtContentOnError, partialContentOnError;
                 partialThoughtContentOnError = state.partialThoughtStreamContent;
                 partialContentOnError = state.partialStreamContent;
@@ -12237,9 +12259,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                             await dbUtils.saveChat();
                          } catch (saveError) {
                              uiUtils.displayError(displayErrorMessage, !isAbort);
+                             // 状態復元: エラー表示後に保護した状態を復元
+                             state.currentChatAiName = preservedCurrentChatAiName;
+                             state.currentChatAiIconBlob = preservedCurrentChatAiIconBlob;
+                             state.settings.aiName = preservedSettingsAiName;
+                             state.settings.aiIconBlob = preservedSettingsAiIconBlob;
+                             state.currentCharacterName = preservedCurrentCharacterName;
                          }
                     } else {
                          uiUtils.displayError(displayErrorMessage, !isAbort);
+                         // 状態復元: エラー表示後に保護した状態を復元
+                         state.currentChatAiName = preservedCurrentChatAiName;
+                         state.currentChatAiIconBlob = preservedCurrentChatAiIconBlob;
+                         state.settings.aiName = preservedSettingsAiName;
+                         state.settings.aiIconBlob = preservedSettingsAiIconBlob;
+                         state.currentCharacterName = preservedCurrentCharacterName;
                     }
                 } else {
                     if (useStreamingForThisCall && !isAbort && modelMessageObjectForStream) {
@@ -12249,6 +12283,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                         if(tempPlaceholderIndex !== -1) state.currentMessages.splice(tempPlaceholderIndex, 1);
                     }
                     uiUtils.displayError(displayErrorMessage, !isAbort);
+                    // 状態復元: エラー表示後に保護した状態を復元
+                    state.currentChatAiName = preservedCurrentChatAiName;
+                    state.currentChatAiIconBlob = preservedCurrentChatAiIconBlob;
+                    state.settings.aiName = preservedSettingsAiName;
+                    state.settings.aiIconBlob = preservedSettingsAiIconBlob;
+                    state.currentCharacterName = preservedCurrentCharacterName;
                 }
             } finally {
                 if (!isBackgroundProcess) {
