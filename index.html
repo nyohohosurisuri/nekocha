@@ -8653,53 +8653,107 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // systempromptフォルダのディレクトリリストを取得
                     let availableCharacters = [];
                     
-                    // 動的ファイル検出 - 可能な限り多くのファイルパターンを試す
-                    const potentialCharacters = [
-                        // 既知の日本語ファイル名
-                        'アイシャ', 'エプリル', 'キアラ', 'キュア', 'シェリル', 'シャルロット', 'セツナ', 'セルピナ', 'セーラ', 
-                        'ティナ', 'テスト', 'トワ', 'ノクタリカ', 'フェイ', 'リスティ', 'リリー', 'リルテット', 
-                        'リーチェ', 'ルウシェ', 'ルカ', 'ルナ', '新キャラ',
-                        // 英語ファイル名のパターン
-                        'serpina', 'aisha', 'april', 'kiara', 'cure', 'sheryl', 'charlotte', 'setsuna', 'sera',
-                        'tina', 'test', 'towa', 'noctarica', 'fay', 'risty', 'lily', 'lirutet', 
-                        'riche', 'ruushe', 'luka', 'luna', 'newchar'
-                    ];
+                    // 方法1: ディレクトリリストから自動検出を試みる
+                    try {
+                        const res = await fetch('./systemprompt/');
+                        if (res.ok) {
+                            const html = await res.text();
+                            console.log('Directory listing available - parsing HTML');
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            const links = doc.querySelectorAll('a[href$=".txt"]');
+                            console.log(`Found ${links.length} .txt files in directory listing`);
+                            
+                            links.forEach(link => {
+                                const href = link.getAttribute('href');
+                                if (href && href.endsWith('.txt')) {
+                                    // URLデコードして文字名を取得
+                                    let characterName;
+                                    try {
+                                        characterName = decodeURIComponent(href.replace('.txt', ''));
+                                    } catch (e) {
+                                        characterName = href.replace('.txt', '');
+                                    }
+                                    
+                                    console.log(`Found character from directory: ${characterName}`);
+                                    if (!availableCharacters.includes(characterName)) {
+                                        availableCharacters.push(characterName);
+                                    }
+                                }
+                            });
+                        } else {
+                            console.log('Directory listing not available (404) - using fallback method');
+                        }
+                    } catch (dirError) {
+                        console.log('Directory listing failed - using fallback method:', dirError);
+                    }
                     
-                    console.log('Dynamic character detection - testing multiple patterns');
-                    for (const char of potentialCharacters) {
-                        try {
-                            // 複数のエンコーディングパターンを試す
-                            const encodingPatterns = [
-                                char,
-                                encodeURIComponent(char),
-                                encodeURI(char)
+                    // 方法2: ディレクトリリストが取得できない場合の完全動的検出
+                    if (availableCharacters.length === 0) {
+                        console.log('Starting comprehensive file detection...');
+                        
+                        // 一般的な文字パターンを生成
+                        const commonPatterns = [];
+                        
+                        // 日本語の文字パターン（ひらがな、カタカナ、漢字の組み合わせ）
+                        const japanesePatterns = [
+                            'アイシャ', 'エプリル', 'キアラ', 'キュア', 'シェリル', 'シャルロット', 'セツナ', 'セルピナ', 'セーラ', 
+                            'ティナ', 'テスト', 'トワ', 'ノクタリカ', 'フェイ', 'リスティ', 'リリー', 'リルテット', 
+                            'リーチェ', 'ルウシェ', 'ルカ', 'ルナ', '新キャラ'
+                        ];
+                        
+                        // 英語の文字パターン
+                        const englishPatterns = [
+                            'serpina', 'aisha', 'april', 'kiara', 'cure', 'sheryl', 'charlotte', 'setsuna', 'sera',
+                            'tina', 'test', 'towa', 'noctarica', 'fay', 'risty', 'lily', 'lirutet', 
+                            'riche', 'ruushe', 'luka', 'luna', 'newchar'
+                        ];
+                        
+                        // 数字パターン（char1, char2, etc.）
+                        const numberedPatterns = [];
+                        for (let i = 1; i <= 50; i++) {
+                            numberedPatterns.push(`char${i}`, `character${i}`, `キャラ${i}`, `test${i}`);
+                        }
+                        
+                        // 一般的な名前パターン
+                        const namePatterns = [
+                            'alice', 'bob', 'carol', 'dave', 'eve', 'frank', 'grace', 'henry', 'iris', 'jack',
+                            'kate', 'liam', 'mary', 'noah', 'olivia', 'peter', 'quinn', 'ruby', 'sarah', 'tom',
+                            'uma', 'victor', 'wendy', 'xavier', 'yuki', 'zoe'
+                        ];
+                        
+                        commonPatterns.push(...japanesePatterns, ...englishPatterns, ...numberedPatterns, ...namePatterns);
+                        
+                        console.log(`Testing ${commonPatterns.length} potential file patterns...`);
+                        
+                        // 並列処理でファイル存在をチェック
+                        const checkPromises = commonPatterns.map(async (pattern) => {
+                            const encodingVariants = [
+                                pattern,
+                                encodeURIComponent(pattern),
+                                encodeURI(pattern)
                             ];
                             
-                            let fileFound = false;
-                            for (const encodedChar of encodingPatterns) {
-                                const url = `./systemprompt/${encodedChar}.txt`;
+                            for (const encoded of encodingVariants) {
                                 try {
-                                    const res = await fetch(url);
+                                    const url = `./systemprompt/${encoded}.txt`;
+                                    const res = await fetch(url, { method: 'HEAD' }); // HEADリクエストで高速化
                                     if (res.ok) {
-                                        console.log(`File found: ${char} (${url})`);
-                                        // 重複チェック
-                                        if (!availableCharacters.includes(char)) {
-                                            availableCharacters.push(char);
-                                        }
-                                        fileFound = true;
-                                        break;
+                                        console.log(`Found file: ${pattern} (${url})`);
+                                        return pattern;
                                     }
-                                } catch (fetchError) {
+                                } catch (e) {
                                     // 静かに失敗
                                 }
                             }
-                            
-                            if (!fileFound) {
-                                console.log(`File not found: ${char}`);
-                            }
-                        } catch (error) {
-                            console.log(`Error checking file: ${char}`, error);
-                        }
+                            return null;
+                        });
+                        
+                        // 全ての検索を並列実行
+                        const results = await Promise.all(checkPromises);
+                        availableCharacters = results.filter(result => result !== null);
+                        
+                        console.log(`Dynamic detection complete. Found ${availableCharacters.length} files:`, availableCharacters);
                     }
                     
                     // 読み込み完了後、選択肢を更新
