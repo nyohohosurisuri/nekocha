@@ -15982,20 +15982,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         chatSystemPromptTextarea.value.trim() : '';
                     state.chatSystemPrompt = systemPrompt || null;
                     
-                    // AIアイコンの状態を確認（既にファイル選択時に保存済み）
-                    // 削除された場合の処理
-                    const chatAiIconInput = document.getElementById('chat-ai-icon');
-                    const chatAiIconPreview = document.getElementById('chat-ai-icon-preview');
-                    if (chatAiIconInput && chatAiIconInput.value === '' && 
-                        chatAiIconPreview && chatAiIconPreview.style.display === 'none') {
-                        // アイコンが削除されている場合
-                        state.settings.aiIconBlob = null;
-                        if (state.aiIconUrl) {
-                            URL.revokeObjectURL(state.aiIconUrl);
-                            state.aiIconUrl = null;
-                        }
-                        await dbUtils.saveSetting('aiIconBlob', null);
-                    }
+                    // AIアイコンの処理は既にファイル選択時や削除ボタン押下時に完了済み
+                    // ここでは追加の処理は不要
                     
                     // チャットを保存（設定を反映）
                     if (state.currentChatId && state.currentMessages && state.currentMessages.length > 0) {
