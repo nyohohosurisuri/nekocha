@@ -131,10 +131,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             --memo-height: 300px;
             --clipboard-stack-height: 300px;
-            --message-icon-size: 56px;
+            --message-icon-size: 28px;
             --message-icon-offset-y: -10px;
             --icon-name-font-size: 10px;
             --icon-name-offset-y: -10px;
+            --history-icon-size: 56px;
 
             --bg-toggle-button: var(--bg-button-action);
             --bg-toggle-button-hover: var(--bg-button-action-hover);
@@ -2109,8 +2110,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             margin-bottom: 0px;
         }
         .history-item-ai-icon {
-            width: 20px;
-            height: 20px;
+            width: var(--history-icon-size);
+            height: var(--history-icon-size);
             border-radius: 50%;
             object-fit: cover;
             flex-shrink: 0;
@@ -5135,7 +5136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const DEFAULT_CODE_BLOCK_FONT_SIZE = 13;
         const DEFAULT_MEMO_HEIGHT = '300px';
         const DEFAULT_CLIPBOARD_STACK_HEIGHT = '300px';
-        const DEFAULT_MESSAGE_ICON_SIZE = 56;
+        const DEFAULT_MESSAGE_ICON_SIZE = 28;
         const DEFAULT_MESSAGE_ICON_OFFSET_Y = -30;
         const DEFAULT_USER_NAME = "";
         const DEFAULT_AI_NAME = "AI";
