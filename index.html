@@ -8653,238 +8653,59 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // systempromptフォルダのディレクトリリストを取得
                     let availableCharacters = [];
                     
-                    // 方法1: ディレクトリリストから自動検出を試みる
                     try {
                         const res = await fetch('./systemprompt/');
                         if (res.ok) {
                             const html = await res.text();
-                            console.log('Directory listing available - parsing HTML');
+                            console.log('Directory HTML response received');
                             const parser = new DOMParser();
                             const doc = parser.parseFromString(html, 'text/html');
                             const links = doc.querySelectorAll('a[href$=".txt"]');
-                            console.log(`Found ${links.length} .txt files in directory listing`);
+                            console.log(`Found ${links.length} .txt links`);
                             
                             links.forEach(link => {
-                                const href = link.getAttribute('href');
-                                if (href && href.endsWith('.txt')) {
-                                    // URLデコードして文字名を取得
-                                    let characterName;
-                                    try {
-                                        characterName = decodeURIComponent(href.replace('.txt', ''));
-                                    } catch (e) {
-                                        characterName = href.replace('.txt', '');
-                                    }
-                                    
-                                    console.log(`Found character from directory: ${characterName}`);
-                                    if (!availableCharacters.includes(characterName)) {
-                                        availableCharacters.push(characterName);
-                                    }
+                                const filename = link.getAttribute('href');
+                                if (filename && filename.endsWith('.txt')) {
+                                    // URLデコードを使用して日本語ファイル名に対応
+                                    const decodedFilename = decodeURIComponent(filename);
+                                    const characterName = decodedFilename.replace('.txt', '');
+                                    console.log(`Found character: ${characterName}`);
+                                    availableCharacters.push(characterName);
                                 }
                             });
                         } else {
-                            console.log('Directory listing not available (404) - using fallback method');
+                            console.warn('Directory fetch failed with status:', res.status);
                         }
                     } catch (dirError) {
-                        console.log('Directory listing failed - using fallback method:', dirError);
+                        console.warn('ディレクトリリストの取得に失敗:', dirError);
                     }
                     
-                    // 方法2: ディレクトリリストが取得できない場合の完全動的検出
+                    // ディレクトリリストが取得できない場合のフォールバック
                     if (availableCharacters.length === 0) {
-                        console.log('Starting comprehensive file detection...');
-                        
-                        // 包括的なファイルパターン生成システム
-                        const commonPatterns = [];
-                        
-                        // 既存の日本語の文字パターン
-                        const japanesePatterns = [
-                            'アイシャ', 'アリーゼ', 'エプリル', 'キアラ', 'キュア', 'サヤ', 'シェリル', 'シャルロット', 'セツナ', 'セルピナ', 'セーラ', 
-                            'ティナ', 'テスト', 'トワ', 'ノクタリカ', 'フェイ', 'リスティ', 'リリー', 'リルテット', 
-                            'リーチェ', 'ルウシェ', 'ルカ', 'ルナ', '新キャラ'
+                        const knownCharacters = [
+                            'アイシャ', 'エプリル', 'キアラ', 'キュア', 'シェリル', 'セツナ', 'セーラ', 
+                            'ティナ', 'テスト', 'ノクタリカ', 'フェイ', 'リリー', 'リルテット', 
+                            'リーチェ', 'ルウシェ', 'ルナ'
                         ];
                         
-                        // 拡張された日本語パターン（より多くの組み合わせ）
-                        const extendedJapanesePatterns = [];
-                        const kanaChars = ['ア', 'イ', 'ウ', 'エ', 'オ', 'カ', 'キ', 'ク', 'ケ', 'コ', 'サ', 'シ', 'ス', 'セ', 'ソ', 
-                                          'タ', 'チ', 'ツ', 'テ', 'ト', 'ナ', 'ニ', 'ヌ', 'ネ', 'ノ', 'ハ', 'ヒ', 'フ', 'ヘ', 'ホ',
-                                          'マ', 'ミ', 'ム', 'メ', 'モ', 'ヤ', 'ユ', 'ヨ', 'ラ', 'リ', 'ル', 'レ', 'ロ', 'ワ', 'ヲ', 'ン'];
-                        const suffixes = ['', 'ちゃん', 'さん', 'くん', 'リン', 'ナ', 'カ', 'コ', 'ミ', 'エ'];
-                        
-                        // カタカナの2-4文字組み合わせを生成
-                        for (let i = 0; i < kanaChars.length; i++) {
-                            for (let j = 0; j < kanaChars.length; j++) {
-                                extendedJapanesePatterns.push(kanaChars[i] + kanaChars[j]);
-                                for (let k = 0; k < kanaChars.length; k++) {
-                                    if (extendedJapanesePatterns.length < 500) {
-                                        extendedJapanesePatterns.push(kanaChars[i] + kanaChars[j] + kanaChars[k]);
-                                    }
+                        // 各ファイルの存在確認
+                        console.log('Using fallback character detection');
+                        for (const char of knownCharacters) {
+                            try {
+                                const encodedChar = encodeURIComponent(char);
+                                const url = `./systemprompt/${encodedChar}.txt`;
+                                console.log(`Checking file: ${char} -> ${url}`);
+                                const res = await fetch(url);
+                                if (res.ok) {
+                                    console.log(`File found: ${char}`);
+                                    availableCharacters.push(char);
+                                } else {
+                                    console.log(`File not found: ${char} (status: ${res.status})`);
                                 }
+                            } catch (error) {
+                                console.log(`Error checking file: ${char}`, error);
                             }
                         }
-                        
-                        // 英語の文字パターン（拡張版）
-                        const englishPatterns = [
-                            'serpina', 'aisha', 'april', 'kiara', 'cure', 'sheryl', 'charlotte', 'setsuna', 'sera',
-                            'tina', 'test', 'towa', 'noctarica', 'fay', 'risty', 'lily', 'lirutet', 
-                            'riche', 'ruushe', 'luka', 'luna', 'newchar'
-                        ];
-                        
-                        // 拡張された英語パターン
-                        const extendedEnglishPatterns = [];
-                        const consonants = ['b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'x', 'y', 'z'];
-                        const vowels = ['a', 'e', 'i', 'o', 'u'];
-                        
-                        // 一般的な名前パターンを大幅拡張
-                        const commonNames = [
-                            'alice', 'bob', 'carol', 'dave', 'eve', 'frank', 'grace', 'henry', 'iris', 'jack',
-                            'kate', 'liam', 'mary', 'noah', 'olivia', 'peter', 'quinn', 'ruby', 'sarah', 'tom',
-                            'uma', 'victor', 'wendy', 'xavier', 'yuki', 'zoe', 'anna', 'bella', 'chloe', 'diana',
-                            'emma', 'faith', 'gina', 'hana', 'ivy', 'jade', 'kira', 'luna', 'mia', 'nina',
-                            'amy', 'ben', 'cam', 'dan', 'eli', 'fin', 'guy', 'hal', 'ian', 'joe', 'kim', 'leo',
-                            'max', 'neo', 'owen', 'pat', 'ray', 'sam', 'tim', 'val', 'will', 'axel', 'blake',
-                            'cole', 'drew', 'eric', 'ford', 'gray', 'hugh', 'ivan', 'jude', 'kyle', 'luke'
-                        ];
-                        
-                        // CV/CVC/CVCVパターンを生成（一般的な音韻パターン）
-                        for (let i = 0; i < consonants.length && extendedEnglishPatterns.length < 300; i++) {
-                            for (let j = 0; j < vowels.length; j++) {
-                                extendedEnglishPatterns.push(consonants[i] + vowels[j]); // CV
-                                for (let k = 0; k < consonants.length && extendedEnglishPatterns.length < 300; k++) {
-                                    extendedEnglishPatterns.push(consonants[i] + vowels[j] + consonants[k]); // CVC
-                                }
-                            }
-                        }
-                        
-                        // 数字パターン（拡張版）
-                        const numberedPatterns = [];
-                        for (let i = 1; i <= 100; i++) {
-                            numberedPatterns.push(`char${i}`, `character${i}`, `キャラ${i}`, `test${i}`, `user${i}`, `bot${i}`, `ai${i}`, `file${i}`);
-                        }
-                        
-                        // 特殊パターン
-                        const specialPatterns = [
-                            'default', 'main', 'primary', 'secondary', 'backup', 'temp', 'temporary', 'sample', 'example',
-                            'demo', 'prototype', 'beta', 'alpha', 'final', 'v1', 'v2', 'v3', 'new', 'old', 'latest',
-                            'custom', 'personal', 'private', 'public', 'system', 'admin', 'guest', 'anonymous',
-                            'unknown', 'untitled', 'unnamed', 'noname', '名前なし', '無題', 'テンプレート'
-                        ];
-                        
-                        // 日付パターン
-                        const datePatterns = [];
-                        const currentYear = new Date().getFullYear();
-                        for (let year = currentYear - 2; year <= currentYear + 1; year++) {
-                            for (let month = 1; month <= 12; month++) {
-                                for (let day = 1; day <= 31; day++) {
-                                    if (datePatterns.length < 100) {
-                                        datePatterns.push(`${year}${month.toString().padStart(2, '0')}${day.toString().padStart(2, '0')}`);
-                                        datePatterns.push(`${month}${day}`);
-                                    }
-                                }
-                            }
-                        }
-                        
-                        // Unicode文字範囲での包括的検索パターン
-                        const unicodePatterns = [];
-                        
-                        // ひらがな範囲（U+3041-U+3096）の組み合わせ
-                        for (let i = 0x3041; i <= 0x3096 && unicodePatterns.length < 200; i++) {
-                            for (let j = 0x3041; j <= 0x3096 && unicodePatterns.length < 200; j++) {
-                                unicodePatterns.push(String.fromCharCode(i) + String.fromCharCode(j));
-                            }
-                        }
-                        
-                        // カタカナ範囲（U+30A1-U+30F6）の組み合わせ
-                        for (let i = 0x30A1; i <= 0x30F6 && unicodePatterns.length < 400; i++) {
-                            for (let j = 0x30A1; j <= 0x30F6 && unicodePatterns.length < 400; j++) {
-                                unicodePatterns.push(String.fromCharCode(i) + String.fromCharCode(j));
-                            }
-                        }
-                        
-                        // 英数字の全組み合わせパターン
-                        const alphanumericPatterns = [];
-                        const allChars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-                        for (let i = 0; i < allChars.length && alphanumericPatterns.length < 300; i++) {
-                            for (let j = 0; j < allChars.length && alphanumericPatterns.length < 300; j++) {
-                                alphanumericPatterns.push(allChars[i] + allChars[j]);
-                                for (let k = 0; k < allChars.length && alphanumericPatterns.length < 300; k++) {
-                                    alphanumericPatterns.push(allChars[i] + allChars[j] + allChars[k]);
-                                }
-                            }
-                        }
-                        
-                        // ランダム文字列パターン（よくあるパターン）
-                        const randomPatterns = [];
-                        const words = ['test', 'new', 'temp', 'sample', 'demo', 'user', 'char', 'bot', 'ai'];
-                        const numbers = ['1', '2', '3', '01', '02', '03', '001', '002', '003'];
-                        words.forEach(word => {
-                            numbers.forEach(num => {
-                                randomPatterns.push(word + num, num + word, word + '_' + num, word + '-' + num);
-                            });
-                        });
-                        
-                        // 全てのパターンを結合
-                        commonPatterns.push(
-                            ...japanesePatterns, 
-                            ...extendedJapanesePatterns.slice(0, 600),
-                            ...unicodePatterns.slice(0, 400),
-                            ...englishPatterns, 
-                            ...extendedEnglishPatterns,
-                            ...alphanumericPatterns.slice(0, 300),
-                            ...commonNames,
-                            ...numberedPatterns, 
-                            ...specialPatterns,
-                            ...datePatterns,
-                            ...randomPatterns
-                        );
-                        
-                        console.log(`Testing ${commonPatterns.length} potential file patterns...`);
-                        
-                        // 段階的検索システム（効率化のため）
-                        let foundPatterns = [];
-                        const batchSize = 100;
-                        
-                        for (let i = 0; i < commonPatterns.length; i += batchSize) {
-                            const batch = commonPatterns.slice(i, i + batchSize);
-                            console.log(`Searching batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(commonPatterns.length/batchSize)}...`);
-                            
-                            const batchPromises = batch.map(async (pattern) => {
-                                const encodingVariants = [
-                                    pattern,
-                                    encodeURIComponent(pattern),
-                                    encodeURI(pattern),
-                                    pattern.toLowerCase(),
-                                    pattern.toUpperCase(),
-                                    pattern.charAt(0).toUpperCase() + pattern.slice(1).toLowerCase()
-                                ];
-                                
-                                for (const encoded of encodingVariants) {
-                                    try {
-                                        const url = `./systemprompt/${encoded}.txt`;
-                                        const res = await fetch(url, { method: 'HEAD' });
-                                        if (res.ok) {
-                                            console.log(`Found file: ${pattern} (${url})`);
-                                            return pattern;
-                                        }
-                                    } catch (e) {
-                                        // 静かに失敗
-                                    }
-                                }
-                                return null;
-                            });
-                            
-                            const batchResults = await Promise.all(batchPromises);
-                            const newFound = batchResults.filter(result => result !== null);
-                            foundPatterns.push(...newFound);
-                            
-                            // 早期終了条件（十分なファイルが見つかった場合）
-                            if (foundPatterns.length > 50) {
-                                console.log(`Early termination: Found ${foundPatterns.length} files, stopping search.`);
-                                break;
-                            }
-                        }
-                        
-                        availableCharacters = foundPatterns;
-                        
-                        console.log(`Dynamic detection complete. Found ${availableCharacters.length} files:`, availableCharacters);
                     }
                     
                     // 読み込み完了後、選択肢を更新
@@ -11027,24 +10848,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                  }
 
                  let exportText = '';
-                 
-                 // キャラクター名を追加
-                 if (chat.characterName || chat.aiName) {
-                     const characterName = chat.characterName || chat.aiName || 'AI';
-                     exportText += `<|#|character|#|>\n${characterName}\n<|#|/character|#|>\n\n`;
-                 }
-                 
-                 // システムプロンプトを追加
-                 if (chat.chatSystemPrompt) {
-                     exportText += `<|#|system|#|>\n${chat.chatSystemPrompt}\n<|#|/system|#|>\n\n`;
-                 }
-                 // メッセージを追加
                  if (chat.messages) {
                      chat.messages.forEach(msg => {
-                         if (msg.role === 'user') {
-                             exportText += `<|#|user|#|>\n${msg.content}\n<|#|/user|#|>\n\n`;
-                         } else if (msg.role === 'model') {
-                             exportText += `<|#|model|#|>\n${msg.content}\n<|#|/model|#|>\n\n`;
+                         if (msg.role === 'user' || msg.role === 'model' || msg.role === 'character' || msg.role === 'system') {
+                             let attributes = '';
+                             if (msg.role === 'model') {
+                                 if (msg.isCascaded) attributes += ' isCascaded';
+                                 if (msg.isSelected) attributes += ' isSelected';
+                                 if (msg.thoughtSummaryOpen) attributes += ' thoughtOpen';
+                             }
+                             if (msg.role === 'user' && msg.attachments && msg.attachments.length > 0) {
+                                 const fileNames = msg.attachments.map(a => a.name).join(';');
+                                 attributes += ` attachments="${fileNames.replace(/"/g, '"')}"`;
+                             }
+                             exportText += `<|#|${msg.role}|#|${attributes.trim()}>\n${msg.content}\n<|#|/${msg.role}|#|>\n\n`;
                          }
                      });
                  }
@@ -12419,38 +12236,48 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
         parseImportedHistory(text) {
             const messages = [];
-            let characterName = null;
-            let systemPrompt = null;
-            
-            const blockRegex = /<\|#\|(system|user|model|character)\|#\|>([\s\S]*?)<\|#\|\/\1\|#\|>/g;
+            const blockRegex = /<\|#\|(system|user|model|character)\|#\|([^>]*)>([\s\S]*?)<\|#\|\/\1\|#\|>/g;
             let match;
 
             while ((match = blockRegex.exec(text)) !== null) {
                 const role = match[1];
-                const content = match[2].trim();
+                const attributesString = match[2].trim();
+                const content = match[3].trim();
 
-                if (role === 'character' && content) {
-                    characterName = content;
-                } else if (role === 'system' && content) {
-                    systemPrompt = content;
-                } else if (role === 'user' && content) {
-                    messages.push({
-                        role: 'user',
-                        content: content,
-                        timestamp: Date.now(),
-                        attachments: []
+                if ((role === 'user' || role === 'model' || role === 'character' || role === 'system') && (content || attributesString.includes('attachments'))) {
+                    const messageData = {
+                        role: role, content: content, timestamp: Date.now(), attachments: []
+                    };
+                    const attributes = {};
+                    attributesString.split(/\s+/).forEach(attr => {
+                        const eqIndex = attr.indexOf('=');
+                        if (eqIndex > 0) {
+                            const key = attr.substring(0, eqIndex);
+                            let value = attr.substring(eqIndex + 1);
+                            if (value.startsWith('"') && value.endsWith('"')) {
+                                value = value.substring(1, value.length - 1);
+                            }
+                            attributes[key] = value.replace(/&quot;/g, '"');
+                        } else if (attr) {
+                            attributes[attr] = true;
+                        }
                     });
-                } else if (role === 'model' && content) {
-                    messages.push({
-                        role: 'model',
-                        content: content,
-                        timestamp: Date.now(),
-                        attachments: []
-                    });
+
+                    if (role === 'model') {
+                        messageData.isCascaded = attributes['isCascaded'] === true;
+                        messageData.isSelected = attributes['isSelected'] === true;
+                        messageData.thoughtSummaryOpen = attributes['thoughtOpen'] === true;
+                    }
+                    if (role === 'user' && attributes['attachments']) {
+                        const fileNames = attributes['attachments'].split(';');
+                        messageData.attachments = fileNames.map(name => ({
+                            name: name, mimeType: 'unknown/unknown', base64Data: ''
+                        }));
+                    }
+                    messages.push(messageData);
                 }
             }
-            
-            return { messages, characterName, systemPrompt };
+            return { messages };
         },
         async exportAllSessions() {
             const confirmed = await uiUtils.showCustomConfirm("全てのセッションを1つのJSONファイルとしてエクスポートしますか？");
