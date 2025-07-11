@@ -6276,18 +6276,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }
                         }
                         
-                        // AI名とAIアイコンの状態検証・修復
-                        let aiName = state.settings.aiName;
+                        // チャット固有のAI名とAIアイコンを保存用に準備
+                        let aiName = state.currentChatAiName || state.settings.aiName;
                         if (!aiName || aiName.trim() === '') {
                             aiName = "AI";
-                            state.settings.aiName = aiName;
                         }
                         
-                        let aiIconBlob = state.settings.aiIconBlob;
+                        let aiIconBlob = state.currentChatAiIconBlob || state.settings.aiIconBlob;
                         if (aiIconBlob && !(aiIconBlob instanceof Blob)) {
                             console.warn('Invalid aiIconBlob detected, setting to null');
                             aiIconBlob = null;
-                            state.settings.aiIconBlob = null;
                         }
                         
                         const chatData = {
@@ -6546,13 +6544,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (state.settings.showAiIcon) {
                         let iconUrl = state.aiIconUrl;
                         
-                        // アイコンURLが無効な場合、設定から再作成を試行
-                        if (!iconUrl && state.settings.aiIconBlob instanceof Blob) {
-                            try {
-                                iconUrl = URL.createObjectURL(state.settings.aiIconBlob);
-                                state.aiIconUrl = iconUrl;
-                            } catch (e) {
-                                console.error('Error recreating AI icon URL:', e);
+                        // アイコンURLが無効な場合、チャット固有またはグローバル設定から再作成を試行
+                        if (!iconUrl) {
+                            const iconBlob = state.currentChatAiIconBlob || state.settings.aiIconBlob;
+                            if (iconBlob instanceof Blob) {
+                                try {
+                                    iconUrl = URL.createObjectURL(iconBlob);
+                                    state.aiIconUrl = iconUrl;
+                                } catch (e) {
+                                    console.error('Error recreating AI icon URL:', e);
+                                }
                             }
                         }
                         
@@ -6567,7 +6568,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     // AI名の表示
                     if (state.settings.showAiName) {
-                        let aiName = state.settings.aiName;
+                        // チャット固有のAI名を優先、なければグローバル設定を使用
+                        let aiName = state.currentChatAiName || state.settings.aiName;
                         
                         // AI名が空の場合、デフォルト値を使用
                         if (!aiName || aiName.trim() === '') {
@@ -10643,6 +10645,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             
             state.pendingCharacterName = null;
+            state.currentChatAiName = null;
+            state.currentChatAiIconBlob = null;
             state.isMemoVisible = false;
             elements.memoArea.classList.add('hidden');
             elements.memoEditor.value = '';
@@ -10735,15 +10739,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                     }
                     
-                    // AI名とAIアイコンを復元
+                    // チャット固有のAI名とAIアイコンを復元（グローバル設定は変更しない）
                     if (chat.aiName) {
-                        state.settings.aiName = chat.aiName;
+                        state.currentChatAiName = chat.aiName;
                         console.log('Restored AI name from chat data:', chat.aiName);
-                        // AI名入力フィールドに反映
-                        const aiNameInput = document.getElementById('ai-name-input');
-                        if (aiNameInput) {
-                            aiNameInput.value = chat.aiName;
-                        }
+                    } else {
+                        state.currentChatAiName = null;
                     }
                     
                     if (chat.aiIconBlob) {
@@ -10762,7 +10763,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                         
                         if (restoredBlob) {
-                            state.settings.aiIconBlob = restoredBlob;
+                            state.currentChatAiIconBlob = restoredBlob;
                             // 既存のURL解放
                             if (state.aiIconUrl) {
                                 URL.revokeObjectURL(state.aiIconUrl);
@@ -10777,15 +10778,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }
                         }
                     } else {
-                        // AIアイコンがない場合はクリーンアップ
+                        // チャット固有のAIアイコンがない場合はクリーンアップ
+                        state.currentChatAiIconBlob = null;
                         if (state.aiIconUrl) {
                             URL.revokeObjectURL(state.aiIconUrl);
                             state.aiIconUrl = null;
                         }
-                        state.settings.aiIconBlob = null;
-                        const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
-                        if (aiIconThumbnail) {
-                            aiIconThumbnail.style.display = 'none';
+                        
+                        // グローバル設定のAIアイコンを復元
+                        if (state.settings.aiIconBlob instanceof Blob) {
+                            try {
+                                state.aiIconUrl = URL.createObjectURL(state.settings.aiIconBlob);
+                                const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
+                                if (aiIconThumbnail) {
+                                    aiIconThumbnail.src = state.aiIconUrl;
+                                    aiIconThumbnail.style.display = 'block';
+                                }
+                            } catch (e) {
+                                console.error('Error creating AI icon URL from global settings:', e);
+                            }
+                        } else {
+                            const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
+                            if (aiIconThumbnail) {
+                                aiIconThumbnail.style.display = 'none';
+                            }
                         }
                     }
                     
