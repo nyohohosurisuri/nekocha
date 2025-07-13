@@ -9700,7 +9700,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     chat.settingsTimestamp = Date.now();
 
                     await store.put(chat);
-                    await transaction.complete;
 
                     // メモリ上の状態も更新
                     state.currentChatAiName = settings.aiName;
