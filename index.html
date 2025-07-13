@@ -6757,7 +6757,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         
                         if (base64Icon) {
                             // デバッグログ
-                            console.log('[appendMessage] Using AI icon:', {
+                            console.log('🔧[DEBUG] appendMessage - Using AI icon:', {
                                 currentChatId: state.currentChatId,
                                 hasCurrentChatBase64: !!state.currentChatAiIconBase64,
                                 hasIconManagerCache: state.currentChatId ? !!iconManager.getIcon(state.currentChatId) : 'N/A',
@@ -8918,13 +8918,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     
                     // プロンプト画面でのAIアイコン状態をクリア（新しいセッション開始）
+                    console.log('🔧[DEBUG] showScreen(prompt-setup) - 状態確認:', {
+                        hasPendingPromptIcon: !!state.pendingPromptAiIconBlob,
+                        aiIconUrl: state.aiIconUrl
+                    });
+                    
                     if (state.pendingPromptAiIconBlob) {
                         if (state.aiIconUrl) {
                             URL.revokeObjectURL(state.aiIconUrl);
                         }
                         state.pendingPromptAiIconBlob = null;
                         state.aiIconUrl = null;
-                        console.log('[showScreen(prompt-setup)] プロンプト用AIアイコン状態をクリア');
+                        console.log('🔧[DEBUG] showScreen(prompt-setup) - プロンプト用AIアイコン状態をクリア');
                     }
                     
                     // AIアイコンの表示状態を更新
@@ -9170,9 +9175,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     state.aiIconUrl = URL.createObjectURL(blob);
                     this.updatePromptAiIconDisplay();
                     
-                    console.log('[handlePromptAiIconUpload] プロンプト用アイコンを一時保存:', {
+                    console.log('🔧[DEBUG] handlePromptAiIconUpload - プロンプト用アイコンを一時保存:', {
                         hasPendingIcon: !!state.pendingPromptAiIconBlob,
-                        hasGlobalIcon: !!state.settings.aiIconBlob
+                        hasGlobalIcon: !!state.settings.aiIconBlob,
+                        aiIconUrl: state.aiIconUrl
                     });
                 } catch (error) {
                     console.error('AIアイコンアップロードエラー:', error);
@@ -9257,8 +9263,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // プロンプト画面からの新規チャット作成を示すフラグを設定
                     state.isFromPromptSetup = true;
                     
+                    console.log('🔧[DEBUG] startChatWithPrompt - 開始ボタンクリック:', {
+                        hasPendingIcon: !!state.pendingPromptAiIconBlob,
+                        isFromPromptSetup: state.isFromPromptSetup,
+                        currentScreen: state.currentScreen
+                    });
+                    
                     // 重要: 画面状態を先に更新してからstartNewChatを呼ぶ
                     await this.showScreen('chat');
+                    
+                    console.log('🔧[DEBUG] startChatWithPrompt - 画面遷移後:', {
+                        currentScreen: state.currentScreen
+                    });
                     
                     // 新規チャットを開始
                     appLogic.startNewChat();
@@ -11093,9 +11109,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             state.pendingPromptAiIconBlob = null;
             
             // デバッグログ
-            console.log('[startNewChat] AI icon state updated:', {
+            console.log('🔧[DEBUG] startNewChat - AI icon state updated:', {
                 currentChatId: state.currentChatId,
                 currentScreen: state.currentScreen,
+                isFromPromptSetup: state.isFromPromptSetup,
+                hasPendingPromptIcon: !!state.pendingPromptAiIconBlob,
                 currentChatAiIconBase64: state.currentChatAiIconBase64,
                 currentChatAiIconBlob: !!state.currentChatAiIconBlob,
                 aiIconUrl: state.aiIconUrl,
