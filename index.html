@@ -4851,8 +4851,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <input type="checkbox" id="show-ai-name-toggle" checked>
                             AI名を表示する
                         </label>
-                        <label for="ai-name-input">表示するAI名:</label>
-                        <input type="text" id="ai-name-input" placeholder="例: Gemini" aria-label="表示するAI名">
 
                         <details id="settings-group-icon-details">
                             <summary style="cursor: pointer; font-weight: normal; font-size: 14px; color: var(--text-link); list-style: revert;">アイコン表示調整</summary>
@@ -5750,7 +5748,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             aiIconThumbnail: document.getElementById('ai-icon-thumbnail'),
             deleteAiIconBtn: document.getElementById('delete-ai-icon-btn'),
             showAiNameToggle: document.getElementById('show-ai-name-toggle'),
-            aiNameInput: document.getElementById('ai-name-input'),
+            // 削除: chatAiNameInput: document.getElementById('chat-ai-name-input'),
             iconNameFontSizeInput: document.getElementById('icon-name-font-size'),
             iconNameOffsetYInput: document.getElementById('icon-name-offset-y'),
             messageIconSizeInput: document.getElementById('message-icon-size'),
@@ -9691,12 +9689,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                         };
                     }
                     
-                    // 設定をチャットオブジェクトに統合
-                    chat.aiName = settings.aiName;
-                    chat.aiIconBase64 = settings.aiIconBase64;
-                    chat.characterName = settings.characterName;
-                    chat.characterPrompt = settings.characterPrompt;
-                    chat.chatSystemPrompt = settings.chatSystemPrompt;
+                    // 設定をチャットオブジェクトに統合（クローン可能なプロパティのみ）
+                    if (settings.aiName !== undefined) chat.aiName = settings.aiName;
+                    if (settings.aiIconBase64 !== undefined) chat.aiIconBase64 = settings.aiIconBase64;
+                    if (settings.characterName !== undefined) chat.characterName = settings.characterName;
+                    if (settings.characterPrompt !== undefined) chat.characterPrompt = settings.characterPrompt;
+                    if (settings.chatSystemPrompt !== undefined) chat.chatSystemPrompt = settings.chatSystemPrompt;
                     chat.settingsTimestamp = Date.now();
 
                     await store.put(chat);
