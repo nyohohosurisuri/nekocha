@@ -72,6 +72,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // アイコンの取得（base64を返す）
         getIcon(chatId) {
+            // chatIdがnullの場合は何も返さない
+            if (chatId === null || chatId === undefined) {
+                return null;
+            }
             return this.iconCache.get(chatId) || null;
         }
 
@@ -6737,12 +6741,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else if (role === 'model') {
                     // AIアイコンの表示（base64対応）
                     if (state.settings.showAiIcon) {
-                        // base64からアイコンを取得
-                        const base64Icon = state.currentChatAiIconBase64 || 
-                                          iconManager.getIcon(state.currentChatId) ||
-                                          state.settings.aiIconBase64;
+                        // base64からアイコンを取得（currentChatIdがnullの場合は既存チャット用のキャッシュを使用しない）
+                        let base64Icon = null;
+                        
+                        if (state.currentChatId) {
+                            // 既存のチャットの場合
+                            base64Icon = state.currentChatAiIconBase64 || 
+                                        iconManager.getIcon(state.currentChatId) ||
+                                        state.settings.aiIconBase64;
+                        } else {
+                            // 新規チャットの場合（currentChatIdがnull）
+                            base64Icon = state.currentChatAiIconBase64 ||
+                                        state.settings.aiIconBase64;
+                        }
                         
                         if (base64Icon) {
+                            // デバッグログ
+                            console.log('[appendMessage] Using AI icon:', {
+                                currentChatId: state.currentChatId,
+                                hasCurrentChatBase64: !!state.currentChatAiIconBase64,
+                                hasIconManagerCache: state.currentChatId ? !!iconManager.getIcon(state.currentChatId) : 'N/A',
+                                hasGlobalBase64: !!state.settings.aiIconBase64,
+                                iconSource: base64Icon.substring(0, 50) + '...'
+                            });
+                            
                             // base64から直接img要素を作成
                             const iconImg = document.createElement('img');
                             iconImg.src = base64Icon; // base64データURLを直接設定
@@ -11021,26 +11043,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (state.currentScreen !== 'prompt-setup') {
                 state.chatSystemPrompt = null;
                 
-                // チャット固有のAIアイコンもクリア（グローバル設定のAIアイコンは保持）
+                // チャット固有のAIアイコンもクリア
                 if (state.aiIconUrl) {
                     URL.revokeObjectURL(state.aiIconUrl);
                     state.aiIconUrl = null;
                 }
                 
-                // AIアイコンを設定から復元
-                if (state.settings.aiIconBlob instanceof Blob) {
-                    try {
-                        state.aiIconUrl = URL.createObjectURL(state.settings.aiIconBlob);
-                    } catch (e) {
-                        console.error('Error creating AI icon URL:', e);
-                    }
-                }
+                // 重要: 新しいチャットではグローバル設定のアイコンも自動復元しない
+                // renderChatMessages()で必要に応じて設定される
             }
             
             state.pendingCharacterName = null;
             state.currentChatAiName = null;
             state.currentChatAiIconBlob = null;
             state.currentChatAiIconBase64 = null;
+            
+            // デバッグログ
+            console.log('[startNewChat] AI icon state cleared:', {
+                currentChatId: state.currentChatId,
+                currentChatAiIconBase64: state.currentChatAiIconBase64,
+                currentChatAiIconBlob: state.currentChatAiIconBlob,
+                aiIconUrl: state.aiIconUrl,
+                hasGlobalBase64: !!state.settings.aiIconBase64
+            });
             state.isMemoVisible = false;
             elements.memoArea.classList.add('hidden');
             elements.memoEditor.value = '';
