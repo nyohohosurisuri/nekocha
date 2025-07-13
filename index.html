@@ -9683,13 +9683,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         delete settings.aiIconBlob; // Blobは保存しない
                     }
 
-                    // IndexedDBに保存
-                    const db = await dbUtils.openDB();
-                    const transaction = db.transaction(['chats'], 'readwrite');
-                    const store = transaction.objectStore('chats');
-                    
                     // 既存のチャットを取得して設定を追加
-                    let chat = await store.get(chatId);
+                    let chat = await dbUtils.getChat(chatId);
                     if (!chat) {
                         chat = {
                             id: chatId,
@@ -9707,7 +9702,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (settings.chatSystemPrompt !== undefined) chat.chatSystemPrompt = settings.chatSystemPrompt;
                     chat.settingsTimestamp = Date.now();
 
-                    await store.put(chat);
+                    await dbUtils.saveChat(chat);
 
                     // メモリ上の状態も更新
                     state.currentChatAiName = settings.aiName;
