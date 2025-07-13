@@ -8917,6 +8917,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                         state.settings.showAiName = true;
                     }
                     
+                    // プロンプト画面でのAIアイコン状態をクリア（新しいセッション開始）
+                    if (state.pendingPromptAiIconBlob) {
+                        if (state.aiIconUrl) {
+                            URL.revokeObjectURL(state.aiIconUrl);
+                        }
+                        state.pendingPromptAiIconBlob = null;
+                        state.aiIconUrl = null;
+                        console.log('[showScreen(prompt-setup)] プロンプト用AIアイコン状態をクリア');
+                    }
+                    
                     // AIアイコンの表示状態を更新
                     this.updatePromptAiIconDisplay();
                     // プレビューを更新
@@ -9154,11 +9164,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 try {
                     const blob = file;
                     if(state.aiIconUrl) URL.revokeObjectURL(state.aiIconUrl);
-                    await dbUtils.saveSetting('aiIconBlob', blob);
-                    state.settings.aiIconBlob = blob;
+                    
+                    // 重要: グローバル設定を汚染せず、一時的な状態として保存
+                    state.pendingPromptAiIconBlob = blob;
                     state.aiIconUrl = URL.createObjectURL(blob);
                     this.updatePromptAiIconDisplay();
-                    this.updateIconSettingsUI();
+                    
+                    console.log('[handlePromptAiIconUpload] プロンプト用アイコンを一時保存:', {
+                        hasPendingIcon: !!state.pendingPromptAiIconBlob,
+                        hasGlobalIcon: !!state.settings.aiIconBlob
+                    });
                 } catch (error) {
                     console.error('AIアイコンアップロードエラー:', error);
                     await this.showCustomAlert(`AIアイコンの処理エラー: ${error}`);
@@ -9231,22 +9246,29 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // 設定を保存
                     await appLogic.saveSettings(false);
                     
-                    // 新規チャットを開始
-                    appLogic.startNewChat();
-                    
                     // キャラクター名を一時保存（新しいチャット作成時に使用）
                     if (characterValue) {
                         state.pendingCharacterName = characterValue;
                         console.log('Pending character name set to:', characterValue);
-                        // チャットタイトルを更新
-                        uiUtils.updateChatTitle(`新しいチャット (${characterValue})`);
                     } else {
                         state.pendingCharacterName = null;
-                        uiUtils.updateChatTitle('新しいチャット');
                     }
                     
-                    // チャット画面に移行
+                    // プロンプト画面からの新規チャット作成を示すフラグを設定
+                    state.isFromPromptSetup = true;
+                    
+                    // 重要: 画面状態を先に更新してからstartNewChatを呼ぶ
                     await this.showScreen('chat');
+                    
+                    // 新規チャットを開始
+                    appLogic.startNewChat();
+                    
+                    // チャットタイトルを更新
+                    if (characterValue) {
+                        uiUtils.updateChatTitle(`新しいチャット (${characterValue})`);
+                    } else {
+                        uiUtils.updateChatTitle('新しいチャット');
+                    }
                 } catch (error) {
                     console.error('プロンプト設定エラー:', error);
                     await this.showCustomAlert('プロンプト設定中にエラーが発生しました。');
@@ -11055,14 +11077,27 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             state.pendingCharacterName = null;
             state.currentChatAiName = null;
-            state.currentChatAiIconBlob = null;
+            
+            // プロンプト画面から来た場合は、一時保存されたアイコンをチャット固有として設定
+            if (state.isFromPromptSetup && state.pendingPromptAiIconBlob) {
+                state.currentChatAiIconBlob = state.pendingPromptAiIconBlob;
+                console.log('[startNewChat] プロンプトアイコンをチャット固有アイコンとして設定');
+            } else {
+                state.currentChatAiIconBlob = null;
+            }
+            
             state.currentChatAiIconBase64 = null;
             
+            // フラグと一時的なプロンプトアイコンをクリア
+            state.isFromPromptSetup = false;
+            state.pendingPromptAiIconBlob = null;
+            
             // デバッグログ
-            console.log('[startNewChat] AI icon state cleared:', {
+            console.log('[startNewChat] AI icon state updated:', {
                 currentChatId: state.currentChatId,
+                currentScreen: state.currentScreen,
                 currentChatAiIconBase64: state.currentChatAiIconBase64,
-                currentChatAiIconBlob: state.currentChatAiIconBlob,
+                currentChatAiIconBlob: !!state.currentChatAiIconBlob,
                 aiIconUrl: state.aiIconUrl,
                 hasGlobalBase64: !!state.settings.aiIconBase64
             });
