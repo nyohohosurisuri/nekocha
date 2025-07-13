@@ -6643,8 +6643,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             },
             renderChatMessages(maintainScroll = false) {
                 // iPhone対策: AIアイコンURLを再確認・再生成
-                if (!state.aiIconUrl && (state.currentChatAiIconBlob || state.settings.aiIconBlob)) {
-                    const iconBlob = state.currentChatAiIconBlob || state.settings.aiIconBlob;
+                if (!state.aiIconUrl && state.currentChatAiIconBlob) {
+                    const iconBlob = state.currentChatAiIconBlob;
+                    if (iconBlob instanceof Blob) {
+                        try {
+                            state.aiIconUrl = URL.createObjectURL(iconBlob);
+                        } catch (e) {
+                            console.error('Error recreating AI icon URL in renderChatMessages:', e);
+                        }
+                    }
+                } else if (!state.aiIconUrl && !state.currentChatAiIconBlob && state.settings.aiIconBlob) {
+                    // チャット固有のアイコンがない場合のみグローバル設定を使用
+                    const iconBlob = state.settings.aiIconBlob;
                     if (iconBlob instanceof Blob) {
                         try {
                             state.aiIconUrl = URL.createObjectURL(iconBlob);
