@@ -11160,6 +11160,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }
                             state.aiIconUrl = URL.createObjectURL(restoredBlob);
                             
+                            // Base64もセット（メッセージ表示用）
+                            try {
+                                const base64 = await iconManager.saveIcon(state.currentChatId, restoredBlob);
+                                state.currentChatAiIconBase64 = base64;
+                            } catch (e) {
+                                console.error('Failed to convert AI icon to base64:', e);
+                            }
+                            
                             // AIアイコンを画面に反映
                             const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
                             if (aiIconThumbnail) {
@@ -11170,6 +11178,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     } else {
                         // チャット固有のAIアイコンがない場合はクリーンアップ
                         state.currentChatAiIconBlob = null;
+                        state.currentChatAiIconBase64 = null;
                         if (state.aiIconUrl) {
                             URL.revokeObjectURL(state.aiIconUrl);
                             state.aiIconUrl = null;
