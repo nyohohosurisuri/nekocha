@@ -9215,6 +9215,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                         uiUtils.updateChatTitle('新しいチャット');
                     }
                     
+                    // プロンプト作成画面で設定したAI名とアイコンをチャット固有として設定
+                    const aiName = elements.aiNameInput ? elements.aiNameInput.value.trim() : '';
+                    if (aiName) {
+                        state.currentChatAiName = aiName;
+                    }
+                    
+                    // AIアイコンをチャット固有として設定
+                    if (state.settings.aiIconBlob) {
+                        state.currentChatAiIconBlob = state.settings.aiIconBlob;
+                        
+                        // Base64も設定（メッセージ表示用）
+                        try {
+                            const base64 = await iconManager.blobToBase64(state.settings.aiIconBlob);
+                            state.currentChatAiIconBase64 = base64;
+                        } catch (e) {
+                            console.error('Failed to convert AI icon to base64 in startChatWithPrompt:', e);
+                        }
+                    }
+                    
                     // チャット画面に移行
                     await this.showScreen('chat');
                 } catch (error) {
