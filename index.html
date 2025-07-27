@@ -6457,11 +6457,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                             aiName = "AI";
                         }
                         
-                        let aiIconBlob = state.currentChatAiIconBlob || state.settings.aiIconBlob;
-                        if (aiIconBlob && !(aiIconBlob instanceof Blob)) {
-                            console.warn('Invalid aiIconBlob detected, setting to null');
-                            aiIconBlob = null;
-                        }
+                        // Base64でアイコンを保存（Blob保存を廃止）
+                        let aiIconBase64 = state.currentChatAiIconBase64 || state.settings.aiIconBase64;
                         
                         const chatData = {
                             messages: messagesToSave,
@@ -6469,7 +6466,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             title: title,
                             characterName: characterName,
                             aiName: aiName,
-                            aiIconBlob: aiIconBlob,
+                            aiIconBase64: aiIconBase64,
                             chatSystemPrompt: state.chatSystemPrompt || null,
                         };
                         if (state.settings.persistMessageCollapseState) {
