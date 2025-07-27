@@ -6,131 +6,6 @@
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     /* ★ 初期化処理のみ実行（プロンプト読み込みはキャラクター選択時に行う） */
-    console.log('=== NEKOCHA ICON FIX VERSION 2025-01-27-02 LOADED ===');
-    
-    // アイコン管理クラス
-    class IconManager {
-        constructor() {
-            this.iconCache = new Map(); // chatId -> base64
-            this.urlCache = new Map();  // base64 -> URL
-        }
-
-        // BlobをBase64に変換
-        async blobToBase64(blob) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-            });
-        }
-
-        // Base64からBlob URLを生成（キャッシュ付き）
-        base64ToUrl(base64) {
-            if (!base64) return null;
-            
-            // キャッシュチェック
-            if (this.urlCache.has(base64)) {
-                return this.urlCache.get(base64);
-            }
-            
-            try {
-                // base64からBlobを作成
-                const arr = base64.split(',');
-                const mime = arr[0].match(/:(.*?);/)[1];
-                const bstr = atob(arr[1]);
-                let n = bstr.length;
-                const u8arr = new Uint8Array(n);
-                while(n--) {
-                    u8arr[n] = bstr.charCodeAt(n);
-                }
-                const blob = new Blob([u8arr], {type: mime});
-                const url = URL.createObjectURL(blob);
-                
-                // キャッシュに保存
-                this.urlCache.set(base64, url);
-                
-                return url;
-            } catch (e) {
-                console.error('Base64 to URL conversion failed:', e);
-                return null;
-            }
-        }
-
-        // アイコンの保存（Blobからbase64に変換して保存）
-        async saveIcon(chatId, blob) {
-            if (!blob || !(blob instanceof Blob)) return null;
-            
-            try {
-                const base64 = await this.blobToBase64(blob);
-                this.iconCache.set(chatId, base64);
-                return base64;
-            } catch (e) {
-                console.error('Icon save failed:', e);
-                return null;
-            }
-        }
-
-        // アイコンの取得（base64を返す）
-        getIcon(chatId) {
-            return this.iconCache.get(chatId) || null;
-        }
-
-        // URLキャッシュのクリア
-        clearUrlCache() {
-            for (const url of this.urlCache.values()) {
-                try {
-                    URL.revokeObjectURL(url);
-                } catch (e) {
-                    // エラーは無視
-                }
-            }
-            this.urlCache.clear();
-        }
-    }
-
-    // 状態管理クラス（排他制御付き）
-    class StateManager {
-        constructor() {
-            this.locked = false;
-            this.queue = [];
-        }
-
-        // 排他制御付き状態更新
-        async updateState(updateFn) {
-            if (this.locked) {
-                // ロック中はキューに追加
-                return new Promise((resolve) => {
-                    this.queue.push({ updateFn, resolve });
-                });
-            }
-
-            this.locked = true;
-            try {
-                const result = await updateFn();
-                
-                // キューの処理
-                while (this.queue.length > 0) {
-                    const { updateFn: queuedFn, resolve } = this.queue.shift();
-                    try {
-                        const queuedResult = await queuedFn();
-                        resolve(queuedResult);
-                    } catch (e) {
-                        resolve(null);
-                    }
-                }
-                
-                return result;
-            } finally {
-                this.locked = false;
-            }
-        }
-    }
-
-    // グローバルインスタンス
-    window.iconManager = new IconManager();
-    window.stateManager = new StateManager();
-    
     window.state        ??= {};   // state がまだ無い場合に備え
     state.settings      ??= {};
     
@@ -145,54 +20,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (typeof appLogic !== 'undefined') {
       appLogic.initializeApp();
     }
-  }
-
-  // iPhone専用のメモリ管理処理
-  if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
-    // 定期的なメモリクリーンアップ
-    setInterval(() => {
-      // URLキャッシュをクリア
-      iconManager.clearUrlCache();
-      
-      // ガベージコレクションのヒント
-      if (window.gc) {
-        window.gc();
-      }
-      
-      console.log('[iPhone Memory] 定期クリーンアップ実行');
-    }, 60000); // 1分ごと
-
-    // ページ非表示時のクリーンアップ
-    document.addEventListener('visibilitychange', () => {
-      if (document.hidden) {
-        iconManager.clearUrlCache();
-        console.log('[iPhone Memory] visibilitychange クリーンアップ実行');
-      }
-    });
-
-    // メモリプレッシャー検知（experimental）
-    if ('memory' in performance) {
-      setInterval(() => {
-        const memInfo = performance.memory;
-        const usage = memInfo.usedJSHeapSize / memInfo.jsHeapSizeLimit;
-        
-        if (usage > 0.8) { // 80%を超えた場合
-          console.warn('[iPhone Memory] メモリ使用率高:', Math.round(usage * 100) + '%');
-          iconManager.clearUrlCache();
-          
-          // 古いメッセージのDOM要素を削除（オプション）
-          const messages = document.querySelectorAll('.message');
-          if (messages.length > 100) {
-            for (let i = 0; i < 50; i++) {
-              messages[i].remove();
-            }
-            console.log('[iPhone Memory] 古いメッセージを削除');
-          }
-        }
-      }, 30000); // 30秒ごとにチェック
-    }
-
-    console.log('[iPhone Memory] メモリ管理機能を初期化しました');
   }
 });
 </script>
@@ -304,11 +131,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             --memo-height: 300px;
             --clipboard-stack-height: 300px;
-            --message-icon-size: 50px;
+            --message-icon-size: 28px;
             --message-icon-offset-y: -10px;
             --icon-name-font-size: 10px;
             --icon-name-offset-y: -10px;
-            --history-icon-size: 40px;
 
             --bg-toggle-button: var(--bg-button-action);
             --bg-toggle-button-hover: var(--bg-button-action-hover);
@@ -404,7 +230,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             --bg-code-copy-button: var(--bg-button-action);
             --bg-code-copy-button-hover: var(--bg-button-action-hover);
             --text-code-copy-button: var(--text-light);
-            --history-icon-size: 40px;
 
             --text-primary: #e0e0e0;
             --text-secondary: #aaaaaa;
@@ -1342,15 +1167,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         .home-button:active {
             transform: scale(0.98);
-        }
-        .home-version-display {
-            position: absolute;
-            bottom: 15px;
-            right: 15px;
-            font-size: 12px;
-            color: var(--text-secondary);
-            font-weight: normal;
-            opacity: 0.7;
         }
 
         .prompt-setup-container {
@@ -2293,8 +2109,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             margin-bottom: 0px;
         }
         .history-item-ai-icon {
-            width: var(--history-icon-size);
-            height: var(--history-icon-size);
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
             object-fit: cover;
             flex-shrink: 0;
@@ -3755,7 +3571,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <button id="start-chat-btn" class="home-button">会話を始める</button>
                     <button id="select-history-btn" class="home-button">履歴から選択</button>
                 </div>
-                <div class="home-version-display">v1.0.0</div>
             </main>
         </div>
 
@@ -3863,9 +3678,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="prompt-setup-container">
                     <div class="setting-group">
                         <label for="character-select">キャラクター選択:</label>
-                        <select id="character-select" class="setting-select">
-                            <option value="">-- キャラクターを選択してください --</option>
-                        </select>
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <select id="character-select" class="setting-select" style="flex: 1;">
+                                <option value="">-- キャラクターを選択してください --</option>
+                            </select>
+                            <button id="manual-character-file-btn" class="btn-secondary" style="white-space: nowrap;" title="systempromptフォルダから手動でファイルを選択">📁 手動選択</button>
+                        </div>
+                        <input type="file" id="manual-character-file-input" accept=".txt" style="display: none;">
                     </div>
                     
                     <div class="setting-group">
@@ -6073,9 +5892,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentScreen: 'home',
             selectedFilesForUpload: [],
             pendingAttachments: [],
-            pendingCharacterName: null,
-            currentChatAiName: null,
-            currentChatAiIconBlob: null,
             isMemoVisible: false,
             isClipboardStackVisible: false,
             clipboardStackContent: "",
@@ -6084,7 +5900,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             thoughtSummaryOpenStates: new Map(),
             linkedSessionIds: [],
             isAiToAiChatProcessing: false,
-            isCreatingNewChatFromPrompt: false,
         };
 
         const sanitizeText = (text, maxLength = 255) => {
@@ -6453,25 +6268,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }
                         }
                         
-                        // チャット固有のAI名とAIアイコンを保存用に準備
-                        let aiName = state.currentChatAiName || state.settings.aiName;
-                        if (!aiName || aiName.trim() === '') {
-                            aiName = "AI";
-                        }
-                        
-                        let aiIconBlob = state.currentChatAiIconBlob || state.settings.aiIconBlob;
-                        if (aiIconBlob && !(aiIconBlob instanceof Blob)) {
-                            console.warn('Invalid aiIconBlob detected, setting to null');
-                            aiIconBlob = null;
-                        }
-                        
                         const chatData = {
                             messages: messagesToSave,
                             updatedAt: now, createdAt: existingChatData ? existingChatData.createdAt : now,
                             title: title,
                             characterName: characterName,
-                            aiName: aiName,
-                            aiIconBlob: aiIconBlob,
+                            aiName: state.settings.aiName || "AI",
+                            aiIconBlob: state.settings.aiIconBlob || null,
                             chatSystemPrompt: state.chatSystemPrompt || null,
                         };
                         if (state.settings.persistMessageCollapseState) {
@@ -6646,18 +6449,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return cleanHtml;
             },
             renderChatMessages(maintainScroll = false) {
-                // iPhone対策: AIアイコンURLを再確認・再生成
-                if (!state.aiIconUrl && (state.currentChatAiIconBlob || state.settings.aiIconBlob)) {
-                    const iconBlob = state.currentChatAiIconBlob || state.settings.aiIconBlob;
-                    if (iconBlob instanceof Blob) {
-                        try {
-                            state.aiIconUrl = URL.createObjectURL(iconBlob);
-                        } catch (e) {
-                            console.error('Error recreating AI icon URL in renderChatMessages:', e);
-                        }
-                    }
-                }
-                
                 const mainContent = elements.chatScreen.querySelector('.main-content');
                 const oldScrollTop = maintainScroll ? mainContent.scrollTop : null;
                 const oldScrollHeight = maintainScroll ? mainContent.scrollHeight : null;
@@ -6729,86 +6520,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                         messageDiv.appendChild(nameSpan);
                     }
                 } else if (role === 'model') {
-                    // AIアイコンの表示（base64対応）
-                    if (state.settings.showAiIcon) {
-                        // base64からアイコンを取得
-                        // 新しいチャット（chatIdがnull）の場合は、設定アイコンを最優先
-                        let base64Icon = null;
-                        // アイコン選択ロジック（安定版）
-                        console.log('ICON DEBUG - chatId:', state.currentChatId, 'hasSettings:', !!state.settings.aiIconBase64, 'hasCurrent:', !!state.currentChatAiIconBase64);
-                        
-                        // 優先順位を明確化：
-                        // 1. 新しいチャット(chatId=null) → settings.aiIconBase64を最優先
-                        // 2. 既存チャット → currentChatAiIconBase64 → iconManager → settingsの順
-                        
-                        if (state.currentChatId === null || state.currentChatId === undefined) {
-                            // 新しいチャット：設定アイコンを絶対優先
-                            base64Icon = state.settings.aiIconBase64;
-                            if (!base64Icon) {
-                                base64Icon = state.currentChatAiIconBase64;
-                            }
-                            console.log('ICON DEBUG - NEW CHAT, using:', !!base64Icon ? 'found' : 'none');
-                        } else {
-                            // 既存チャット：チャット固有を最優先
-                            base64Icon = state.currentChatAiIconBase64;
-                            if (!base64Icon) {
-                                base64Icon = iconManager.getIcon(state.currentChatId);
-                            }
-                            if (!base64Icon) {
-                                base64Icon = state.settings.aiIconBase64;
-                            }
-                            console.log('ICON DEBUG - EXISTING CHAT, using:', !!base64Icon ? 'found' : 'none');
-                        }
-                        
-                        if (base64Icon) {
-                            // base64から直接img要素を作成
-                            const iconImg = document.createElement('img');
-                            iconImg.src = base64Icon; // base64データURLを直接設定
-                            iconImg.alt = "AI Icon";
-                            iconImg.classList.add('message-icon');
-                            
-                            // エラーハンドリング
-                            iconImg.onerror = function() {
-                                console.warn('AI icon failed to load from base64');
-                                this.style.display = 'none';
-                            };
-                            
-                            messageDiv.appendChild(iconImg);
-                        } else {
-                            // 後方互換性: Blobが存在する場合はbase64に変換
-                            const iconBlob = state.currentChatAiIconBlob || state.settings.aiIconBlob;
-                            if (iconBlob instanceof Blob && state.currentChatId) {
-                                iconManager.saveIcon(state.currentChatId, iconBlob).then(base64 => {
-                                    if (base64) {
-                                        state.currentChatAiIconBase64 = base64;
-                                        // 再描画をトリガー
-                                        if (typeof uiUtils !== 'undefined' && uiUtils.renderChatMessages) {
-                                            uiUtils.renderChatMessages();
-                                        }
-                                    }
-                                }).catch(e => {
-                                    console.error('Blob to base64 conversion failed:', e);
-                                });
-                            }
-                        }
+                    if (state.settings.showAiIcon && state.aiIconUrl) {
+                        const iconImg = document.createElement('img');
+                        iconImg.src = state.aiIconUrl;
+                        iconImg.alt = "AI Icon";
+                        iconImg.classList.add('message-icon');
+                        messageDiv.appendChild(iconImg);
                     }
-                    
-                    // AI名の表示
-                    if (state.settings.showAiName) {
-                        // チャット固有のAI名を優先、なければグローバル設定を使用
-                        let aiName = state.currentChatAiName || state.settings.aiName;
-                        
-                        // AI名が空の場合、デフォルト値を使用
-                        if (!aiName || aiName.trim() === '') {
-                            aiName = 'AI';
-                        }
-                        
+                    if (state.settings.showAiName && state.settings.aiName) {
                         const nameSpan = document.createElement('span');
                         nameSpan.classList.add('message-icon-name');
                         if (state.settings.showAiNameBubble) {
                             nameSpan.classList.add('has-bubble');
                         }
-                        nameSpan.textContent = aiName;
+                        nameSpan.textContent = state.settings.aiName;
                         messageDiv.appendChild(nameSpan);
                     }
                 }
@@ -7649,7 +7374,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             displayError(message, isApiError = false) {
                 const errorIndex = state.currentMessages.length;
                 this.appendMessage('error', `エラー: ${message}`, errorIndex);
-                
                 elements.loadingIndicator.classList.add('hidden');
                 this.setSendingState(false);
                 this.scrollToBottom();
@@ -7733,7 +7457,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             const characterEl = li.querySelector('.history-item-character');
                             console.log('Chat character info:', { chatId: chat.id, characterName: chat.characterName });
                             if (chat.characterName) {
-                                characterEl.textContent = `🗣️ ${chat.characterName}`;
+                                characterEl.textContent = `🎭 ${chat.characterName}`;
                                 characterEl.style.display = 'block';
                                 console.log('Displaying character:', chat.characterName);
                             } else {
@@ -7758,29 +7482,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         const aiIconUrl = URL.createObjectURL(aiIconBlob);
                                         aiIconEl.src = aiIconUrl;
                                         aiIconEl.style.display = 'inline-block';
-                                        
-                                        // iPhone対策: 画像読み込みエラー時の再試行
-                                        aiIconEl.onerror = () => {
-                                            try {
-                                                const newUrl = URL.createObjectURL(aiIconBlob);
-                                                aiIconEl.src = newUrl;
-                                                setTimeout(() => {
-                                                    try {
-                                                        URL.revokeObjectURL(newUrl);
-                                                    } catch (e) {}
-                                                }, 1000);
-                                            } catch (e) {
-                                                aiIconEl.style.display = 'none';
-                                            }
-                                        };
+                                        console.log('Displaying AI icon for chat:', chat.id);
                                         
                                         // メモリリークを防ぐため、画像読み込み後にURLを解放
                                         aiIconEl.onload = () => {
-                                            setTimeout(() => {
-                                                try {
-                                                    URL.revokeObjectURL(aiIconUrl);
-                                                } catch (e) {}
-                                            }, 1000);
+                                            setTimeout(() => URL.revokeObjectURL(aiIconUrl), 1000);
                                         };
                                     } else {
                                         aiIconEl.style.display = 'none';
@@ -8938,62 +8644,338 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 state.currentScreen = screenName;
             },
+            async detectLocalCharacters() {
+                // ローカル環境でのキャラクターファイル動的検出
+                const characters = [];
+                
+                // より実用的な検出方法: 文字の組み合わせパターンを生成
+                const candidateNames = [];
+                
+                // 1. 既知のキャラクター名
+                const knownNames = [
+                    'アイシャ', 'イクシア', 'エプリル', 'キアラ', 'キュア', 'サヤ', 'シェリル', 'シャルロット', 
+                    'セツナ', 'セルピナ', 'セーラ', 'ティナ', 'テスト', 'トワ', 'ノクタリカ', 'フェイ', 
+                    'リスティ', 'リリー', 'リルテット', 'リーチェ', 'ルウシェ', 'ルカ', 'ルナ', '新キャラ'
+                ];
+                candidateNames.push(...knownNames);
+                
+                // 2. 数字付きバリエーション
+                for (let i = 1; i <= 200; i++) {
+                    candidateNames.push(
+                        `キャラ${i}`, `テスト${i}`, `新キャラ${i}`, `character${i}`, `test${i}`,
+                        `キャラクター${i}`, `プレイヤー${i}`, `ユーザー${i}`, `AI${i}`, `Bot${i}`
+                    );
+                }
+                
+                // 3. よくある日本語名前
+                const commonJapaneseNames = [
+                    'あい', 'あかり', 'あき', 'あきら', 'あさみ', 'あやか', 'あゆみ', 'えみ', 'えり', 'かな', 'かなこ',
+                    'きょうこ', 'さき', 'さくら', 'さとみ', 'しおり', 'たかこ', 'ちか', 'なお', 'なおみ', 'なつみ',
+                    'はるか', 'ひろみ', 'まい', 'まき', 'まゆ', 'まり', 'みか', 'みき', 'みさき', 'みゆき',
+                    'ゆい', 'ゆか', 'ゆき', 'ゆみ', 'りえ', 'りか', 'りさ', 'りな', 'れいな', 'わかな',
+                    'アイ', 'アカリ', 'アキ', 'アキラ', 'アサミ', 'アヤカ', 'アユミ', 'エミ', 'エリ', 'カナ',
+                    'キョウコ', 'サキ', 'サクラ', 'サトミ', 'シオリ', 'タカコ', 'チカ', 'ナオ', 'ナオミ', 'ナツミ',
+                    'ハルカ', 'ヒロミ', 'マイ', 'マキ', 'マユ', 'マリ', 'ミカ', 'ミキ', 'ミサキ', 'ミユキ',
+                    'ユイ', 'ユカ', 'ユキ', 'ユミ', 'リエ', 'リカ', 'リサ', 'リナ', 'レイナ', 'ワカナ'
+                ];
+                candidateNames.push(...commonJapaneseNames);
+                
+                // 4. 英語名前
+                const commonEnglishNames = [
+                    'Alice', 'Anna', 'Amy', 'Emma', 'Eva', 'Grace', 'Jane', 'Kate', 'Lisa', 'Mary', 'Nina', 'Rose', 'Sara',
+                    'Alex', 'Bob', 'Dave', 'Jack', 'John', 'Mike', 'Nick', 'Paul', 'Tom', 'User', 'Assistant', 'AI', 'Bot'
+                ];
+                candidateNames.push(...commonEnglishNames);
+                
+                // 5. 特殊パターン（一文字、記号付き等）
+                const specialPatterns = [];
+                const singleChars = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんアイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンABCDEFGHIJKLMNOPQRSTUVWXYZ';
+                for (const char of singleChars) {
+                    specialPatterns.push(char, `${char}ちゃん`, `${char}さん`, `${char}くん`);
+                }
+                candidateNames.push(...specialPatterns.slice(0, 200)); // 制限をかける
+                
+                // 重複除去
+                const uniqueCandidates = [...new Set(candidateNames)];
+                console.log(`Generated ${uniqueCandidates.length} unique candidate names for detection`);
+                
+                // バッチ処理で並列チェック
+                const batchSize = 20;
+                for (let i = 0; i < uniqueCandidates.length; i += batchSize) {
+                    const batch = uniqueCandidates.slice(i, i + batchSize);
+                    const promises = batch.map(async (name) => {
+                        try {
+                            const encodedName = encodeURIComponent(name);
+                            const url = `./systemprompt/${encodedName}.txt`;
+                            const res = await fetch(url, { method: 'HEAD' });
+                            if (res.ok) {
+                                console.log(`Found character file: ${name}`);
+                                return name;
+                            }
+                        } catch (error) {
+                            // エラーは無視
+                        }
+                        return null;
+                    });
+                    
+                    const results = await Promise.all(promises);
+                    results.forEach(name => {
+                        if (name && !characters.includes(name)) {
+                            characters.push(name);
+                        }
+                    });
+                    
+                    // 進行状況表示
+                    if (i % 100 === 0) {
+                        console.log(`Checked ${Math.min(i + batchSize, uniqueCandidates.length)}/${uniqueCandidates.length} candidates, found ${characters.length} characters`);
+                    }
+                }
+                
+                console.log(`Local dynamic detection completed. Found ${characters.length} characters:`, characters);
+                return characters;
+            },
+            async detectWebCharacters() {
+                // Web環境でのキャラクターファイル動的検出
+                const characters = [];
+                
+                // 既知のキャラクター名＋拡張パターン
+                const knownNames = [
+                    'アイシャ', 'イクシア', 'エプリル', 'キアラ', 'キュア', 'サヤ', 'シェリル', 'シャルロット', 
+                    'セツナ', 'セルピナ', 'セーラ', 'ティナ', 'テスト', 'トワ', 'ノクタリカ', 'フェイ', 
+                    'リスティ', 'リリー', 'リルテット', 'リーチェ', 'ルウシェ', 'ルカ', 'ルナ', '新キャラ'
+                ];
+                
+                // 数字・文字バリエーション生成
+                const variations = [];
+                
+                // 数字付きバリエーション
+                for (let i = 1; i <= 50; i++) {
+                    variations.push(`キャラ${i}`, `テスト${i}`, `新キャラ${i}`, `character${i}`, `test${i}`);
+                }
+                
+                // 一般的な名前パターン
+                const commonNames = [
+                    'アリス', 'ボブ', 'キャロル', 'デイブ', 'イブ', 'フランク', 'グレース', 'ハンク',
+                    'さくら', 'ゆい', 'あい', 'みか', 'りん', 'えみ', 'かな', 'まな',
+                    'リナ', 'マリ', 'ナナ', 'サラ', 'エマ', 'アナ', 'ミア', 'ソフィア',
+                    'User', 'Assistant', 'AI', 'Bot', 'Helper', 'Guide', 'Test', 'Demo'
+                ];
+                
+                const allCandidates = [...knownNames, ...variations, ...commonNames];
+                const batchSize = 20; // Web環境では大きめのバッチサイズ
+                
+                console.log(`Web detection: Checking ${allCandidates.length} potential character files...`);
+                
+                for (let i = 0; i < allCandidates.length; i += batchSize) {
+                    const batch = allCandidates.slice(i, i + batchSize);
+                    const promises = batch.map(async (name) => {
+                        try {
+                            const encodedName = encodeURIComponent(name);
+                            const url = `./systemprompt/${encodedName}.txt`;
+                            const res = await fetch(url, { method: 'HEAD' });
+                            if (res.ok) {
+                                console.log(`Found character file: ${name}`);
+                                return name;
+                            }
+                        } catch (error) {
+                            // エラーは無視
+                        }
+                        return null;
+                    });
+                    
+                    const results = await Promise.all(promises);
+                    results.forEach(name => {
+                        if (name && !characters.includes(name)) {
+                            characters.push(name);
+                        }
+                    });
+                    
+                    // 進行状況表示（少し間隔を空ける）
+                    if (i % 100 === 0) {
+                        console.log(`Web detection: Checked ${Math.min(i + batchSize, allCandidates.length)}/${allCandidates.length} files, found ${characters.length} characters`);
+                    }
+                }
+                
+                console.log(`Web dynamic detection completed. Found ${characters.length} characters:`, characters);
+                return characters;
+            },
             async loadCharacterOptions() {
                 try {
+                    // キャラクターリスト読み込み中の表示
                     const characterSelect = elements.characterSelect;
                     if (characterSelect) {
+                        // 読み込み中状態を設定
                         characterSelect.innerHTML = '<option value="" disabled selected>キャラクターリスト読み込み中...</option>';
                         characterSelect.disabled = true;
                     }
 
+                    // systempromptフォルダのディレクトリリストを取得
                     let availableCharacters = [];
                     
                     try {
-                        // ①characterlist.txtからキャラクターリストを読み込み
-                        const listRes = await fetch('./systemprompt/characterlist.txt');
-                        if (listRes.ok) {
-                            const listText = await listRes.text();
-                            const characterNames = listText.split('\n')
-                                .map(name => name.trim())
-                                .filter(name => name.length > 0);
+                        const res = await fetch('./systemprompt/');
+                        if (res.ok) {
+                            const html = await res.text();
+                            console.log('Directory HTML response received');
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
                             
-                            console.log(`Found ${characterNames.length} characters in characterlist.txt:`, characterNames);
+                            // 複数のパターンでリンクを検索
+                            const txtSelectors = [
+                                'a[href$=".txt"]',
+                                'a[href*=".txt"]',
+                                'a:contains(".txt")',
+                                'td a', // テーブル形式の場合
+                                'pre a' // プレーンテキスト形式の場合
+                            ];
                             
-                            // ②各キャラクターファイルの存在確認
-                            for (const charName of characterNames) {
+                            let links = [];
+                            for (const selector of txtSelectors) {
                                 try {
-                                    const encodedName = encodeURIComponent(charName);
-                                    const fileRes = await fetch(`./systemprompt/${encodedName}.txt`, { method: 'HEAD' });
-                                    if (fileRes.ok) {
-                                        availableCharacters.push(charName);
-                                        console.log(`✓ Verified: ${charName}`);
-                                    } else {
-                                        console.warn(`✗ Missing file: ${charName}`);
-                                    }
-                                } catch (error) {
-                                    console.warn(`✗ Error checking: ${charName}`, error);
+                                    const foundLinks = doc.querySelectorAll(selector);
+                                    foundLinks.forEach(link => {
+                                        const href = link.getAttribute('href');
+                                        const text = link.textContent || '';
+                                        if ((href && href.includes('.txt')) || text.includes('.txt')) {
+                                            links.push(link);
+                                        }
+                                    });
+                                } catch (e) {
+                                    // セレクタがサポートされない場合は無視
                                 }
                             }
+                            
+                            console.log(`Found ${links.length} potential .txt links`);
+                            
+                            // リンクから文字情報を抽出
+                            const foundNames = new Set();
+                            links.forEach(link => {
+                                const href = link.getAttribute('href');
+                                const text = link.textContent || '';
+                                
+                                // href から抽出
+                                if (href && href.includes('.txt')) {
+                                    const filename = href.split('/').pop();
+                                    if (filename && filename.endsWith('.txt')) {
+                                        const decodedFilename = decodeURIComponent(filename);
+                                        const characterName = decodedFilename.replace('.txt', '');
+                                        foundNames.add(characterName);
+                                    }
+                                }
+                                
+                                // テキストから抽出
+                                if (text.includes('.txt')) {
+                                    const filename = text.trim();
+                                    if (filename.endsWith('.txt')) {
+                                        const characterName = filename.replace('.txt', '');
+                                        foundNames.add(characterName);
+                                    }
+                                }
+                            });
+                            
+                            availableCharacters = Array.from(foundNames);
+                            console.log(`Extracted characters from directory:`, availableCharacters);
                         } else {
-                            console.warn('characterlist.txt not found, using fallback method');
-                            throw new Error('characterlist.txt not found');
+                            console.warn('Directory fetch failed with status:', res.status);
                         }
-                    } catch (error) {
-                        console.warn('Failed to load characterlist.txt:', error);
-                        // characterlist.txtが見つからない場合は空のリストにする
-                        availableCharacters = [];
+                    } catch (dirError) {
+                        console.warn('ディレクトリリストの取得に失敗:', dirError);
                     }
                     
+                    // ディレクトリリストが取得できない場合のフォールバック
+                    if (availableCharacters.length === 0) {
+                        const knownCharacters = [
+                            'アイシャ', 'イクシア', 'エプリル', 'キアラ', 'キュア', 'サヤ', 'シェリル', 'シャルロット', 
+                            'セツナ', 'セルピナ', 'セーラ', 'ティナ', 'テスト', 'トワ', 'ノクタリカ', 'フェイ', 
+                            'リスティ', 'リリー', 'リルテット', 'リーチェ', 'ルウシェ', 'ルカ', 'ルナ', '新キャラ'
+                        ];
+                        
+                        // ローカル環境では動的検出を試行し、フォールバックも用意
+                        console.log('Using fallback character detection');
+                        if (window.location.protocol === 'file:') {
+                            // ローカルファイル環境では複数のアプローチを試行
+                            console.log('Local file protocol detected - attempting multiple detection methods');
+                            try {
+                                // 方法1: 動的検出
+                                availableCharacters = await this.detectLocalCharacters();
+                                
+                                // 方法2: フォールバック - 既知のリストでも確認
+                                if (availableCharacters.length === 0) {
+                                    console.log('Dynamic detection found no files, trying known characters...');
+                                    for (const char of knownCharacters) {
+                                        try {
+                                            const encodedChar = encodeURIComponent(char);
+                                            const url = `./systemprompt/${encodedChar}.txt`;
+                                            const res = await fetch(url, { method: 'HEAD' });
+                                            if (res.ok) {
+                                                availableCharacters.push(char);
+                                            }
+                                        } catch (error) {
+                                            // 無視
+                                        }
+                                    }
+                                }
+                                
+                                // 方法3: 最終フォールバック - 既知のリストをそのまま表示
+                                if (availableCharacters.length === 0) {
+                                    console.log('All detection methods failed, showing known characters list');
+                                    availableCharacters = [...knownCharacters];
+                                }
+                            } catch (error) {
+                                console.warn('All detection failed, using known list:', error);
+                                availableCharacters = [...knownCharacters];
+                            }
+                        } else {
+                            // Web環境では動的検出を試行
+                            console.log('Web environment detected - attempting dynamic detection');
+                            try {
+                                const dynamicChars = await this.detectWebCharacters();
+                                if (dynamicChars.length > 0) {
+                                    availableCharacters = dynamicChars;
+                                } else {
+                                    // 動的検出が失敗した場合は既知リストで存在確認
+                                    for (const char of knownCharacters) {
+                                        try {
+                                            const encodedChar = encodeURIComponent(char);
+                                            const url = `./systemprompt/${encodedChar}.txt`;
+                                            console.log(`Checking file: ${char} -> ${url}`);
+                                            const res = await fetch(url, { method: 'HEAD' });
+                                            if (res.ok) {
+                                                console.log(`File found: ${char}`);
+                                                availableCharacters.push(char);
+                                            }
+                                        } catch (error) {
+                                            console.log(`Error checking file: ${char}`, error);
+                                        }
+                                    }
+                                }
+                            } catch (error) {
+                                console.warn('Web dynamic detection failed:', error);
+                                // 最終フォールバック: 既知リストで存在確認
+                                for (const char of knownCharacters) {
+                                    try {
+                                        const encodedChar = encodeURIComponent(char);
+                                        const url = `./systemprompt/${encodedChar}.txt`;
+                                        const res = await fetch(url, { method: 'HEAD' });
+                                        if (res.ok) {
+                                            availableCharacters.push(char);
+                                        }
+                                    } catch (error) {
+                                        // 無視
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    // 読み込み完了後、選択肢を更新
                     if (characterSelect) {
+                        // 読み込み完了後、選択肢を再構築
                         characterSelect.innerHTML = '<option value="">-- キャラクターを選択してください --</option>';
                         characterSelect.disabled = false;
                         
-                        // 五十音順でソート
-                        const sortedCharacters = availableCharacters.sort((a, b) => {
-                            return a.localeCompare(b, 'ja', { sensitivity: 'base' });
-                        });
-                        
-                        sortedCharacters.forEach(char => {
+                        // 見つかったファイルから選択肢を生成
+                        availableCharacters.forEach(char => {
                             const option = document.createElement('option');
                             option.value = char;
                             option.textContent = char;
@@ -9001,9 +8983,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         });
                         
                         if (availableCharacters.length === 0) {
+                            console.warn('使用可能なキャラクターファイルが見つかりません');
+                            // キャラクターが見つからない場合のメッセージ
                             characterSelect.innerHTML = '<option value="" disabled selected>キャラクターファイルが見つかりません</option>';
-                        } else {
-                            console.log(`Loaded ${availableCharacters.length} characters successfully`);
                         }
                     }
                 } catch (error) {
@@ -9017,133 +8999,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                         return;
                     }
                     
-                    // ①characterlist.txtからキャラクターリストを読み込み
-                    let characterList = [];
-                    try {
-                        const listRes = await fetch('./systemprompt/characterlist.txt');
-                        if (listRes.ok) {
-                            const listText = await listRes.text();
-                            characterList = listText.split('\n')
-                                .map(name => name.trim())
-                                .filter(name => name.length > 0);
-                            console.log(`Character list loaded: ${characterList.length} characters`);
-                        } else {
-                            throw new Error('characterlist.txt not found');
-                        }
-                    } catch (error) {
-                        console.error('Failed to load characterlist.txt:', error);
-                        throw new Error('characterlist.txt is required for character loading');
-                    }
+                    // URLエンコードを使用して日本語ファイル名に対応
+                    const encodedCharacterValue = encodeURIComponent(characterValue);
+                    const filename = `systemprompt/${encodedCharacterValue}.txt`;
+                    console.log(`Loading character file: ${characterValue} -> ${filename}`);
+                    const res = await fetch(`./${filename}`);
+                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                    const prompt = (await res.text()).trim();
+                    console.log(`Successfully loaded character: ${characterValue}`);
                     
-                    // ②すべてのキャラクターファイルを一括読み込み
-                    const allCharacterData = {};
-                    const batchSize = 10; // 一度に10個ずつ並列読み込み
-                    
-                    for (let i = 0; i < characterList.length; i += batchSize) {
-                        const batch = characterList.slice(i, i + batchSize);
-                        const promises = batch.map(async (charName) => {
-                            try {
-                                const encodedName = encodeURIComponent(charName);
-                                const res = await fetch(`./systemprompt/${encodedName}.txt`);
-                                if (res.ok) {
-                                    const content = await res.text();
-                                    return { name: charName, content: content.trim() };
-                                }
-                            } catch (error) {
-                                console.warn(`Failed to load: ${charName}`, error);
-                            }
-                            return null;
-                        });
-                        
-                        const results = await Promise.all(promises);
-                        results.forEach(result => {
-                            if (result) {
-                                allCharacterData[result.name] = result.content;
-                            }
-                        });
-                    }
-                    
-                    console.log(`Loaded ${Object.keys(allCharacterData).length} character files`);
-                    
-                    // ③選択されたキャラクターのデータを表示
-                    if (allCharacterData[characterValue]) {
-                        elements.promptSetupSystemPrompt.value = allCharacterData[characterValue];
-                        console.log(`Successfully loaded character: ${characterValue}`);
-                    } else {
-                        throw new Error(`Character data not found: ${characterValue}`);
-                    }
+                    elements.promptSetupSystemPrompt.value = prompt;
                     
                     // キャラクター名をAI名に自動入力
                     if (elements.aiNameInput) {
                         elements.aiNameInput.value = characterValue;
                     }
                     
-                    // キャラクターアイコンを読み込み
-                    try {
-                        await this.loadCharacterIcon(characterValue);
-                    } catch (iconError) {
-                        console.error('Character icon loading failed:', iconError);
-                    }
-                    
-                    // グローバルにキャラクターデータを保存（オプション）
-                    window.characterDataCache = allCharacterData;
-                    
                     this.updatePromptPreview();
                 } catch (error) {
                     console.error('キャラクタープロンプト読み込みエラー:', error);
                     elements.promptSetupSystemPrompt.value = '';
-                    await this.showCustomAlert(`キャラクタープロンプト(${characterValue})の読み込みに失敗しました。`);
-                }
-            },
-            async loadCharacterIcon(characterName) {
-                console.log('=== LOADING CHARACTER ICON FOR:', characterName, '===');
-                try {
-                    // 可能なアイコンファイル拡張子
-                    const extensions = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
-                    let iconBlob = null;
-                    
-                    // 各拡張子を試行
-                    for (const ext of extensions) {
-                        try {
-                            const encodedName = encodeURIComponent(characterName);
-                            const iconUrl = `./icon/${encodedName}.${ext}`;
-                            const response = await fetch(iconUrl);
-                            
-                            if (response.ok) {
-                                iconBlob = await response.blob();
-                                console.log(`Successfully loaded character icon: ${characterName}.${ext}`);
-                                break;
-                            }
-                        } catch (error) {
-                            // 次の拡張子を試行
-                            console.log(`Failed to load ${characterName}.${ext}:`, error.message);
-                            continue;
-                        }
-                    }
-                    
-                    if (iconBlob) {
-                        // 既存のアイコンURLをクリーンアップ
-                        if (state.aiIconUrl) {
-                            URL.revokeObjectURL(state.aiIconUrl);
-                        }
-                        
-                        // アイコンを設定
-                        state.settings.aiIconBlob = iconBlob;
-                        state.aiIconUrl = URL.createObjectURL(iconBlob);
-                        
-                        // base64に変換してキャッシュ
-                        const base64Icon = await iconManager.blobToBase64(iconBlob);
-                        state.settings.aiIconBase64 = base64Icon;
-                        
-                        // プロンプト設定画面のサムネイルを更新
-                        this.updatePromptAiIconDisplay();
-                        
-                        console.log(`Character icon loaded for: ${characterName}`);
-                    } else {
-                        console.log(`No icon found for character: ${characterName}`);
-                    }
-                } catch (error) {
-                    console.error(`Failed to load character icon for ${characterName}:`, error);
+                    await this.showCustomAlert(`キャラクタープロンプト(systemprompt/${characterValue}.txt)の読み込みに失敗しました。`);
                 }
             },
             updatePromptPreview() {
@@ -9237,7 +9113,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             },
             async startChatWithPrompt() {
-                console.log('=== START CHAT WITH PROMPT CALLED ===');
                 try {
                     const characterValue = elements.characterSelect.value;
                     const relationship = elements.userRelationshipSelect.value;
@@ -9286,18 +9161,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // 設定を保存
                     await appLogic.saveSettings(false);
                     
-                    // プロンプト設定からの新しいチャット作成フラグを設定
-                    state.isCreatingNewChatFromPrompt = true;
-                    console.log('[DEBUG] Setting isCreatingNewChatFromPrompt to true');
-                    
                     // 新規チャットを開始
                     appLogic.startNewChat();
-                    
-                    // プロンプト設定画面で設定されたアイコンを新しいチャット専用として反映
-                    if (state.settings.aiIconBase64) {
-                        state.currentChatAiIconBase64 = state.settings.aiIconBase64;
-                        console.log('[DEBUG] Set currentChatAiIconBase64 for new chat');
-                    }
                     
                     // キャラクター名を一時保存（新しいチャット作成時に使用）
                     if (characterValue) {
@@ -9312,10 +9177,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     // チャット画面に移行
                     await this.showScreen('chat');
-                    
-                    // フラグをクリア
-                    console.log('[DEBUG] Clearing isCreatingNewChatFromPrompt flag');
-                    state.isCreatingNewChatFromPrompt = false;
                 } catch (error) {
                     console.error('プロンプト設定エラー:', error);
                     await this.showCustomAlert('プロンプト設定中にエラーが発生しました。');
@@ -9762,177 +9623,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             },
         };
 
-        // チャット設定の保存処理
-        async function saveChatSettings(chatId, settings) {
-            return stateManager.updateState(async () => {
-                try {
-                    // アイコンの処理
-                    if (settings.aiIconBlob instanceof Blob) {
-                        // Blobをbase64に変換して保存
-                        const base64Icon = await iconManager.saveIcon(chatId, settings.aiIconBlob);
-                        settings.aiIconBase64 = base64Icon;
-                        delete settings.aiIconBlob; // Blobは保存しない
-                    }
-
-                    // IndexedDBに保存
-                    const db = await dbUtils.openDB();
-                    const transaction = db.transaction(['chats'], 'readwrite');
-                    const store = transaction.objectStore('chats');
-                    
-                    // 既存のチャットを取得して設定を追加
-                    let chat = await store.get(chatId);
-                    if (!chat) {
-                        chat = {
-                            id: chatId,
-                            title: 'New Chat',
-                            messages: [],
-                            timestamp: Date.now()
-                        };
-                    }
-                    
-                    // 設定をチャットオブジェクトに統合
-                    chat.aiName = settings.aiName;
-                    chat.aiIconBase64 = settings.aiIconBase64;
-                    chat.characterName = settings.characterName;
-                    chat.characterPrompt = settings.characterPrompt;
-                    chat.chatSystemPrompt = settings.chatSystemPrompt;
-                    chat.settingsTimestamp = Date.now();
-
-                    await store.put(chat);
-                    await transaction.complete;
-
-                    // メモリ上の状態も更新
-                    state.currentChatAiName = settings.aiName;
-                    state.currentChatAiIconBase64 = settings.aiIconBase64;
-                    state.currentCharacterName = settings.characterName;
-                    state.currentCharacterPrompt = settings.characterPrompt;
-                    state.chatSystemPrompt = settings.chatSystemPrompt;
-
-                    console.log('[saveChatSettings] 保存完了:', {
-                        chatId,
-                        aiName: settings.aiName,
-                        hasIcon: !!settings.aiIconBase64
-                    });
-
-                    return true;
-                } catch (error) {
-                    console.error('[saveChatSettings] エラー:', error);
-                    return false;
-                }
-            });
-        }
-
-        // チャット設定の読み込み処理
-        async function loadChatSettings(chatId) {
-            try {
-                const db = await dbUtils.openDB();
-                const transaction = db.transaction(['chats'], 'readonly');
-                const store = transaction.objectStore('chats');
-                
-                const chat = await store.get(chatId);
-                
-                if (chat && chat.aiName !== undefined) {
-                    // base64アイコンをキャッシュに読み込み
-                    if (chat.aiIconBase64) {
-                        iconManager.iconCache.set(chatId, chat.aiIconBase64);
-                    }
-
-                    // 状態に反映
-                    state.currentChatAiName = chat.aiName;
-                    state.currentChatAiIconBase64 = chat.aiIconBase64;
-                    state.currentCharacterName = chat.characterName;
-                    state.currentCharacterPrompt = chat.characterPrompt;
-                    state.chatSystemPrompt = chat.chatSystemPrompt;
-
-                    console.log('[loadChatSettings] 読み込み完了:', {
-                        chatId,
-                        aiName: chat.aiName,
-                        hasIcon: !!chat.aiIconBase64
-                    });
-
-                    return {
-                        aiName: chat.aiName,
-                        aiIconBase64: chat.aiIconBase64,
-                        characterName: chat.characterName,
-                        characterPrompt: chat.characterPrompt,
-                        chatSystemPrompt: chat.chatSystemPrompt
-                    };
-                }
-
-                return null;
-            } catch (error) {
-                console.error('[loadChatSettings] エラー:', error);
-                return null;
-            }
-        }
-
-        // チャット初期化処理
-        async function initializeChat(chatId) {
-            try {
-                // 設定を読み込み
-                const settings = await loadChatSettings(chatId);
-                
-                if (!settings) {
-                    // 新規チャットの場合はデフォルト設定を保存
-                    await saveChatSettings(chatId, {
-                        aiName: state.settings.aiName || 'AI',
-                        aiIconBase64: state.settings.aiIconBase64,
-                        characterName: state.currentCharacterName || '',
-                        characterPrompt: state.currentCharacterPrompt || '',
-                        chatSystemPrompt: state.chatSystemPrompt || ''
-                    });
-                }
-
-                // UIの更新
-                if (typeof uiUtils !== 'undefined' && uiUtils.updateChatHeader) {
-                    uiUtils.updateChatHeader();
-                }
-                
-            } catch (error) {
-                console.error('[initializeChat] エラー:', error);
-            }
-        }
-
-        // 状態復元用のヘルパー関数
-        function restorePreservedState(preservedState) {
-            try {
-                // 基本的な状態の復元
-                state.currentChatAiName = preservedState.currentChatAiName;
-                state.currentChatAiIconBlob = preservedState.currentChatAiIconBlob;
-                state.settings.aiName = preservedState.settingsAiName;
-                state.settings.aiIconBlob = preservedState.settingsAiIconBlob;
-                state.currentCharacterName = preservedState.currentCharacterName;
-                state.chatSystemPrompt = preservedState.chatSystemPrompt;
-                state.currentCharacterPrompt = preservedState.currentCharacterPrompt;
-                
-                // アイコンURLの復元（既存のオブジェクトURLをクリーンアップしてから）
-                if (state.aiIconUrl && state.aiIconUrl !== preservedState.aiIconUrl) {
-                    try {
-                        URL.revokeObjectURL(state.aiIconUrl);
-                    } catch (e) {
-                        console.warn('Failed to revoke object URL:', e);
-                    }
-                }
-                state.aiIconUrl = preservedState.aiIconUrl;
-                
-                // チャット関連の状態も復元
-                if (preservedState.currentChatId !== undefined) {
-                    state.currentChatId = preservedState.currentChatId;
-                }
-                if (preservedState.currentChat !== undefined) {
-                    state.currentChat = preservedState.currentChat;
-                }
-                
-                console.log('[restorePreservedState] 状態復元完了:', {
-                    aiName: state.currentChatAiName || state.settings.aiName,
-                    hasAiIcon: !!(state.currentChatAiIconBlob || state.settings.aiIconBlob),
-                    hasIconUrl: !!state.aiIconUrl
-                });
-            } catch (error) {
-                console.error('[restorePreservedState] 状態復元エラー:', error);
-            }
-        }
-
         const appLogic = {
             async initializeApp() {
                 if (typeof marked !== 'undefined') {
@@ -10023,13 +9713,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     
                     // チャット履歴は読み込むが、画面遷移は後で制御
                     const chats = await dbUtils.getAllChats(state.settings.historySortOrder);
-                    console.log('[DEBUG] initializeApp: isCreatingNewChatFromPrompt =', state.isCreatingNewChatFromPrompt);
-                    console.log('[DEBUG] initializeApp: chats.length =', chats?.length || 0);
-                    if (chats && chats.length > 0 && !state.isCreatingNewChatFromPrompt) {
-                        console.log('[DEBUG] Loading existing chat:', chats[0].id);
+                    if (chats && chats.length > 0) {
                         await this.loadChat(chats[0].id);
                     } else {
-                        console.log('[DEBUG] Starting new chat');
                         this.startNewChat();
                     }
                     
@@ -10093,6 +9779,60 @@ document.addEventListener('DOMContentLoaded', async () => {
                     elements.characterSelect.addEventListener('change', async () => {
                         const selectedValue = elements.characterSelect.value;
                         await uiUtils.loadCharacterPrompt(selectedValue);
+                    });
+                }
+                
+                // 手動キャラクターファイル選択
+                const manualCharacterFileBtn = document.getElementById('manual-character-file-btn');
+                const manualCharacterFileInput = document.getElementById('manual-character-file-input');
+                if (manualCharacterFileBtn && manualCharacterFileInput) {
+                    manualCharacterFileBtn.addEventListener('click', () => {
+                        manualCharacterFileInput.click();
+                    });
+                    
+                    manualCharacterFileInput.addEventListener('change', async (event) => {
+                        const file = event.target.files[0];
+                        if (file && file.name.endsWith('.txt')) {
+                            try {
+                                const content = await file.text();
+                                const characterName = file.name.replace('.txt', '');
+                                
+                                // プロンプトエリアに読み込み
+                                if (elements.promptSetupSystemPrompt) {
+                                    elements.promptSetupSystemPrompt.value = content.trim();
+                                }
+                                
+                                // AI名に自動入力
+                                if (elements.aiNameInput) {
+                                    elements.aiNameInput.value = characterName;
+                                }
+                                
+                                // セレクトボックスに追加（存在しない場合）
+                                if (elements.characterSelect) {
+                                    const existingOption = Array.from(elements.characterSelect.options)
+                                        .find(option => option.value === characterName);
+                                    if (!existingOption) {
+                                        const newOption = document.createElement('option');
+                                        newOption.value = characterName;
+                                        newOption.textContent = characterName;
+                                        elements.characterSelect.appendChild(newOption);
+                                    }
+                                    elements.characterSelect.value = characterName;
+                                }
+                                
+                                uiUtils.updatePromptPreview();
+                                console.log(`手動でキャラクターファイルを読み込みました: ${characterName}`);
+                                
+                                // ファイル入力をリセット
+                                manualCharacterFileInput.value = '';
+                                
+                            } catch (error) {
+                                console.error('ファイル読み込みエラー:', error);
+                                await uiUtils.showCustomAlert('ファイルの読み込みに失敗しました。');
+                            }
+                        } else {
+                            await uiUtils.showCustomAlert('テキストファイル(.txt)を選択してください。');
+                        }
                     });
                 }
                 if (elements.userRelationshipSelect) {
@@ -11110,7 +10850,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             uiUtils.showScreen('chat');
         },
         startNewChat() {
-            console.log('[DEBUG] startNewChat called, isCreatingNewChatFromPrompt =', state.isCreatingNewChatFromPrompt);
             state.currentChatId = null;
             state.currentMessages = [];
             
@@ -11122,27 +10861,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             // プロンプト作成画面から来た場合以外は、チャット専用システムプロンプトをクリア
             if (state.currentScreen !== 'prompt-setup') {
                 state.chatSystemPrompt = null;
-                
-                // チャット固有のAIアイコンもクリア（グローバル設定のAIアイコンは保持）
-                if (state.aiIconUrl) {
-                    URL.revokeObjectURL(state.aiIconUrl);
-                    state.aiIconUrl = null;
-                }
-                
-                // AIアイコンを設定から復元
-                if (state.settings.aiIconBlob instanceof Blob) {
-                    try {
-                        state.aiIconUrl = URL.createObjectURL(state.settings.aiIconBlob);
-                    } catch (e) {
-                        console.error('Error creating AI icon URL:', e);
-                    }
-                }
             }
             
             state.pendingCharacterName = null;
-            state.currentChatAiName = null;
-            state.currentChatAiIconBlob = null;
-            state.currentChatAiIconBase64 = null;
             state.isMemoVisible = false;
             elements.memoArea.classList.add('hidden');
             elements.memoEditor.value = '';
@@ -11164,12 +10885,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         },
         async loadChat(id) {
-            // プロンプト設定からの新しいチャット作成中は既存チャットの読み込みを回避
-            if (state.isCreatingNewChatFromPrompt) {
-                console.log('[DEBUG] Skipping loadChat due to isCreatingNewChatFromPrompt flag');
-                return;
-            }
-            
             let confirmedLoad = true;
             if (state.isSending) {
                 if (!state.settings.disableLoadChatConfirmationWhileSending) {
@@ -11241,14 +10956,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                     }
                     
-                    // チャット固有のAI名とAIアイコンを復元（グローバル設定は変更しない）
+                    // AI名とAIアイコンを復元
                     if (chat.aiName) {
-                        state.currentChatAiName = chat.aiName;
-                    } else {
-                        state.currentChatAiName = null;
+                        state.settings.aiName = chat.aiName;
+                        console.log('Restored AI name from chat data:', chat.aiName);
+                        // AI名入力フィールドに反映
+                        const aiNameInput = document.getElementById('ai-name-input');
+                        if (aiNameInput) {
+                            aiNameInput.value = chat.aiName;
+                        }
                     }
                     
                     if (chat.aiIconBlob) {
+                        console.log('Restored AI icon from chat data');
                         // AIアイコンのBlobデータを復元
                         let restoredBlob;
                         if (chat.aiIconBlob instanceof Blob) {
@@ -11263,7 +10983,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                         
                         if (restoredBlob) {
-                            state.currentChatAiIconBlob = restoredBlob;
+                            state.settings.aiIconBlob = restoredBlob;
                             // 既存のURL解放
                             if (state.aiIconUrl) {
                                 URL.revokeObjectURL(state.aiIconUrl);
@@ -11278,30 +10998,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }
                         }
                     } else {
-                        // チャット固有のAIアイコンがない場合はクリーンアップ
-                        state.currentChatAiIconBlob = null;
+                        // AIアイコンがない場合はクリーンアップ
                         if (state.aiIconUrl) {
                             URL.revokeObjectURL(state.aiIconUrl);
                             state.aiIconUrl = null;
                         }
-                        
-                        // グローバル設定のAIアイコンを復元
-                        if (state.settings.aiIconBlob instanceof Blob) {
-                            try {
-                                state.aiIconUrl = URL.createObjectURL(state.settings.aiIconBlob);
-                                const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
-                                if (aiIconThumbnail) {
-                                    aiIconThumbnail.src = state.aiIconUrl;
-                                    aiIconThumbnail.style.display = 'block';
-                                }
-                            } catch (e) {
-                                console.error('Error creating AI icon URL from global settings:', e);
-                            }
-                        } else {
-                            const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
-                            if (aiIconThumbnail) {
-                                aiIconThumbnail.style.display = 'none';
-                            }
+                        state.settings.aiIconBlob = null;
+                        const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
+                        if (aiIconThumbnail) {
+                            aiIconThumbnail.style.display = 'none';
                         }
                     }
                     
@@ -11612,27 +11317,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         },
         async handleSend(isRetry = false, retryUserMessageIndex = -1, sourceSessionContext = null) {
-            // エラー処理フラグを初期化
-            window.isProcessingError = false;
-            
             const isBackgroundProcess = !!sourceSessionContext;
             const selectedApiProvider = isBackgroundProcess ? (sourceSessionContext.apiProvider || state.settings.apiProvider) : state.settings.apiProvider;
-
-            // 送信前に現在の設定を保存（非バックグラウンド処理のみ）
-            if (!isBackgroundProcess && state.currentChatId) {
-                try {
-                    await saveChatSettings(state.currentChatId, {
-                        aiName: state.currentChatAiName || state.settings.aiName,
-                        aiIconBase64: state.currentChatAiIconBase64 || state.settings.aiIconBase64,
-                        aiIconBlob: state.currentChatAiIconBlob, // Blobがある場合は変換される
-                        characterName: state.currentCharacterName,
-                        characterPrompt: state.currentCharacterPrompt,
-                        chatSystemPrompt: state.chatSystemPrompt
-                    });
-                } catch (saveError) {
-                    console.warn('[handleSend] 設定保存に失敗:', saveError);
-                }
-            }
 
             let text = '';
             let attachmentsToSend = [];
@@ -12661,34 +12347,71 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 }
             } catch (error) {
-                console.error('[handleSend] エラー:', error);
-                
                 const isAbort = error.message === "リクエストがキャンセルされました。" || modelResponseMetadata.finishReason === 'ABORTED';
-                const displayErrorMessage = isAbort ? error.message : (error.message || "不明なエラーが発生しました。");
+                const displayErrorMessage = isAbort ? error.message : (error.message || "不明なエラーが発生しました");
 
-                // エラー時は保存された設定を再読み込み
-                if (!isBackgroundProcess && state.currentChatId) {
-                    try {
-                        await loadChatSettings(state.currentChatId);
-                        console.log('[handleSend] エラー後に設定を復元しました');
-                    } catch (loadError) {
-                        console.error('[handleSend] 設定復元に失敗:', loadError);
-                    }
-                }
+                let partialThoughtContentOnError, partialContentOnError;
+                partialThoughtContentOnError = state.partialThoughtStreamContent;
+                partialContentOnError = state.partialStreamContent;
 
-                // バックグラウンド処理の場合は例外を再スロー
                 if (isBackgroundProcess) {
-                    throw error;
+                     throw error;
                 }
 
-                // エラー表示
-                if (!isBackgroundProcess) {
+                if ((partialContentOnError || partialContentOnError) && useStreamingForThisCall && modelMessageObjectForStream) {
+                     const finalPartialContent = partialContentOnError + `\n\n(${isAbort ? '中断されました' : 'エラーが発生しました'})`;
+                     let finalPartialThoughtValue = null;
+                     if (selectedApiProvider === 'gemini' && partialThoughtContentOnError && contextGeminiIncludeThoughts) {
+                         finalPartialThoughtValue = partialThoughtContentOnError + `\n\n(${isAbort ? '中断されました' : 'エラーが発生しました'})`;
+                     } else if ((selectedApiProvider === 'deepseek' || selectedApiProvider === 'llmaggregator') && partialThoughtContentOnError && contextDeepSeekIncludeThoughts) {
+                         finalPartialThoughtValue = partialThoughtContentOnError + `\n\n(${isAbort ? '中断されました' : 'エラーが発生しました'})`;
+                     } else if (selectedApiProvider === 'claude' && partialThoughtContentOnError && contextClaudeIncludeThoughts) {
+                         finalPartialThoughtValue = partialThoughtContentOnError + `\n\n(${isAbort ? '中断されました' : 'エラーが発生しました'})`;
+                     } else if (selectedApiProvider === 'xai' && partialThoughtContentOnError && contextXaiIncludeThoughts) {
+                         finalPartialThoughtValue = partialThoughtContentOnError + `\n\n(${isAbort ? '中断されました' : 'エラーが発生しました'})`;
+                     }
+
+                    const streamingMessageIndex = state.currentMessages.indexOf(modelMessageObjectForStream);
+                    if (streamingMessageIndex !== -1) {
+                        const msgToUpdate = state.currentMessages[streamingMessageIndex];
+                        msgToUpdate.content = finalPartialContent;
+                        msgToUpdate.timestamp = Date.now();
+                        msgToUpdate.error = true;
+                        msgToUpdate.finishReason = isAbort ? 'ABORTED' : (modelResponseMetadata.finishReason || 'ERROR');
+                        msgToUpdate.safetyRatings = modelResponseMetadata.safetyRatings;
+                        msgToUpdate.usageMetadata = finalUsageMetadataFromStream;
+                        msgToUpdate.generatedByApiProvider = selectedApiProvider;
+
+                        if (selectedApiProvider === 'gemini') {
+                            msgToUpdate.thoughtSummary = finalPartialThoughtValue;
+                            msgToUpdate.groundingMetadata = currentGroundingMetadata;
+                        } else if (selectedApiProvider === 'deepseek' || selectedApiProvider === 'llmaggregator') {
+                            msgToUpdate.deepSeekThoughtSummary = finalPartialThoughtValue;
+                        } else if (selectedApiProvider === 'claude') {
+                            msgToUpdate.thoughtSummary = finalPartialThoughtValue;
+                        } else if (selectedApiProvider === 'xai') {
+                            msgToUpdate.xaiThoughtSummary = finalPartialThoughtValue;
+                        }
+
+                         try {
+                            uiUtils.finalizeStreamingMessage(streamingMessageIndex);
+                            await dbUtils.saveChat();
+                         } catch (saveError) {
+                             uiUtils.displayError(displayErrorMessage, !isAbort);
+                         }
+                    } else {
+                         uiUtils.displayError(displayErrorMessage, !isAbort);
+                    }
+                } else {
+                    if (useStreamingForThisCall && !isAbort && modelMessageObjectForStream) {
+                        const tempPlaceholderIndex = state.currentMessages.indexOf(modelMessageObjectForStream);
+                        const placeholderElement = document.getElementById(`streaming-message-${tempPlaceholderIndex}`);
+                        if (placeholderElement) placeholderElement.remove();
+                        if(tempPlaceholderIndex !== -1) state.currentMessages.splice(tempPlaceholderIndex, 1);
+                    }
                     uiUtils.displayError(displayErrorMessage, !isAbort);
                 }
             } finally {
-                // エラー処理フラグをリセット
-                window.isProcessingError = false;
-                
                 if (!isBackgroundProcess) {
                     uiUtils.setSendingState(false);
                     state.abortController = null;
@@ -15922,7 +15645,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const errorRecovery = {
         errorCount: 0,
         errorTimeWindow: 60000,
-        maxErrors: /iPad|iPhone|iPod/.test(navigator.userAgent) ? 8 : 3, // iOS では連続エラー許容数を増加
+        maxErrors: 3,
         lastErrorTime: 0,
         isRecovering: false,
         errorLog: [],
@@ -15994,40 +15717,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     this.handleError('Service Worker Error', event);
                 });
             }
-
-            // iPhone向け強制リロード検知
-            window.addEventListener('pagehide', () => {
-                try {
-                    const debugInfo = {
-                        timestamp: performance.now(),
-                        currentChatAiName: state.currentChatAiName || 'null',
-                        settingsAiName: state.settings?.aiName || 'null',
-                        currentCharacterName: state.currentCharacterName || 'null',
-                        hasAiIconUrl: !!state.aiIconUrl,
-                        userAgent: navigator.userAgent,
-                        url: window.location.href
-                    };
-                    localStorage.setItem('nekocha_pagehide_debug', JSON.stringify(debugInfo));
-                } catch (e) {
-                    console.error('pagehide デバッグ情報保存失敗:', e);
-                }
-            });
-
-            // ページ読み込み時に前回の強制リロード情報をチェック
-            this.checkPreviousPagehide();
-        },
-
-        checkPreviousPagehide() {
-            try {
-                const debugInfo = localStorage.getItem('nekocha_pagehide_debug');
-                if (debugInfo) {
-                    const data = JSON.parse(debugInfo);
-                    console.log('[errorRecovery] 前回pagehide情報:', data);
-                    localStorage.removeItem('nekocha_pagehide_debug');
-                }
-            } catch (e) {
-                console.error('前回pagehide情報読み込み失敗:', e);
-            }
         },
 
         handleError(type, errorInfo) {
@@ -16051,38 +15740,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         },
 
         isCriticalError(errorInfo) {
-            // iPhone/Safari で頻発する非致命的エラーを除外
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-            
             const criticalPatterns = [
                 /Cannot read prop/i,
                 /Cannot access before initialization/i,
                 /is not defined/i,
                 /IndexedDB/i,
+                /QuotaExceededError/i,
                 /localStorage/i,
                 /sessionStorage/i,
                 /Service Worker/i,
-                /Failed to fetch/i
+                /Failed to fetch/i,
+                /NetworkError/i
             ];
-            
-            // iOS以外、または明らかに致命的な場合のみQuotaExceededError/NetworkErrorを致命的と判定
-            if (!isIOS) {
-                criticalPatterns.push(/QuotaExceededError/i, /NetworkError/i);
-            }
-            
-            const errorMessage = JSON.stringify(errorInfo).toLowerCase();
-            const isCritical = criticalPatterns.some(pattern => pattern.test(errorMessage));
-            
-            // デバッグ用ログ（iOS向けに詳細ログ）
-            if (isIOS) {
-                console.log('[errorRecovery] iOS エラー判定:', {
-                    isCritical,
-                    errorMessage,
-                    originalError: errorInfo
-                });
-            }
-            
-            return isCritical;
+                        const errorMessage = JSON.stringify(errorInfo).toLowerCase();
+            return criticalPatterns.some(pattern => pattern.test(errorMessage));
         },
 
         async triggerForceReload(errorType, errorInfo, isCritical) {
@@ -16498,7 +16169,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const chatSystemPromptTextarea = document.getElementById('chat-system-prompt');
                 
                 if (chatAiNameInput) {
-                    chatAiNameInput.value = state.currentChatAiName || state.settings.aiName || '';
+                    chatAiNameInput.value = state.settings.aiName || '';
                 }
                 if (chatSystemPromptTextarea) {
                     const systemPromptValue = state.chatSystemPrompt || state.settings.commonSystemPrompt || '';
@@ -16509,8 +16180,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const chatAiIconPreview = document.getElementById('chat-ai-icon-preview');
                 const chatAiIconRemove = document.getElementById('chat-ai-icon-remove');
                 
-                const currentAiIconBlob = state.currentChatAiIconBlob || state.settings.aiIconBlob;
-                if (currentAiIconBlob) {
+                if (state.settings.aiIconBlob) {
                     if (state.aiIconUrl) {
                         if (chatAiIconPreview) {
                             chatAiIconPreview.src = state.aiIconUrl;
@@ -16519,8 +16189,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         if (chatAiIconRemove) {
                             chatAiIconRemove.style.display = 'inline-block';
                         }
-                    } else if (currentAiIconBlob instanceof Blob) {
-                        const url = URL.createObjectURL(currentAiIconBlob);
+                    } else if (state.settings.aiIconBlob instanceof Blob) {
+                        const url = URL.createObjectURL(state.settings.aiIconBlob);
                         if (chatAiIconPreview) {
                             chatAiIconPreview.src = url;
                             chatAiIconPreview.style.display = 'inline-block';
@@ -16552,12 +16222,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             async save() {
                 try {
-                    // AI名を更新（チャット固有として保存）
+                    // AI名を更新
                     const chatAiNameInput = document.getElementById('chat-ai-name');
                     const aiName = chatAiNameInput ? 
                         (chatAiNameInput.value.trim() || 'AI') : 'AI';
-                    state.currentChatAiName = aiName;
-                    // グローバル設定は変更しない
+                    state.settings.aiName = aiName;
+                    await dbUtils.saveSetting('aiName', aiName);
+                    
+                    // AI名入力フィールドを更新
+                    const aiNameInput = document.getElementById('ai-name-input');
+                    if (aiNameInput) {
+                        aiNameInput.value = aiName;
+                    }
                     
                     // システムプロンプトを更新
                     const chatSystemPromptTextarea = document.getElementById('chat-system-prompt');
@@ -16565,22 +16241,34 @@ document.addEventListener('DOMContentLoaded', async () => {
                         chatSystemPromptTextarea.value.trim() : '';
                     state.chatSystemPrompt = systemPrompt || null;
                     
-                    // AIアイコンの処理は既にファイル選択時や削除ボタン押下時に完了済み
-                    // ここでは追加の処理は不要
+                    // AIアイコンの状態を確認（既にファイル選択時に保存済み）
+                    // 削除された場合の処理
+                    const chatAiIconInput = document.getElementById('chat-ai-icon');
+                    const chatAiIconPreview = document.getElementById('chat-ai-icon-preview');
+                    if (chatAiIconInput && chatAiIconInput.value === '' && 
+                        chatAiIconPreview && chatAiIconPreview.style.display === 'none') {
+                        // アイコンが削除されている場合
+                        state.settings.aiIconBlob = null;
+                        if (state.aiIconUrl) {
+                            URL.revokeObjectURL(state.aiIconUrl);
+                            state.aiIconUrl = null;
+                        }
+                        await dbUtils.saveSetting('aiIconBlob', null);
+                    }
                     
                     // チャットを保存（設定を反映）
                     if (state.currentChatId && state.currentMessages && state.currentMessages.length > 0) {
                         await dbUtils.saveChat();
                     }
                     
+                    // メッセージを再描画してAI名とアイコンを反映
+                    if (uiUtils && uiUtils.renderChatMessages) {
+                        uiUtils.renderChatMessages();
+                    }
+                    
                     // アイコン表示の更新
                     if (uiUtils && uiUtils.updateIconSettingsUI) {
                         uiUtils.updateIconSettingsUI();
-                    }
-                    
-                    // メッセージを再描画してAI名とアイコンを反映
-                    if (uiUtils && uiUtils.renderChatMessages) {
-                        uiUtils.renderChatMessages(true);
                     }
                     
                     this.hide();
@@ -16598,23 +16286,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             },
         
-            async removeIcon() {
-                // チャット固有のAIアイコンを削除
-                state.currentChatAiIconBlob = null;
+            removeIcon() {
+                state.settings.aiIconBlob = null;
                 if (state.aiIconUrl) {
                     URL.revokeObjectURL(state.aiIconUrl);
                     state.aiIconUrl = null;
                 }
-                
-                // グローバル設定のAIアイコンがあれば復元
-                if (state.settings.aiIconBlob instanceof Blob) {
-                    try {
-                        state.aiIconUrl = URL.createObjectURL(state.settings.aiIconBlob);
-                    } catch (e) {
-                        console.error('Error creating AI icon URL from global settings:', e);
-                    }
-                }
-                
                 if (elements.chatAiIconPreview) {
                     elements.chatAiIconPreview.style.display = 'none';
                 }
@@ -16629,11 +16306,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
                 if (aiIconThumbnail) {
                     aiIconThumbnail.style.display = 'none';
-                }
-                
-                // アイコン表示UIを更新
-                if (uiUtils && uiUtils.updateIconSettingsUI) {
-                    uiUtils.updateIconSettingsUI();
                 }
             }
     };
@@ -16710,17 +16382,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 
                 try {
-                    // 新しいURLを先に作成
-                    const newIconUrl = URL.createObjectURL(file);
-                    const oldIconUrl = state.aiIconUrl;
+                    // 既存のURLを解放
+                    if (state.aiIconUrl) {
+                        URL.revokeObjectURL(state.aiIconUrl);
+                    }
                     
-                    // 新しいBlobを設定（チャット固有として保存）
-                    state.currentChatAiIconBlob = file;
-                    state.aiIconUrl = newIconUrl;
-                    
-                    // グローバル設定は変更しない
+                    // 新しいBlobを設定
+                    state.settings.aiIconBlob = file;
+                    await dbUtils.saveSetting('aiIconBlob', file);
                     
                     // プレビューを更新
+                    state.aiIconUrl = URL.createObjectURL(file);
                     if (elements.chatAiIconPreview) {
                         elements.chatAiIconPreview.src = state.aiIconUrl;
                         elements.chatAiIconPreview.style.display = 'inline-block';
@@ -16736,25 +16408,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         aiIconThumbnail.style.display = 'block';
                     }
                     
-                    // アイコン設定UIを更新
-                    if (uiUtils && uiUtils.updateIconSettingsUI) {
-                        uiUtils.updateIconSettingsUI();
-                    }
-                    
                     // チャット画面のメッセージを再描画してアイコンを反映
                     if (uiUtils && uiUtils.renderChatMessages) {
                         uiUtils.renderChatMessages(true);
-                    }
-                    
-                    // 古いURLを解放（最後に実行）
-                    if (oldIconUrl && oldIconUrl !== newIconUrl) {
-                        setTimeout(() => {
-                            try {
-                                URL.revokeObjectURL(oldIconUrl);
-                            } catch (e) {
-                                // iPhone では URL の解放でエラーが出ることがある
-                            }
-                        }, 1000);
                     }
                     
                 } catch (error) {
@@ -16767,7 +16423,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         // AIアイコン削除ボタン
         if (elements.chatAiIconRemove) {
             elements.chatAiIconRemove.addEventListener('click', async () => {
-                await chatSettingsModal.removeIcon();
+                chatSettingsModal.removeIcon();
+                await dbUtils.saveSetting('aiIconBlob', null);
                 
                 // チャット画面のメッセージを再描画してアイコンを反映
                 if (uiUtils && uiUtils.renderChatMessages) {
