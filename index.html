@@ -9054,6 +9054,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         elements.aiNameInput.value = characterValue;
                     }
                     
+                    // キャラクターアイコンを読み込み
+                    await this.loadCharacterIcon(characterValue);
+                    
                     // グローバルにキャラクターデータを保存（オプション）
                     window.characterDataCache = allCharacterData;
                     
@@ -9062,6 +9065,55 @@ document.addEventListener('DOMContentLoaded', async () => {
                     console.error('キャラクタープロンプト読み込みエラー:', error);
                     elements.promptSetupSystemPrompt.value = '';
                     await this.showCustomAlert(`キャラクタープロンプト(${characterValue})の読み込みに失敗しました。`);
+                }
+            },
+            async loadCharacterIcon(characterName) {
+                try {
+                    // 可能なアイコンファイル拡張子
+                    const extensions = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
+                    let iconBlob = null;
+                    
+                    // 各拡張子を試行
+                    for (const ext of extensions) {
+                        try {
+                            const encodedName = encodeURIComponent(characterName);
+                            const iconUrl = `./icon/${encodedName}.${ext}`;
+                            const response = await fetch(iconUrl);
+                            
+                            if (response.ok) {
+                                iconBlob = await response.blob();
+                                console.log(`Successfully loaded character icon: ${characterName}.${ext}`);
+                                break;
+                            }
+                        } catch (error) {
+                            // 次の拡張子を試行
+                            continue;
+                        }
+                    }
+                    
+                    if (iconBlob) {
+                        // 既存のアイコンURLをクリーンアップ
+                        if (state.aiIconUrl) {
+                            URL.revokeObjectURL(state.aiIconUrl);
+                        }
+                        
+                        // アイコンを設定
+                        state.settings.aiIconBlob = iconBlob;
+                        state.aiIconUrl = URL.createObjectURL(iconBlob);
+                        
+                        // base64に変換してキャッシュ
+                        const base64Icon = await iconManager.blobToBase64(iconBlob);
+                        state.settings.aiIconBase64 = base64Icon;
+                        
+                        // プロンプト設定画面のサムネイルを更新
+                        this.updatePromptAiIconDisplay();
+                        
+                        console.log(`Character icon loaded for: ${characterName}`);
+                    } else {
+                        console.log(`No icon found for character: ${characterName}`);
+                    }
+                } catch (error) {
+                    console.error(`Failed to load character icon for ${characterName}:`, error);
                 }
             },
             updatePromptPreview() {
