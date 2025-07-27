@@ -9257,6 +9257,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     // プロンプト設定からの新しいチャット作成フラグを設定
                     state.isCreatingNewChatFromPrompt = true;
+                    console.log('[DEBUG] Setting isCreatingNewChatFromPrompt to true');
                     
                     // 新規チャットを開始
                     appLogic.startNewChat();
@@ -9281,6 +9282,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     await this.showScreen('chat');
                     
                     // フラグをクリア
+                    console.log('[DEBUG] Clearing isCreatingNewChatFromPrompt flag');
                     state.isCreatingNewChatFromPrompt = false;
                 } catch (error) {
                     console.error('プロンプト設定エラー:', error);
@@ -9989,9 +9991,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     
                     // チャット履歴は読み込むが、画面遷移は後で制御
                     const chats = await dbUtils.getAllChats(state.settings.historySortOrder);
+                    console.log('[DEBUG] initializeApp: isCreatingNewChatFromPrompt =', state.isCreatingNewChatFromPrompt);
+                    console.log('[DEBUG] initializeApp: chats.length =', chats?.length || 0);
                     if (chats && chats.length > 0 && !state.isCreatingNewChatFromPrompt) {
+                        console.log('[DEBUG] Loading existing chat:', chats[0].id);
                         await this.loadChat(chats[0].id);
                     } else {
+                        console.log('[DEBUG] Starting new chat');
                         this.startNewChat();
                     }
                     
@@ -11072,6 +11078,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             uiUtils.showScreen('chat');
         },
         startNewChat() {
+            console.log('[DEBUG] startNewChat called, isCreatingNewChatFromPrompt =', state.isCreatingNewChatFromPrompt);
             state.currentChatId = null;
             state.currentMessages = [];
             
@@ -11125,6 +11132,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         },
         async loadChat(id) {
+            // プロンプト設定からの新しいチャット作成中は既存チャットの読み込みを回避
+            if (state.isCreatingNewChatFromPrompt) {
+                console.log('[DEBUG] Skipping loadChat due to isCreatingNewChatFromPrompt flag');
+                return;
+            }
+            
             let confirmedLoad = true;
             if (state.isSending) {
                 if (!state.settings.disableLoadChatConfirmationWhileSending) {
