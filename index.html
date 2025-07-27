@@ -6734,6 +6734,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // base64からアイコンを取得
                         // 新しいチャット（chatIdがnull）の場合は、設定アイコンを最優先
                         let base64Icon = null;
+                        console.log('[DEBUG] Icon selection - currentChatId:', state.currentChatId);
+                        console.log('[DEBUG] Icon selection - settings.aiIconBase64:', !!state.settings.aiIconBase64);
+                        console.log('[DEBUG] Icon selection - currentChatAiIconBase64:', !!state.currentChatAiIconBase64);
+                        
                         if (!state.currentChatId) {
                             // 新しいチャットの場合：設定アイコンを最優先
                             base64Icon = state.settings.aiIconBase64 || state.currentChatAiIconBase64;
@@ -9068,7 +9072,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     
                     // キャラクターアイコンを読み込み
-                    await this.loadCharacterIcon(characterValue);
+                    try {
+                        await this.loadCharacterIcon(characterValue);
+                    } catch (iconError) {
+                        console.error('Character icon loading failed:', iconError);
+                    }
                     
                     // グローバルにキャラクターデータを保存（オプション）
                     window.characterDataCache = allCharacterData;
@@ -9101,6 +9109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }
                         } catch (error) {
                             // 次の拡張子を試行
+                            console.log(`Failed to load ${characterName}.${ext}:`, error.message);
                             continue;
                         }
                     }
