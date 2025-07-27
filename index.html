@@ -6,6 +6,7 @@
 document.addEventListener('DOMContentLoaded', async () => {
   try {
     /* ★ 初期化処理のみ実行（プロンプト読み込みはキャラクター選択時に行う） */
+    console.log('=== NEKOCHA ICON FIX VERSION 2025-01-27-02 LOADED ===');
     
     // アイコン管理クラス
     class IconManager {
@@ -9077,6 +9078,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             },
             async loadCharacterIcon(characterName) {
+                console.log('=== LOADING CHARACTER ICON FOR:', characterName, '===');
                 try {
                     // 可能なアイコンファイル拡張子
                     const extensions = ['png', 'jpg', 'jpeg', 'webp', 'gif'];
@@ -9216,6 +9218,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             },
             async startChatWithPrompt() {
+                console.log('=== START CHAT WITH PROMPT CALLED ===');
                 try {
                     const characterValue = elements.characterSelect.value;
                     const relationship = elements.userRelationshipSelect.value;
