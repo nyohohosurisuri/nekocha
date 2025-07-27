@@ -6730,8 +6730,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // AIアイコンの表示（base64対応）
                     if (state.settings.showAiIcon) {
                         // base64からアイコンを取得
+                        // 新しいチャット（chatIdがnull）の場合は、currentChatAiIconBase64を優先
                         const base64Icon = state.currentChatAiIconBase64 || 
-                                          iconManager.getIcon(state.currentChatId) ||
+                                          (state.currentChatId ? iconManager.getIcon(state.currentChatId) : null) ||
                                           state.settings.aiIconBase64;
                         
                         if (base64Icon) {
@@ -9204,6 +9205,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // 新規チャットを開始
                     appLogic.startNewChat();
                     
+                    // プロンプト設定画面で設定されたアイコンを新しいチャットに反映
+                    if (state.settings.aiIconBase64) {
+                        state.currentChatAiIconBase64 = state.settings.aiIconBase64;
+                    }
+                    
                     // キャラクター名を一時保存（新しいチャット作成時に使用）
                     if (characterValue) {
                         state.pendingCharacterName = characterValue;
@@ -11038,6 +11044,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             state.pendingCharacterName = null;
             state.currentChatAiName = null;
             state.currentChatAiIconBlob = null;
+            state.currentChatAiIconBase64 = null;
             state.isMemoVisible = false;
             elements.memoArea.classList.add('hidden');
             elements.memoEditor.value = '';
