@@ -6729,9 +6729,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else if (role === 'model') {
                     // AIアイコンの表示（base64対応）
                     if (state.settings.showAiIcon) {
-                        // base64からアイコンを取得
+                        // base64からアイコンを取得（新しいチャットではcurrentChatIdがnullなのでIconManagerは使わない）
                         const base64Icon = state.currentChatAiIconBase64 || 
-                                          iconManager.getIcon(state.currentChatId) ||
+                                          (state.currentChatId ? iconManager.getIcon(state.currentChatId) : null) ||
                                           state.settings.aiIconBase64;
                         
                         if (base64Icon) {
@@ -11038,6 +11038,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             state.pendingCharacterName = null;
             state.currentChatAiName = null;
             state.currentChatAiIconBlob = null;
+            state.currentChatAiIconBase64 = null;
             state.isMemoVisible = false;
             elements.memoArea.classList.add('hidden');
             elements.memoEditor.value = '';
