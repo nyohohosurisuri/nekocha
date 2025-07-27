@@ -6731,10 +6731,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // AIアイコンの表示（base64対応）
                     if (state.settings.showAiIcon) {
                         // base64からアイコンを取得
-                        // 新しいチャット（chatIdがnull）の場合は、currentChatAiIconBase64を優先
-                        const base64Icon = state.currentChatAiIconBase64 || 
-                                          (state.currentChatId ? iconManager.getIcon(state.currentChatId) : null) ||
-                                          state.settings.aiIconBase64;
+                        // 新しいチャット（chatIdがnull）の場合は、設定アイコンを最優先
+                        let base64Icon = null;
+                        if (!state.currentChatId) {
+                            // 新しいチャットの場合：設定アイコンを最優先
+                            base64Icon = state.settings.aiIconBase64 || state.currentChatAiIconBase64;
+                            console.log('[DEBUG] New chat - using settings icon first:', !!base64Icon);
+                        } else {
+                            // 既存チャットの場合：従来の優先順位
+                            base64Icon = state.currentChatAiIconBase64 || 
+                                        iconManager.getIcon(state.currentChatId) ||
+                                        state.settings.aiIconBase64;
+                            console.log('[DEBUG] Existing chat - using traditional priority:', !!base64Icon);
+                        }
                         
                         if (base64Icon) {
                             // base64から直接img要素を作成
@@ -9278,8 +9287,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                         uiUtils.updateChatTitle('新しいチャット');
                     }
                     
+                    // チャット画面に移行前に、アイコンを確実に更新
+                    if (state.settings.aiIconBase64) {
+                        state.currentChatAiIconBase64 = state.settings.aiIconBase64;
+                        console.log('[DEBUG] Force updating currentChatAiIconBase64 before screen transition');
+                    }
+                    
                     // チャット画面に移行
                     await this.showScreen('chat');
+                    
+                    // 画面移行後も再度アイコンを確認・更新
+                    setTimeout(() => {
+                        if (state.settings.aiIconBase64 && state.currentChatAiIconBase64 !== state.settings.aiIconBase64) {
+                            state.currentChatAiIconBase64 = state.settings.aiIconBase64;
+                            console.log('[DEBUG] Re-updating currentChatAiIconBase64 after screen transition');
+                            // メッセージを再描画してアイコンを反映
+                            uiUtils.renderChatMessages();
+                        }
+                    }, 100);
                     
                     // フラグをクリア
                     console.log('[DEBUG] Clearing isCreatingNewChatFromPrompt flag');
