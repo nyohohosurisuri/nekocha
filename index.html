@@ -6734,23 +6734,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // base64からアイコンを取得
                         // 新しいチャット（chatIdがnull）の場合は、設定アイコンを最優先
                         let base64Icon = null;
-                        console.log('[DEBUG] Icon selection - currentChatId:', state.currentChatId);
-                        console.log('[DEBUG] Icon selection - settings.aiIconBase64:', !!state.settings.aiIconBase64);
-                        console.log('[DEBUG] Icon selection - currentChatAiIconBase64:', !!state.currentChatAiIconBase64);
+                        // アイコン選択ロジック（安定版）
+                        console.log('ICON DEBUG - chatId:', state.currentChatId, 'hasSettings:', !!state.settings.aiIconBase64, 'hasCurrent:', !!state.currentChatAiIconBase64);
                         
-                        if (!state.currentChatId) {
-                            // 新しいチャットの場合：設定アイコンを最優先
-                            base64Icon = state.settings.aiIconBase64 || state.currentChatAiIconBase64;
-                            console.log('[DEBUG] New chat - using settings icon first:', !!base64Icon);
+                        // 優先順位を明確化：
+                        // 1. 新しいチャット(chatId=null) → settings.aiIconBase64を最優先
+                        // 2. 既存チャット → currentChatAiIconBase64 → iconManager → settingsの順
+                        
+                        if (state.currentChatId === null || state.currentChatId === undefined) {
+                            // 新しいチャット：設定アイコンを絶対優先
+                            base64Icon = state.settings.aiIconBase64;
+                            if (!base64Icon) {
+                                base64Icon = state.currentChatAiIconBase64;
+                            }
+                            console.log('ICON DEBUG - NEW CHAT, using:', !!base64Icon ? 'found' : 'none');
                         } else {
-                            // 既存チャットの場合：チャット固有アイコンを最優先
-                            base64Icon = state.currentChatAiIconBase64 || 
-                                        iconManager.getIcon(state.currentChatId);
-                            // チャット固有のアイコンがない場合のみ設定アイコンを使用
+                            // 既存チャット：チャット固有を最優先
+                            base64Icon = state.currentChatAiIconBase64;
+                            if (!base64Icon) {
+                                base64Icon = iconManager.getIcon(state.currentChatId);
+                            }
                             if (!base64Icon) {
                                 base64Icon = state.settings.aiIconBase64;
                             }
-                            console.log('[DEBUG] Existing chat - chat-specific icon:', !!base64Icon);
+                            console.log('ICON DEBUG - EXISTING CHAT, using:', !!base64Icon ? 'found' : 'none');
                         }
                         
                         if (base64Icon) {
