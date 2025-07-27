@@ -6644,17 +6644,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return cleanHtml;
             },
             renderChatMessages(maintainScroll = false) {
-                // iPhone対策: AIアイコンURLを再確認・再生成
-                if (!state.aiIconUrl && (state.currentChatAiIconBlob || state.settings.aiIconBlob)) {
-                    const iconBlob = state.currentChatAiIconBlob || state.settings.aiIconBlob;
-                    if (iconBlob instanceof Blob) {
-                        try {
-                            state.aiIconUrl = URL.createObjectURL(iconBlob);
-                        } catch (e) {
-                            console.error('Error recreating AI icon URL in renderChatMessages:', e);
-                        }
-                    }
+                // Base64優先でアイコンURL更新（Blob優先ロジックを廃止）
+                const base64Icon = state.currentChatAiIconBase64
+                                || (state.currentChatId ? iconManager.getIcon(state.currentChatId) : null)
+                                || state.settings.aiIconBase64;
+                const aiIconUrl = base64Icon ? iconManager.base64ToUrl(base64Icon) : null;
+                if (state.aiIconUrl && state.aiIconUrl !== aiIconUrl) {
+                    try { URL.revokeObjectURL(state.aiIconUrl); } catch(e) {}
                 }
+                state.aiIconUrl = aiIconUrl;
                 
                 const mainContent = elements.chatScreen.querySelector('.main-content');
                 const oldScrollTop = maintainScroll ? mainContent.scrollTop : null;
@@ -6727,42 +6725,29 @@ document.addEventListener('DOMContentLoaded', async () => {
                         messageDiv.appendChild(nameSpan);
                     }
                 } else if (role === 'model') {
-                    // AIアイコンの表示（base64対応）
+                    // AIアイコンの表示（Base64一本化）
                     if (state.settings.showAiIcon) {
-                        // base64からアイコンを取得（新しいチャットではcurrentChatIdがnullなのでIconManagerは使わない）
+                        // Base64優先の統一ロジック
                         const base64Icon = state.currentChatAiIconBase64 || 
                                           (state.currentChatId ? iconManager.getIcon(state.currentChatId) : null) ||
                                           state.settings.aiIconBase64;
                         
                         if (base64Icon) {
-                            // base64から直接img要素を作成
-                            const iconImg = document.createElement('img');
-                            iconImg.src = base64Icon; // base64データURLを直接設定
-                            iconImg.alt = "AI Icon";
-                            iconImg.classList.add('message-icon');
-                            
-                            // エラーハンドリング
-                            iconImg.onerror = function() {
-                                console.warn('AI icon failed to load from base64');
-                                this.style.display = 'none';
-                            };
-                            
-                            messageDiv.appendChild(iconImg);
-                        } else {
-                            // 後方互換性: Blobが存在する場合はbase64に変換
-                            const iconBlob = state.currentChatAiIconBlob || state.settings.aiIconBlob;
-                            if (iconBlob instanceof Blob && state.currentChatId) {
-                                iconManager.saveIcon(state.currentChatId, iconBlob).then(base64 => {
-                                    if (base64) {
-                                        state.currentChatAiIconBase64 = base64;
-                                        // 再描画をトリガー
-                                        if (typeof uiUtils !== 'undefined' && uiUtils.renderChatMessages) {
-                                            uiUtils.renderChatMessages();
-                                        }
-                                    }
-                                }).catch(e => {
-                                    console.error('Blob to base64 conversion failed:', e);
-                                });
+                            // Base64からObjectURLを生成（キャッシュ利用）
+                            const iconUrl = iconManager.base64ToUrl(base64Icon);
+                            if (iconUrl) {
+                                const iconImg = document.createElement('img');
+                                iconImg.src = iconUrl;
+                                iconImg.alt = "AI Icon";
+                                iconImg.classList.add('message-icon');
+                                
+                                // エラーハンドリング
+                                iconImg.onerror = function() {
+                                    console.warn('AI icon failed to load from URL:', iconUrl);
+                                    this.style.display = 'none';
+                                };
+                                
+                                messageDiv.appendChild(iconImg);
                             }
                         }
                     }
@@ -11038,19 +11023,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (state.currentScreen !== 'prompt-setup') {
                 state.chatSystemPrompt = null;
                 
-                // チャット固有のAIアイコンもクリア（グローバル設定のAIアイコンは保持）
+                // チャット固有のAIアイコンをクリア
                 if (state.aiIconUrl) {
                     URL.revokeObjectURL(state.aiIconUrl);
                     state.aiIconUrl = null;
                 }
                 
-                // AIアイコンを設定から復元
-                if (state.settings.aiIconBlob instanceof Blob) {
-                    try {
-                        state.aiIconUrl = URL.createObjectURL(state.settings.aiIconBlob);
-                    } catch (e) {
-                        console.error('Error creating AI icon URL:', e);
-                    }
+                // 新規チャット用の暫定初期値として設定（後で各チャットのBase64で上書きされる）
+                const base64Icon = state.settings.aiIconBase64;
+                if (base64Icon) {
+                    state.aiIconUrl = iconManager.base64ToUrl(base64Icon);
                 }
             }
             
@@ -11157,8 +11139,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         state.currentChatAiName = null;
                     }
                     
-                    if (chat.aiIconBlob) {
-                        // AIアイコンのBlobデータを復元
+                    // Base64ベースのアイコン復元（Blobロジックを廃止）
+                    if (chat.aiIconBase64) {
+                        state.currentChatAiIconBase64 = chat.aiIconBase64;
+                        // iconManagerキャッシュにも保存
+                        iconManager.iconCache.set(state.currentChatId, chat.aiIconBase64);
+                    } else if (chat.aiIconBlob) {
+                        // 既存のBlobデータをBase64に変換（後方互換性）
                         let restoredBlob;
                         if (chat.aiIconBlob instanceof Blob) {
                             restoredBlob = chat.aiIconBlob;
@@ -11166,60 +11153,38 @@ document.addEventListener('DOMContentLoaded', async () => {
                             restoredBlob = new Blob([chat.aiIconBlob], { type: 'image/jpeg' });
                         } else if (chat.aiIconBlob.constructor === Uint8Array || Array.isArray(chat.aiIconBlob)) {
                             restoredBlob = new Blob([new Uint8Array(chat.aiIconBlob)], { type: 'image/jpeg' });
-                        } else {
-                            console.warn('Unknown aiIconBlob format:', typeof chat.aiIconBlob);
-                            restoredBlob = null;
                         }
                         
                         if (restoredBlob) {
-                            state.currentChatAiIconBlob = restoredBlob;
-                            // 既存のURL解放
-                            if (state.aiIconUrl) {
-                                URL.revokeObjectURL(state.aiIconUrl);
-                            }
-                            state.aiIconUrl = URL.createObjectURL(restoredBlob);
-                            
-                            // Base64もセット（メッセージ表示用）
                             try {
                                 const base64 = await iconManager.saveIcon(state.currentChatId, restoredBlob);
                                 state.currentChatAiIconBase64 = base64;
                             } catch (e) {
-                                console.error('Failed to convert AI icon to base64:', e);
-                            }
-                            
-                            // AIアイコンを画面に反映
-                            const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
-                            if (aiIconThumbnail) {
-                                aiIconThumbnail.src = state.aiIconUrl;
-                                aiIconThumbnail.style.display = 'block';
+                                console.error('Failed to convert legacy aiIconBlob to base64:', e);
                             }
                         }
                     } else {
-                        // チャット固有のAIアイコンがない場合はクリーンアップ
-                        state.currentChatAiIconBlob = null;
+                        // チャット固有のアイコンがない場合
                         state.currentChatAiIconBase64 = null;
+                    }
+                    
+                    // Base64からURL生成とUI更新
+                    const base64Icon = state.currentChatAiIconBase64 
+                                    || iconManager.getIcon(state.currentChatId) 
+                                    || state.settings.aiIconBase64;
+                    if (state.aiIconUrl) { 
+                        try { URL.revokeObjectURL(state.aiIconUrl); } catch(e) {} 
+                    }
+                    state.aiIconUrl = base64Icon ? iconManager.base64ToUrl(base64Icon) : null;
+                    
+                    // AIアイコンを画面に反映
+                    const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
+                    if (aiIconThumbnail) {
                         if (state.aiIconUrl) {
-                            URL.revokeObjectURL(state.aiIconUrl);
-                            state.aiIconUrl = null;
-                        }
-                        
-                        // グローバル設定のAIアイコンを復元
-                        if (state.settings.aiIconBlob instanceof Blob) {
-                            try {
-                                state.aiIconUrl = URL.createObjectURL(state.settings.aiIconBlob);
-                                const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
-                                if (aiIconThumbnail) {
-                                    aiIconThumbnail.src = state.aiIconUrl;
-                                    aiIconThumbnail.style.display = 'block';
-                                }
-                            } catch (e) {
-                                console.error('Error creating AI icon URL from global settings:', e);
-                            }
+                            aiIconThumbnail.src = state.aiIconUrl;
+                            aiIconThumbnail.style.display = 'block';
                         } else {
-                            const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
-                            if (aiIconThumbnail) {
-                                aiIconThumbnail.style.display = 'none';
-                            }
+                            aiIconThumbnail.style.display = 'none';
                         }
                     }
                     
