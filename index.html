@@ -6083,6 +6083,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             thoughtSummaryOpenStates: new Map(),
             linkedSessionIds: [],
             isAiToAiChatProcessing: false,
+            isCreatingNewChatFromPrompt: false,
         };
 
         const sanitizeText = (text, maxLength = 255) => {
@@ -9202,6 +9203,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // 設定を保存
                     await appLogic.saveSettings(false);
                     
+                    // プロンプト設定からの新しいチャット作成フラグを設定
+                    state.isCreatingNewChatFromPrompt = true;
+                    
                     // 新規チャットを開始
                     appLogic.startNewChat();
                     
@@ -9223,6 +9227,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     // チャット画面に移行
                     await this.showScreen('chat');
+                    
+                    // フラグをクリア
+                    state.isCreatingNewChatFromPrompt = false;
                 } catch (error) {
                     console.error('プロンプト設定エラー:', error);
                     await this.showCustomAlert('プロンプト設定中にエラーが発生しました。');
@@ -9930,7 +9937,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     
                     // チャット履歴は読み込むが、画面遷移は後で制御
                     const chats = await dbUtils.getAllChats(state.settings.historySortOrder);
-                    if (chats && chats.length > 0) {
+                    if (chats && chats.length > 0 && !state.isCreatingNewChatFromPrompt) {
                         await this.loadChat(chats[0].id);
                     } else {
                         this.startNewChat();
