@@ -6727,43 +6727,43 @@ document.addEventListener('DOMContentLoaded', async () => {
                         messageDiv.appendChild(nameSpan);
                     }
                 } else if (role === 'model') {
-                    // AIアイコンの表示（base64対応）
+                    // AIアイコンの表示（Blob URL / Base64対応）
                     if (state.settings.showAiIcon) {
-                        // base64からアイコンを取得
-                        const base64Icon = state.currentChatAiIconBase64 || 
-                                          iconManager.getIcon(state.currentChatId) ||
-                                          state.settings.aiIconBase64;
-                        
-                        if (base64Icon) {
-                            // base64から直接img要素を作成
+                        let iconSrc = null;
+                        // 優先: Blob URL
+                        if (state.aiIconUrl) {
+                            iconSrc = state.aiIconUrl;
+                        } else {
+                            // Base64からURLを生成
+                            const base64Icon = state.currentChatAiIconBase64 ||
+                                               iconManager.getIcon(state.currentChatId) ||
+                                               state.settings.aiIconBase64;
+                            if (base64Icon) {
+                                iconSrc = iconManager.base64ToUrl(base64Icon);
+                            } else {
+                                // 後方互換性: Blobがある場合は保存してBase64化
+                                const iconBlob = state.currentChatAiIconBlob || state.settings.aiIconBlob;
+                                if (iconBlob instanceof Blob && state.currentChatId) {
+                                    iconManager.saveIcon(state.currentChatId, iconBlob).then(base64 => {
+                                        if (base64) {
+                                            state.currentChatAiIconBase64 = base64;
+                                            // 再描画
+                                            uiUtils.renderChatMessages(true);
+                                        }
+                                    }).catch(e => console.error('Blob to base64 conversion failed:', e));
+                                }
+                            }
+                        }
+                        if (iconSrc) {
                             const iconImg = document.createElement('img');
-                            iconImg.src = base64Icon; // base64データURLを直接設定
+                            iconImg.src = iconSrc;
                             iconImg.alt = "AI Icon";
                             iconImg.classList.add('message-icon');
-                            
-                            // エラーハンドリング
                             iconImg.onerror = function() {
-                                console.warn('AI icon failed to load from base64');
+                                console.warn('AI icon failed to load:', this.src);
                                 this.style.display = 'none';
                             };
-                            
                             messageDiv.appendChild(iconImg);
-                        } else {
-                            // 後方互換性: Blobが存在する場合はbase64に変換
-                            const iconBlob = state.currentChatAiIconBlob || state.settings.aiIconBlob;
-                            if (iconBlob instanceof Blob && state.currentChatId) {
-                                iconManager.saveIcon(state.currentChatId, iconBlob).then(base64 => {
-                                    if (base64) {
-                                        state.currentChatAiIconBase64 = base64;
-                                        // 再描画をトリガー
-                                        if (typeof uiUtils !== 'undefined' && uiUtils.renderChatMessages) {
-                                            uiUtils.renderChatMessages();
-                                        }
-                                    }
-                                }).catch(e => {
-                                    console.error('Blob to base64 conversion failed:', e);
-                                });
-                            }
                         }
                     }
                     
