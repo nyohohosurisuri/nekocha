@@ -10994,7 +10994,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                             if (state.aiIconUrl) {
                                 URL.revokeObjectURL(state.aiIconUrl);
                             }
-                            state.aiIconUrl = URL.createObjectURL(restoredBlob);
+                            try {
+                                state.aiIconUrl = URL.createObjectURL(restoredBlob);
+                            } catch (e) {
+                                console.warn('Safari Blob URL creation failed during chat load:', e);
+                                state.aiIconUrl = null;
+                            }
                             
                             // AIアイコンを画面に反映
                             const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
@@ -11037,7 +11042,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                             if (state.backgroundImageUrl) {
                                 URL.revokeObjectURL(state.backgroundImageUrl);
                             }
-                            state.backgroundImageUrl = URL.createObjectURL(restoredBgBlob);
+                            try {
+                                state.backgroundImageUrl = URL.createObjectURL(restoredBgBlob);
+                            } catch (e) {
+                                console.warn('Safari Blob URL creation failed for background image:', e);
+                                state.backgroundImageUrl = null;
+                            }
                             
                             // 背景画像をチャット画面に適用
                             document.documentElement.style.setProperty('--chat-background-image', `url(${state.backgroundImageUrl})`);
@@ -12398,6 +12408,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const isAbort = error.message === "リクエストがキャンセルされました。" || modelResponseMetadata.finishReason === 'ABORTED';
                 const displayErrorMessage = isAbort ? error.message : (error.message || "不明なエラーが発生しました");
 
+                // Safari Blob エラー対策: 重要な状態変数を保護
+                const preservedAiName = state.settings.aiName;
+                const preservedAiIconBlob = state.settings.aiIconBlob;
+                const preservedBackgroundImageBlob = state.settings.backgroundImageBlob;
+                const preservedAiIconUrl = state.aiIconUrl;
+                const preservedBackgroundImageUrl = state.backgroundImageUrl;
+
                 let partialThoughtContentOnError, partialContentOnError;
                 partialThoughtContentOnError = state.partialThoughtStreamContent;
                 partialContentOnError = state.partialStreamContent;
@@ -12446,9 +12463,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                             await dbUtils.saveChat();
                          } catch (saveError) {
                              uiUtils.displayError(displayErrorMessage, !isAbort);
+                             // Safari Blob エラー対策: 状態復元
+                             state.settings.aiName = preservedAiName;
+                             state.settings.aiIconBlob = preservedAiIconBlob;
+                             state.settings.backgroundImageBlob = preservedBackgroundImageBlob;
+                             state.aiIconUrl = preservedAiIconUrl;
+                             state.backgroundImageUrl = preservedBackgroundImageUrl;
                          }
                     } else {
                          uiUtils.displayError(displayErrorMessage, !isAbort);
+                         // Safari Blob エラー対策: 状態復元
+                         state.settings.aiName = preservedAiName;
+                         state.settings.aiIconBlob = preservedAiIconBlob;
+                         state.settings.backgroundImageBlob = preservedBackgroundImageBlob;
+                         state.aiIconUrl = preservedAiIconUrl;
+                         state.backgroundImageUrl = preservedBackgroundImageUrl;
                     }
                 } else {
                     if (useStreamingForThisCall && !isAbort && modelMessageObjectForStream) {
@@ -12458,6 +12487,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                         if(tempPlaceholderIndex !== -1) state.currentMessages.splice(tempPlaceholderIndex, 1);
                     }
                     uiUtils.displayError(displayErrorMessage, !isAbort);
+                    // Safari Blob エラー対策: 状態復元
+                    state.settings.aiName = preservedAiName;
+                    state.settings.aiIconBlob = preservedAiIconBlob;
+                    state.settings.backgroundImageBlob = preservedBackgroundImageBlob;
+                    state.aiIconUrl = preservedAiIconUrl;
+                    state.backgroundImageUrl = preservedBackgroundImageUrl;
                 }
             } finally {
                 if (!isBackgroundProcess) {
@@ -12830,7 +12865,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                  const blob = file;
                  await dbUtils.saveSetting('backgroundImageBlob', blob);
                  state.settings.backgroundImageBlob = blob;
-                 state.backgroundImageUrl = URL.createObjectURL(blob);
+                 try {
+                     state.backgroundImageUrl = URL.createObjectURL(blob);
+                 } catch (e) {
+                     console.warn('Safari Blob URL creation failed for background:', e);
+                     state.backgroundImageUrl = null;
+                 }
                  document.documentElement.style.setProperty('--chat-background-image', `url(${state.backgroundImageUrl})`);
                  uiUtils.updateBackgroundSettingsUI();
                  uiUtils.updatePromptBackgroundDisplay();
@@ -12881,7 +12921,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                      if(state.aiIconUrl) URL.revokeObjectURL(state.aiIconUrl);
                      await dbUtils.saveSetting('aiIconBlob', blob);
                      state.settings.aiIconBlob = blob;
-                     state.aiIconUrl = URL.createObjectURL(blob);
+                     try {
+                         state.aiIconUrl = URL.createObjectURL(blob);
+                     } catch (e) {
+                         console.warn('Safari Blob URL creation failed:', e);
+                         state.aiIconUrl = null;
+                     }
                  }
                  uiUtils.updateIconSettingsUI();
                  uiUtils.renderChatMessages(true);
@@ -16509,7 +16554,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     await dbUtils.saveSetting('aiIconBlob', file);
                     
                     // プレビューを更新
-                    state.aiIconUrl = URL.createObjectURL(file);
+                    try {
+                        state.aiIconUrl = URL.createObjectURL(file);
+                    } catch (e) {
+                        console.warn('Safari Blob URL creation failed in chat settings:', e);
+                        state.aiIconUrl = null;
+                    }
                     if (elements.chatAiIconPreview) {
                         elements.chatAiIconPreview.src = state.aiIconUrl;
                         elements.chatAiIconPreview.style.display = 'inline-block';
@@ -16567,7 +16617,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     await dbUtils.saveSetting('backgroundImageBlob', file);
                     
                     // プレビューを更新
-                    state.backgroundImageUrl = URL.createObjectURL(file);
+                    try {
+                        state.backgroundImageUrl = URL.createObjectURL(file);
+                    } catch (e) {
+                        console.warn('Safari Blob URL creation failed for chat background:', e);
+                        state.backgroundImageUrl = null;
+                    }
                     if (elements.chatBackgroundPreview) {
                         elements.chatBackgroundPreview.src = state.backgroundImageUrl;
                         elements.chatBackgroundPreview.style.display = 'inline-block';
