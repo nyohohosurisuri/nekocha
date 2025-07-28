@@ -12787,11 +12787,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                  state.backgroundImageUrl = URL.createObjectURL(blob);
                  document.documentElement.style.setProperty('--chat-background-image', `url(${state.backgroundImageUrl})`);
                  uiUtils.updateBackgroundSettingsUI();
+                 uiUtils.updatePromptBackgroundDisplay();
              } catch (error) {
                  uiUtils.revokeExistingObjectUrl();
                  document.documentElement.style.setProperty('--chat-background-image', 'none');
                  state.settings.backgroundImageBlob = null;
                  uiUtils.updateBackgroundSettingsUI();
+                 uiUtils.updatePromptBackgroundDisplay();
              }
          },
          async confirmDeleteBackgroundImage() {
@@ -12807,6 +12809,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                  state.settings.backgroundImageBlob = null;
                  document.documentElement.style.setProperty('--chat-background-image', 'none');
                  uiUtils.updateBackgroundSettingsUI();
+                 uiUtils.updatePromptBackgroundDisplay();
              } catch (error) {
              }
          },
