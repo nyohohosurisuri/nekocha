@@ -1504,7 +1504,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 80px;
+            max-width: 120px;
             z-index: 2;
             top: calc(var(--message-icon-size) + var(--message-icon-offset-y, 0px) - (var(--message-icon-size) / 4) + var(--icon-name-offset-y, 0px) );
             padding: 0;
@@ -7455,7 +7455,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             const characterEl = li.querySelector('.history-item-character');
                             console.log('Chat character info:', { chatId: chat.id, characterName: chat.characterName });
                             if (chat.characterName) {
-                                characterEl.textContent = `🎭 ${chat.characterName}`;
+                                characterEl.textContent = `🗣️ ${chat.characterName}`;
                                 characterEl.style.display = 'block';
                                 console.log('Displaying character:', chat.characterName);
                             } else {
