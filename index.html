@@ -5648,6 +5648,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             chatAiIconInput: document.getElementById('chat-ai-icon'),
             chatAiIconPreview: document.getElementById('chat-ai-icon-preview'),
             chatAiIconRemove: document.getElementById('chat-ai-icon-remove'),
+            chatBackgroundImageInput: document.getElementById('chat-background-image'),
+            chatBackgroundPreview: document.getElementById('chat-background-preview'),
+            chatBackgroundRemove: document.getElementById('chat-background-remove'),
             chatSystemPromptTextarea: document.getElementById('chat-system-prompt'),
             chatSettingsSaveBtn: document.getElementById('chat-settings-save'),
             chatSettingsCancelBtn: document.getElementById('chat-settings-cancel'),
@@ -6287,6 +6290,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             characterName: characterName,
                             aiName: state.settings.aiName || "AI",
                             aiIconBlob: state.settings.aiIconBlob || null,
+                            backgroundImageBlob: state.settings.backgroundImageBlob || null,
                             chatSystemPrompt: state.chatSystemPrompt || null,
                         };
                         if (state.settings.persistMessageCollapseState) {
@@ -11010,6 +11014,48 @@ document.addEventListener('DOMContentLoaded', async () => {
                         if (aiIconThumbnail) {
                             aiIconThumbnail.style.display = 'none';
                         }
+                    }
+                    
+                    // 背景画像を復元
+                    if (chat.backgroundImageBlob) {
+                        console.log('Restored background image from chat data');
+                        let restoredBgBlob;
+                        if (chat.backgroundImageBlob instanceof Blob) {
+                            restoredBgBlob = chat.backgroundImageBlob;
+                        } else if (chat.backgroundImageBlob instanceof ArrayBuffer) {
+                            restoredBgBlob = new Blob([chat.backgroundImageBlob], { type: 'image/jpeg' });
+                        } else if (chat.backgroundImageBlob.constructor === Uint8Array || Array.isArray(chat.backgroundImageBlob)) {
+                            restoredBgBlob = new Blob([new Uint8Array(chat.backgroundImageBlob)], { type: 'image/jpeg' });
+                        } else {
+                            console.warn('Unknown backgroundImageBlob format:', typeof chat.backgroundImageBlob);
+                            restoredBgBlob = null;
+                        }
+                        
+                        if (restoredBgBlob) {
+                            state.settings.backgroundImageBlob = restoredBgBlob;
+                            // 既存のURL解放
+                            if (state.backgroundImageUrl) {
+                                URL.revokeObjectURL(state.backgroundImageUrl);
+                            }
+                            state.backgroundImageUrl = URL.createObjectURL(restoredBgBlob);
+                            
+                            // 背景画像をチャット画面に適用
+                            document.documentElement.style.setProperty('--chat-background-image', `url(${state.backgroundImageUrl})`);
+                            
+                            // 設定画面のサムネイルを更新
+                            uiUtils.updateBackgroundSettingsUI();
+                            uiUtils.updatePromptBackgroundDisplay();
+                        }
+                    } else {
+                        // 背景画像がない場合はクリーンアップ
+                        if (state.backgroundImageUrl) {
+                            URL.revokeObjectURL(state.backgroundImageUrl);
+                            state.backgroundImageUrl = null;
+                        }
+                        state.settings.backgroundImageBlob = null;
+                        document.documentElement.style.setProperty('--chat-background-image', 'none');
+                        uiUtils.updateBackgroundSettingsUI();
+                        uiUtils.updatePromptBackgroundDisplay();
                     }
                     
                     // チャット専用システムプロンプトを復元
@@ -16213,6 +16259,38 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 }
                 
+                // 背景画像プレビューを表示
+                const chatBackgroundPreview = document.getElementById('chat-background-preview');
+                const chatBackgroundRemove = document.getElementById('chat-background-remove');
+                
+                if (state.settings.backgroundImageBlob) {
+                    if (state.backgroundImageUrl) {
+                        if (chatBackgroundPreview) {
+                            chatBackgroundPreview.src = state.backgroundImageUrl;
+                            chatBackgroundPreview.style.display = 'inline-block';
+                        }
+                        if (chatBackgroundRemove) {
+                            chatBackgroundRemove.style.display = 'inline-block';
+                        }
+                    } else if (state.settings.backgroundImageBlob instanceof Blob) {
+                        const url = URL.createObjectURL(state.settings.backgroundImageBlob);
+                        if (chatBackgroundPreview) {
+                            chatBackgroundPreview.src = url;
+                            chatBackgroundPreview.style.display = 'inline-block';
+                        }
+                        if (chatBackgroundRemove) {
+                            chatBackgroundRemove.style.display = 'inline-block';
+                        }
+                    }
+                } else {
+                    if (chatBackgroundPreview) {
+                        chatBackgroundPreview.style.display = 'none';
+                    }
+                    if (chatBackgroundRemove) {
+                        chatBackgroundRemove.style.display = 'none';
+                    }
+                }
+                
                 // モーダルを表示
                 modal.style.display = 'flex';
                 console.log('モーダルの表示を設定しました');
@@ -16261,6 +16339,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                         await dbUtils.saveSetting('aiIconBlob', null);
                     }
                     
+                    // 背景画像の状態を確認
+                    const chatBackgroundImageInput = document.getElementById('chat-background-image');
+                    const chatBackgroundPreview = document.getElementById('chat-background-preview');
+                    if (chatBackgroundImageInput && chatBackgroundImageInput.value === '' && 
+                        chatBackgroundPreview && chatBackgroundPreview.style.display === 'none') {
+                        // 背景画像が削除されている場合
+                        state.settings.backgroundImageBlob = null;
+                        if (state.backgroundImageUrl) {
+                            URL.revokeObjectURL(state.backgroundImageUrl);
+                            state.backgroundImageUrl = null;
+                        }
+                        document.documentElement.style.setProperty('--chat-background-image', 'none');
+                        await dbUtils.saveSetting('backgroundImageBlob', null);
+                    }
+                    
                     // チャットを保存（設定を反映）
                     if (state.currentChatId && state.currentMessages && state.currentMessages.length > 0) {
                         await dbUtils.saveChat();
@@ -16288,6 +16381,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (uiUtils && uiUtils.showCustomAlert) {
                         await uiUtils.showCustomAlert('チャット設定の保存に失敗しました。');
                     }
+                }
+            },
+        
+            removeBackground() {
+                state.settings.backgroundImageBlob = null;
+                if (state.backgroundImageUrl) {
+                    URL.revokeObjectURL(state.backgroundImageUrl);
+                    state.backgroundImageUrl = null;
+                }
+                document.documentElement.style.setProperty('--chat-background-image', 'none');
+                
+                const chatBackgroundPreview = document.getElementById('chat-background-preview');
+                const chatBackgroundRemove = document.getElementById('chat-background-remove');
+                
+                if (chatBackgroundPreview) {
+                    chatBackgroundPreview.style.display = 'none';
+                }
+                if (chatBackgroundRemove) {
+                    chatBackgroundRemove.style.display = 'none';
                 }
             },
         
@@ -16438,6 +16550,57 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
         
+        // 背景画像アップロード
+        if (elements.chatBackgroundImageInput) {
+            elements.chatBackgroundImageInput.addEventListener('change', async (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+                
+                try {
+                    // 既存のURLを解放
+                    if (state.backgroundImageUrl) {
+                        URL.revokeObjectURL(state.backgroundImageUrl);
+                    }
+                    
+                    // 新しいBlobを設定
+                    state.settings.backgroundImageBlob = file;
+                    await dbUtils.saveSetting('backgroundImageBlob', file);
+                    
+                    // プレビューを更新
+                    state.backgroundImageUrl = URL.createObjectURL(file);
+                    if (elements.chatBackgroundPreview) {
+                        elements.chatBackgroundPreview.src = state.backgroundImageUrl;
+                        elements.chatBackgroundPreview.style.display = 'inline-block';
+                    }
+                    if (elements.chatBackgroundRemove) {
+                        elements.chatBackgroundRemove.style.display = 'inline-block';
+                    }
+                    
+                    // チャット画面に背景画像を適用
+                    document.documentElement.style.setProperty('--chat-background-image', `url(${state.backgroundImageUrl})`);
+                    
+                    // 設定画面のサムネイルを更新
+                    uiUtils.updateBackgroundSettingsUI();
+                    uiUtils.updatePromptBackgroundDisplay();
+                    
+                } catch (error) {
+                    console.error('背景画像のアップロードに失敗しました:', error);
+                }
+            });
+        }
+        
+        // 背景画像削除ボタン
+        if (elements.chatBackgroundRemove) {
+            elements.chatBackgroundRemove.addEventListener('click', async () => {
+                chatSettingsModal.removeBackground();
+                await dbUtils.saveSetting('backgroundImageBlob', null);
+                
+                // 設定画面のサムネイルを更新
+                uiUtils.updateBackgroundSettingsUI();
+                uiUtils.updatePromptBackgroundDisplay();
+            });
+        }
+        
         // ESCキーでモーダルを閉じる
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && elements.chatSettingsModal && elements.chatSettingsModal.style.display === 'flex') {
@@ -16478,6 +16641,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <input type="file" id="chat-ai-icon" accept="image/*">
                         <img id="chat-ai-icon-preview" class="ai-icon-preview" style="display: none;">
                         <button type="button" id="chat-ai-icon-remove" class="icon-remove-btn" style="display: none;">削除</button>
+                    </div>
+                </div>
+                
+                <div class="setting-item">
+                    <label for="chat-background-image">背景画像</label>
+                    <div class="background-image-upload-container">
+                        <input type="file" id="chat-background-image" accept="image/*">
+                        <img id="chat-background-preview" class="background-preview" style="display: none; width: 60px; height: 40px; object-fit: cover; border: 1px solid var(--border-primary);">
+                        <button type="button" id="chat-background-remove" class="icon-remove-btn" style="display: none;">削除</button>
                     </div>
                 </div>
                 
