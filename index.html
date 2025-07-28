@@ -3699,8 +3699,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                     
                     <div class="setting-group">
-                        <label for="ai-name-input">AI名:</label>
-                        <input type="text" id="ai-name-input" class="setting-input" placeholder="AI名を入力" maxlength="20" style="width: 200px;">
+                        <label for="prompt-ai-name-input">AI名:</label>
+                        <input type="text" id="prompt-ai-name-input" class="setting-input" placeholder="AI名を入力" maxlength="20" style="width: 200px;">
                         <label class="checkbox-label" style="margin-left: 10px;">
                             <input type="checkbox" id="show-ai-name-checkbox" checked>
                             AI名を表示する
@@ -5497,7 +5497,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             promptUploadBackgroundBtn: document.getElementById('prompt-upload-background-btn'),
             promptBackgroundThumbnail: document.getElementById('prompt-background-thumbnail'),
             promptDeleteBackgroundBtn: document.getElementById('prompt-delete-background-btn'),
-            aiNameInput: document.getElementById('ai-name-input'),
+            promptAiNameInput: document.getElementById('prompt-ai-name-input'),
             showAiIconCheckbox: document.getElementById('show-ai-icon-checkbox'),
             showAiNameCheckbox: document.getElementById('show-ai-name-checkbox'),
             userRelationshipSelect: document.getElementById('user-relationship-select'),
@@ -8613,8 +8613,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (elements.userNameInput) {
                         elements.userNameInput.value = state.settings.userName || '';
                     }
-                    if (elements.aiNameInput) {
-                        elements.aiNameInput.value = state.settings.aiName || '';
+                    if (elements.promptAiNameInput) {
+                        elements.promptAiNameInput.value = state.settings.aiName || '';
                     }
                     if (elements.showAiIconCheckbox) {
                         elements.showAiIconCheckbox.checked = state.settings.showAiIcon !== false;
@@ -9025,8 +9025,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     elements.promptSetupSystemPrompt.value = prompt;
                     
                     // キャラクター名をAI名に自動入力
-                    if (elements.aiNameInput) {
-                        elements.aiNameInput.value = characterValue;
+                    if (elements.promptAiNameInput) {
+                        elements.promptAiNameInput.value = characterValue;
                     }
                     
                     this.updatePromptPreview();
@@ -9039,7 +9039,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             updatePromptPreview() {
                 const relationship = elements.userRelationshipSelect.value;
                 const systemPrompt = elements.promptSetupSystemPrompt.value;
-                const aiName = elements.aiNameInput ? elements.aiNameInput.value.trim() || 'AI' : 'AI';
+                const aiName = elements.promptAiNameInput ? elements.promptAiNameInput.value.trim() || 'AI' : 'AI';
                 
                 const relationshipText = {
                     'first-meeting': '初対面',
@@ -9172,7 +9172,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     
                     // AI名を追加
-                    const aiName = elements.aiNameInput ? elements.aiNameInput.value.trim() || 'AI' : 'AI';
+                    const aiName = elements.promptAiNameInput ? elements.promptAiNameInput.value.trim() || 'AI' : 'AI';
                     if (aiName && aiName !== 'AI') {
                         combinedPrompt += `\nあなたの名前は${aiName}です。`;
                     }
@@ -9829,8 +9829,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                 }
                 
-                if (elements.aiNameInput) {
-                    elements.aiNameInput.addEventListener('input', () => {
+                if (elements.promptAiNameInput) {
+                    elements.promptAiNameInput.addEventListener('input', () => {
                         uiUtils.updatePromptPreview();
                     });
                 }
@@ -9876,14 +9876,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (elements.promptBackgroundImageInput) {
                     elements.promptBackgroundImageInput.addEventListener('change', async (event) => {
                         const file = event.target.files[0];
-                        if (file) await uiUtils.handleBackgroundImageUpload(file);
+                        if (file) await this.handleBackgroundImageUpload(file);
                         event.target.value = null;
                     });
                 }
                 
                 if (elements.promptDeleteBackgroundBtn) {
                     elements.promptDeleteBackgroundBtn.addEventListener('click', async () => {
-                        await uiUtils.confirmDeleteBackgroundImage();
+                        await this.confirmDeleteBackgroundImage();
                     });
                 }
                 
