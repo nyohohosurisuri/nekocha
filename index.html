@@ -3682,9 +3682,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <select id="character-select" class="setting-select" style="flex: 1;">
                                 <option value="">-- キャラクターを選択してください --</option>
                             </select>
-                            <button id="manual-character-file-btn" class="btn-secondary" style="white-space: nowrap;" title="systempromptフォルダから手動でファイルを選択">📁 手動選択</button>
                         </div>
-                        <input type="file" id="manual-character-file-input" accept=".txt" style="display: none;">
                     </div>
                     
                     <div class="setting-group">
@@ -9782,59 +9780,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                 }
                 
-                // 手動キャラクターファイル選択
-                const manualCharacterFileBtn = document.getElementById('manual-character-file-btn');
-                const manualCharacterFileInput = document.getElementById('manual-character-file-input');
-                if (manualCharacterFileBtn && manualCharacterFileInput) {
-                    manualCharacterFileBtn.addEventListener('click', () => {
-                        manualCharacterFileInput.click();
-                    });
-                    
-                    manualCharacterFileInput.addEventListener('change', async (event) => {
-                        const file = event.target.files[0];
-                        if (file && file.name.endsWith('.txt')) {
-                            try {
-                                const content = await file.text();
-                                const characterName = file.name.replace('.txt', '');
-                                
-                                // プロンプトエリアに読み込み
-                                if (elements.promptSetupSystemPrompt) {
-                                    elements.promptSetupSystemPrompt.value = content.trim();
-                                }
-                                
-                                // AI名に自動入力
-                                if (elements.aiNameInput) {
-                                    elements.aiNameInput.value = characterName;
-                                }
-                                
-                                // セレクトボックスに追加（存在しない場合）
-                                if (elements.characterSelect) {
-                                    const existingOption = Array.from(elements.characterSelect.options)
-                                        .find(option => option.value === characterName);
-                                    if (!existingOption) {
-                                        const newOption = document.createElement('option');
-                                        newOption.value = characterName;
-                                        newOption.textContent = characterName;
-                                        elements.characterSelect.appendChild(newOption);
-                                    }
-                                    elements.characterSelect.value = characterName;
-                                }
-                                
-                                uiUtils.updatePromptPreview();
-                                console.log(`手動でキャラクターファイルを読み込みました: ${characterName}`);
-                                
-                                // ファイル入力をリセット
-                                manualCharacterFileInput.value = '';
-                                
-                            } catch (error) {
-                                console.error('ファイル読み込みエラー:', error);
-                                await uiUtils.showCustomAlert('ファイルの読み込みに失敗しました。');
-                            }
-                        } else {
-                            await uiUtils.showCustomAlert('テキストファイル(.txt)を選択してください。');
-                        }
-                    });
-                }
                 if (elements.userRelationshipSelect) {
                     elements.userRelationshipSelect.addEventListener('change', () => uiUtils.updatePromptPreview());
                 }
