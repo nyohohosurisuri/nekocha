@@ -9181,11 +9181,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         combinedPrompt += `\nあなたの名前は${aiName}です。`;
                     }
                     
-                    // 設定を更新
-                    state.settings.aiName = aiName;
-                    state.settings.showAiIcon = elements.showAiIconCheckbox ? elements.showAiIconCheckbox.checked : true;
-                    state.settings.showAiName = elements.showAiNameCheckbox ? elements.showAiNameCheckbox.checked : true;
-                    
                     // 設定に反映
                     state.settings.commonSystemPrompt = combinedPrompt;
                     if (elements.commonSystemPromptDefaultTextarea) {
@@ -9195,8 +9190,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // チャット専用システムプロンプトとして保存
                     state.chatSystemPrompt = combinedPrompt;
                     
-                    // 設定を保存
+                    // 設定を保存（AI名設定の前に）
                     await appLogic.saveSettings(false);
+                    
+                    // 設定を更新（保存後にAI名を設定）
+                    state.settings.aiName = aiName;
+                    state.settings.showAiIcon = elements.showAiIconCheckbox ? elements.showAiIconCheckbox.checked : true;
+                    state.settings.showAiName = elements.showAiNameCheckbox ? elements.showAiNameCheckbox.checked : true;
                     
                     // 新規チャットを開始
                     appLogic.startNewChat();
