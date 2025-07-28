@@ -3708,6 +3708,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                     
                     <div class="setting-group">
+                        <label>チャット画面の背景画像:</label>
+                        <div class="image-upload-controls">
+                            <input type="file" id="prompt-background-image-input" accept="image/jpeg, image/png, image/gif, image/webp" class="hidden">
+                            <button id="prompt-upload-background-btn" class="settings-action-button" type="button">背景画像選択...</button>
+                            <img id="prompt-background-thumbnail" src="" alt="背景画像プレビュー" class="background-thumbnail hidden">
+                            <button id="prompt-delete-background-btn" class="settings-delete-button hidden" type="button">削除</button>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
                         <label for="user-name-input">ユーザーの名前(呼び名):</label>
                         <input type="text" id="user-name-input" aria-label="ユーザーの名前">
                     </div>
@@ -5483,6 +5493,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             promptUploadAiIconBtn: document.getElementById('prompt-upload-ai-icon-btn'),
             promptAiIconThumbnail: document.getElementById('prompt-ai-icon-thumbnail'),
             promptDeleteAiIconBtn: document.getElementById('prompt-delete-ai-icon-btn'),
+            promptBackgroundImageInput: document.getElementById('prompt-background-image-input'),
+            promptUploadBackgroundBtn: document.getElementById('prompt-upload-background-btn'),
+            promptBackgroundThumbnail: document.getElementById('prompt-background-thumbnail'),
+            promptDeleteBackgroundBtn: document.getElementById('prompt-delete-background-btn'),
             aiNameInput: document.getElementById('ai-name-input'),
             showAiIconCheckbox: document.getElementById('show-ai-icon-checkbox'),
             showAiNameCheckbox: document.getElementById('show-ai-name-checkbox'),
@@ -8619,6 +8633,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     // AIアイコンの表示状態を更新
                     this.updatePromptAiIconDisplay();
+                    // 背景画像の表示状態を更新
+                    this.updatePromptBackgroundDisplay();
                     // プレビューを更新
                     this.updatePromptPreview();
                 } else if (screenName === 'settings') {
@@ -9052,6 +9068,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 if (state.aiIconUrl && thumbnail) {
                     thumbnail.src = state.aiIconUrl;
+                    thumbnail.classList.remove('hidden');
+                    if (deleteBtn) {
+                        deleteBtn.classList.remove('hidden');
+                    }
+                } else {
+                    if (thumbnail) {
+                        thumbnail.classList.add('hidden');
+                    }
+                    if (deleteBtn) {
+                        deleteBtn.classList.add('hidden');
+                    }
+                }
+            },
+            updatePromptBackgroundDisplay() {
+                const thumbnail = elements.promptBackgroundThumbnail;
+                const deleteBtn = elements.promptDeleteBackgroundBtn;
+                
+                if (state.backgroundImageUrl && thumbnail) {
+                    thumbnail.src = state.backgroundImageUrl;
                     thumbnail.classList.remove('hidden');
                     if (deleteBtn) {
                         deleteBtn.classList.remove('hidden');
@@ -9830,6 +9865,28 @@ document.addEventListener('DOMContentLoaded', async () => {
                         await uiUtils.deletePromptAiIcon();
                     });
                 }
+                
+                // プロンプト作成画面の背景画像アップロード
+                if (elements.promptUploadBackgroundBtn) {
+                    elements.promptUploadBackgroundBtn.addEventListener('click', () => {
+                        elements.promptBackgroundImageInput.click();
+                    });
+                }
+                
+                if (elements.promptBackgroundImageInput) {
+                    elements.promptBackgroundImageInput.addEventListener('change', async (event) => {
+                        const file = event.target.files[0];
+                        if (file) await uiUtils.handleBackgroundImageUpload(file);
+                        event.target.value = null;
+                    });
+                }
+                
+                if (elements.promptDeleteBackgroundBtn) {
+                    elements.promptDeleteBackgroundBtn.addEventListener('click', async () => {
+                        await uiUtils.confirmDeleteBackgroundImage();
+                    });
+                }
+                
                 elements.toggleMemoBtn.addEventListener('click', () => this.toggleMemo());
                 elements.copyMemoBtn.addEventListener('click', () => this.copyMemoText());
                 elements.pasteMemoBtn.addEventListener('click', () => this.pasteIntoMemo());
