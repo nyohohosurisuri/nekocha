@@ -6295,25 +6295,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // IndexedDBが使用できない場合はアセット変更を無効化
                         const isIdbUsable = state.env?.idbUsable !== false;
                         
-                        // aiName は「空文字/未定義なら既存を保持」。変更した時だけ上書き
+                        // aiName: dirtyの場合は state.settings.aiNameを使用、そうでない場合は既存値を優先
                         const nextAiName = (isIdbUsable && state.assetDirty.aiName && typeof state.settings.aiName === 'string' && state.settings.aiName.trim() !== '')
                             ? state.settings.aiName.trim()
-                            : (prev.aiName ?? 'AI');
+                            : (prev.aiName || state.settings.aiName || 'AI');
 
-                        // AIアイコン
-                        // dirtyのとき: Blobがある→上書き、null→削除。dirtyでない→既存保持
+                        // AIアイコン: dirtyの場合は変更を反映、そうでない場合は既存値を優先
                         const nextAiIconBlob =
                             (isIdbUsable && state.assetDirty.aiIcon)
                                 ? (state.settings.aiIconBlob instanceof Blob ? state.settings.aiIconBlob
                                     : state.settings.aiIconBlob === null ? null : prev.aiIconBlob)
-                                : (prev.aiIconBlob);
+                                : (prev.aiIconBlob || state.settings.aiIconBlob);
 
-                        // 背景画像
+                        // 背景画像: dirtyの場合は変更を反映、そうでない場合は既存値を優先
                         const nextBgBlob =
                             (isIdbUsable && state.assetDirty.bgImage)
                                 ? (state.settings.backgroundImageBlob instanceof Blob ? state.settings.backgroundImageBlob
                                     : state.settings.backgroundImageBlob === null ? null : prev.backgroundImageBlob)
-                                : (prev.backgroundImageBlob);
+                                : (prev.backgroundImageBlob || state.settings.backgroundImageBlob);
 
                         const chatData = {
                             messages: messagesToSave,
@@ -7504,16 +7503,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                             const titleEl = li.querySelector('.history-item-title');
                             titleEl.textContent = titleText;
                             
-                            // キャラクター名を表示
+                            // キャラクター名またはAI名を表示
                             const characterEl = li.querySelector('.history-item-character');
-                            console.log('Chat character info:', { chatId: chat.id, characterName: chat.characterName });
+                            console.log('Chat character info:', { chatId: chat.id, characterName: chat.characterName, aiName: chat.aiName });
                             if (chat.characterName) {
                                 characterEl.textContent = `🗣️ ${chat.characterName}`;
                                 characterEl.style.display = 'block';
                                 console.log('Displaying character:', chat.characterName);
+                            } else if (chat.aiName && chat.aiName !== 'AI') {
+                                characterEl.textContent = `🤖 ${chat.aiName}`;
+                                characterEl.style.display = 'block';
+                                console.log('Displaying AI name:', chat.aiName);
                             } else {
                                 characterEl.style.display = 'none';
-                                console.log('No character name for chat:', chat.id);
+                                console.log('No character name or AI name for chat:', chat.id);
                             }
                             
                             // AIアイコンを表示
@@ -10932,6 +10935,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             // プロンプト作成画面から来た場合以外は、チャット専用システムプロンプトをクリア
             if (state.currentScreen !== 'prompt-setup') {
                 state.chatSystemPrompt = null;
+                // dirtyフラグもリセット（新規チャットのため）
+                state.assetDirty = { aiIcon: false, bgImage: false, aiName: false };
             }
             
             state.pendingCharacterName = null;
@@ -11037,6 +11042,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                             aiNameInput.value = chat.aiName;
                         }
                     }
+                    
+                    // dirtyフラグをリセット（チャットから復元したため）
+                    state.assetDirty = { aiIcon: false, bgImage: false, aiName: false };
                     
                     if (chat.aiIconBlob) {
                         console.log('Restored AI icon from chat data');
