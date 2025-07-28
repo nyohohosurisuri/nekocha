@@ -5660,6 +5660,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             db: null,
             currentChatId: null,
             currentMessages: [],
+            // AI名・アイコン・背景画像の明示的変更フラグ
+            assetDirty: {
+                aiIcon: false,
+                bgImage: false,
+                aiName: false
+            },
             settings: {
                 apiKey: '',
                 modelName: DEFAULT_MODEL,
@@ -6283,14 +6289,40 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }
                         }
                         
+                        // 既存値
+                        const prev = existingChatData || {};
+
+                        // IndexedDBが使用できない場合はアセット変更を無効化
+                        const isIdbUsable = state.env?.idbUsable !== false;
+                        
+                        // aiName は「空文字/未定義なら既存を保持」。変更した時だけ上書き
+                        const nextAiName = (isIdbUsable && state.assetDirty.aiName && typeof state.settings.aiName === 'string' && state.settings.aiName.trim() !== '')
+                            ? state.settings.aiName.trim()
+                            : (prev.aiName ?? 'AI');
+
+                        // AIアイコン
+                        // dirtyのとき: Blobがある→上書き、null→削除。dirtyでない→既存保持
+                        const nextAiIconBlob =
+                            (isIdbUsable && state.assetDirty.aiIcon)
+                                ? (state.settings.aiIconBlob instanceof Blob ? state.settings.aiIconBlob
+                                    : state.settings.aiIconBlob === null ? null : prev.aiIconBlob)
+                                : (prev.aiIconBlob);
+
+                        // 背景画像
+                        const nextBgBlob =
+                            (isIdbUsable && state.assetDirty.bgImage)
+                                ? (state.settings.backgroundImageBlob instanceof Blob ? state.settings.backgroundImageBlob
+                                    : state.settings.backgroundImageBlob === null ? null : prev.backgroundImageBlob)
+                                : (prev.backgroundImageBlob);
+
                         const chatData = {
                             messages: messagesToSave,
                             updatedAt: now, createdAt: existingChatData ? existingChatData.createdAt : now,
                             title: title,
                             characterName: characterName,
-                            aiName: state.settings.aiName || "AI",
-                            aiIconBlob: state.settings.aiIconBlob || null,
-                            backgroundImageBlob: state.settings.backgroundImageBlob || null,
+                            aiName: nextAiName,
+                            aiIconBlob: nextAiIconBlob ?? null,
+                            backgroundImageBlob: nextBgBlob ?? null,
                             chatSystemPrompt: state.chatSystemPrompt || null,
                         };
                         if (state.settings.persistMessageCollapseState) {
@@ -6305,6 +6337,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const request = store.put(chatData);
                         request.onsuccess = (event) => {
                             const savedId = event.target.result;
+                            // 成功したらdirtyフラグをクリア
+                            state.assetDirty = { aiIcon: false, bgImage: false, aiName: false };
+                            
                             if (!state.currentChatId && savedId) {
                                 state.currentChatId = savedId;
                             }
@@ -9124,6 +9159,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     await dbUtils.saveSetting('aiIconBlob', blob);
                     state.settings.aiIconBlob = blob;
                     state.aiIconUrl = URL.createObjectURL(blob);
+                    // dirtyフラグを設定
+                    state.assetDirty.aiIcon = true;
                     this.updatePromptAiIconDisplay();
                     this.updateIconSettingsUI();
                 } catch (error) {
@@ -9141,6 +9178,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         if (state.aiIconUrl) URL.revokeObjectURL(state.aiIconUrl);
                         state.aiIconUrl = null;
                         state.settings.aiIconBlob = null;
+                        // dirtyフラグを設定
+                        state.assetDirty.aiIcon = true;
                         await dbUtils.saveSetting('aiIconBlob', null);
                         this.updatePromptAiIconDisplay();
                         this.updateIconSettingsUI();
@@ -9660,6 +9699,23 @@ document.addEventListener('DOMContentLoaded', async () => {
             },
         };
 
+        // IndexedDB使用可能性検出
+        async function detectIndexedDbAvailable() {
+            try {
+                const db = await new Promise((res, rej) => {
+                    const req = indexedDB.open('_probe_', 1);
+                    req.onupgradeneeded = () => req.result.createObjectStore('s');
+                    req.onsuccess = () => res(req.result);
+                    req.onerror = () => rej(req.error);
+                });
+                db.close();
+                indexedDB.deleteDatabase('_probe_');
+                return true;
+            } catch {
+                return false;
+            }
+        }
+
         const appLogic = {
             async initializeApp() {
                 if (typeof marked !== 'undefined') {
@@ -9743,6 +9799,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     history.replaceState({ screen: 'home' }, '', '#home');
                     state.currentScreen = 'home';
                     await uiUtils.showScreen('home');
+                    
+                    // IndexedDB使用可能性を検出
+                    state.env = state.env || {};
+                    state.env.idbUsable = await detectIndexedDbAvailable();
+                    if (!state.env.idbUsable) {
+                        console.warn('IndexedDB is not available. Asset saving will be disabled.');
+                        await uiUtils.showCustomAlert('プライベートブラウズモードまたはIndexedDBが使用できない環境です。\n画像アセットの保存が無効化されます。');
+                        // アセット保存系UIを無効化する場合はここで実装
+                    }
                     
                     console.log('Home screen shown');
                     
@@ -12865,6 +12930,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                  const blob = file;
                  await dbUtils.saveSetting('backgroundImageBlob', blob);
                  state.settings.backgroundImageBlob = blob;
+                 // dirtyフラグを設定
+                 state.assetDirty.bgImage = true;
                  try {
                      state.backgroundImageUrl = URL.createObjectURL(blob);
                  } catch (e) {
@@ -12878,6 +12945,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                  uiUtils.revokeExistingObjectUrl();
                  document.documentElement.style.setProperty('--chat-background-image', 'none');
                  state.settings.backgroundImageBlob = null;
+                 // dirtyフラグを設定
+                 state.assetDirty.bgImage = true;
                  uiUtils.updateBackgroundSettingsUI();
                  uiUtils.updatePromptBackgroundDisplay();
              }
@@ -12893,6 +12962,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                  uiUtils.revokeExistingObjectUrl();
                  await dbUtils.saveSetting('backgroundImageBlob', null);
                  state.settings.backgroundImageBlob = null;
+                 // dirtyフラグを設定
+                 state.assetDirty.bgImage = true;
                  document.documentElement.style.setProperty('--chat-background-image', 'none');
                  uiUtils.updateBackgroundSettingsUI();
                  uiUtils.updatePromptBackgroundDisplay();
@@ -12921,6 +12992,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                      if(state.aiIconUrl) URL.revokeObjectURL(state.aiIconUrl);
                      await dbUtils.saveSetting('aiIconBlob', blob);
                      state.settings.aiIconBlob = blob;
+                     // dirtyフラグを設定
+                     state.assetDirty.aiIcon = true;
                      try {
                          state.aiIconUrl = URL.createObjectURL(blob);
                      } catch (e) {
@@ -12952,6 +13025,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                      if (state.aiIconUrl) URL.revokeObjectURL(state.aiIconUrl);
                      state.aiIconUrl = null;
                      state.settings.aiIconBlob = null;
+                     // dirtyフラグを設定
+                     state.assetDirty.aiIcon = true;
                      await dbUtils.saveSetting('aiIconBlob', null);
                  }
                  uiUtils.updateIconSettingsUI();
@@ -16354,6 +16429,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const chatAiNameInput = document.getElementById('chat-ai-name');
                     const aiName = chatAiNameInput ? 
                         (chatAiNameInput.value.trim() || 'AI') : 'AI';
+                    
+                    // AI名が変更された場合はdirtyフラグを設定
+                    if (state.settings.aiName !== aiName) {
+                        state.assetDirty.aiName = true;
+                    }
+                    
                     state.settings.aiName = aiName;
                     await dbUtils.saveSetting('aiName', aiName);
                     
@@ -16431,6 +16512,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         
             removeBackground() {
                 state.settings.backgroundImageBlob = null;
+                // dirtyフラグを設定
+                state.assetDirty.bgImage = true;
                 if (state.backgroundImageUrl) {
                     URL.revokeObjectURL(state.backgroundImageUrl);
                     state.backgroundImageUrl = null;
@@ -16450,6 +16533,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         
             removeIcon() {
                 state.settings.aiIconBlob = null;
+                // dirtyフラグを設定
+                state.assetDirty.aiIcon = true;
                 if (state.aiIconUrl) {
                     URL.revokeObjectURL(state.aiIconUrl);
                     state.aiIconUrl = null;
@@ -16551,6 +16636,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     // 新しいBlobを設定
                     state.settings.aiIconBlob = file;
+                    // dirtyフラグを設定
+                    state.assetDirty.aiIcon = true;
                     await dbUtils.saveSetting('aiIconBlob', file);
                     
                     // プレビューを更新
@@ -16614,6 +16701,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     // 新しいBlobを設定
                     state.settings.backgroundImageBlob = file;
+                    // dirtyフラグを設定
+                    state.assetDirty.bgImage = true;
                     await dbUtils.saveSetting('backgroundImageBlob', file);
                     
                     // プレビューを更新
