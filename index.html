@@ -6327,10 +6327,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                         let nextAiName, nextAiIconBlob, nextBgBlob;
                         
                         if (isExistingChat) {
-                            // 既存チャット: そのチャットの値を保持（dirtyフラグが立っている場合のみ更新）
-                            nextAiName = state.assetDirty.aiName ? state.settings.aiName : (prev.aiName || state.settings.aiName || 'AI');
-                            nextAiIconBlob = state.assetDirty.aiIcon ? state.settings.aiIconBlob : prev.aiIconBlob;
-                            nextBgBlob = state.assetDirty.bgImage ? state.settings.backgroundImageBlob : prev.backgroundImageBlob;
+                            // 既存チャット: 基本的にそのチャットの保存済みの値を保持
+                            // ただし、現在アクティブなチャットかつdirtyフラグが立っている場合のみ更新
+                            const isActiveChat = chatIdForOperation === state.currentChatId;
+                            
+                            if (isActiveChat && state.assetDirty.aiName) {
+                                nextAiName = state.settings.aiName;
+                            } else {
+                                nextAiName = prev.aiName || 'AI';
+                            }
+                            
+                            if (isActiveChat && state.assetDirty.aiIcon) {
+                                nextAiIconBlob = state.settings.aiIconBlob;
+                            } else {
+                                nextAiIconBlob = prev.aiIconBlob;
+                            }
+                            
+                            if (isActiveChat && state.assetDirty.bgImage) {
+                                nextBgBlob = state.settings.backgroundImageBlob;
+                            } else {
+                                nextBgBlob = prev.backgroundImageBlob;
+                            }
                         } else {
                             // 新規チャット: 現在の設定値を使用
                             nextAiName = state.settings.aiName || 'AI';
@@ -6341,10 +6358,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // iOS Debug: アセット決定後の値を確認
                         console.log('[iOS Debug] Asset values determined', {
                             isExistingChat,
+                            isActiveChat: chatIdForOperation === state.currentChatId,
+                            chatIdForOperation,
+                            currentChatId: state.currentChatId,
                             nextAiName,
                             nextAiIconBlob: nextAiIconBlob ? 'Blob exists' : 'No blob',
                             nextBgBlob: nextBgBlob ? 'Blob exists' : 'No blob',
-                            'state.assetDirty': JSON.parse(JSON.stringify(state.assetDirty))
+                            'state.assetDirty': JSON.parse(JSON.stringify(state.assetDirty)),
+                            'prev.aiIconBlob': prev.aiIconBlob ? 'Blob exists' : 'No blob'
                         });
                         
                         // iOS環境を検出
@@ -9362,6 +9383,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // 新規チャットを開始
                     appLogic.startNewChat();
                     
+                    // プロンプト設定画面から新規チャット作成時は、現在の設定を使用することを示す
+                    // startNewChatの後に設定して、新規チャットに反映させる
+                    state.assetDirty = { aiIcon: true, bgImage: true, aiName: true };
+                    
                     // キャラクター名を一時保存（新しいチャット作成時に使用）
                     if (characterValue) {
                         state.pendingCharacterName = characterValue;
@@ -11211,6 +11236,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const previousAiName = state.settings.aiName;
                     
                     // dirtyフラグをリセット（チャットから復元したため）
+                    // 重要: チャット切り替え時は必ずリセット
                     state.assetDirty = { aiIcon: false, bgImage: false, aiName: false };
                     
                     if (chat.aiIconBlob) {
