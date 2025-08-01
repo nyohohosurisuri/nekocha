@@ -6244,6 +6244,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if ((!state.currentMessages || state.currentMessages.length === 0)) {
                     return Promise.resolve(state.currentChatId);
                 }
+                
+                // Safari Blob エラー対策: 保存前に状態を保護
+                const preservedState = {
+                    aiName: state.settings.aiName,
+                    aiIconBlob: state.settings.aiIconBlob,
+                    backgroundImageBlob: state.settings.backgroundImageBlob,
+                    aiIconUrl: state.aiIconUrl,
+                    backgroundImageUrl: state.backgroundImageUrl
+                };
+                
                 return new Promise((resolve, reject) => {
                     const store = this._getStore(CHATS_STORE, 'readwrite');
                     const now = Date.now();
@@ -6314,14 +6324,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     : state.settings.backgroundImageBlob === null ? null : prev.backgroundImageBlob)
                                 : (prev.backgroundImageBlob || state.settings.backgroundImageBlob);
 
+                        // Safari Blob エラー対策: Blobデータの検証
+                        const validateBlob = (blob) => {
+                            if (!blob || !(blob instanceof Blob)) return null;
+                            try {
+                                // Safariで問題となる空のBlobを検出
+                                if (blob.size === 0) {
+                                    console.warn('Empty blob detected, skipping');
+                                    return null;
+                                }
+                                return blob;
+                            } catch (e) {
+                                console.error('Blob validation error:', e);
+                                return null;
+                            }
+                        };
+                        
                         const chatData = {
                             messages: messagesToSave,
                             updatedAt: now, createdAt: existingChatData ? existingChatData.createdAt : now,
                             title: title,
                             characterName: characterName,
                             aiName: nextAiName,
-                            aiIconBlob: nextAiIconBlob ?? null,
-                            backgroundImageBlob: nextBgBlob ?? null,
+                            aiIconBlob: validateBlob(nextAiIconBlob),
+                            backgroundImageBlob: validateBlob(nextBgBlob),
                             chatSystemPrompt: state.chatSystemPrompt || null,
                         };
                         if (state.settings.persistMessageCollapseState) {
@@ -6355,7 +6381,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }
                             resolve(state.currentChatId || savedId);
                         };
-                        request.onerror = (event) => reject(`チャット保存putエラー: ${event.target.error.name} - ${event.target.error.message}`);
+                        request.onerror = (event) => {
+                            // Safari Blob エラー対策: エラー時に状態を復元
+                            state.settings.aiName = preservedState.aiName;
+                            state.settings.aiIconBlob = preservedState.aiIconBlob;
+                            state.settings.backgroundImageBlob = preservedState.backgroundImageBlob;
+                            state.aiIconUrl = preservedState.aiIconUrl;
+                            state.backgroundImageUrl = preservedState.backgroundImageUrl;
+                            reject(`チャット保存putエラー: ${event.target.error.name} - ${event.target.error.message}`);
+                        };
                     };
                     if (state.currentChatId) {
                         const getRequest = store.get(state.currentChatId);
@@ -6375,7 +6409,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     } else {
                         determineTitleAndSave(null);
                     }
-                    store.transaction.onerror = (event) => reject(`チャット保存トランザクション失敗: ${event.target.error.name} - ${event.target.error.message}`);
+                    store.transaction.onerror = (event) => {
+                        // Safari Blob エラー対策: トランザクションエラー時も状態を復元
+                        state.settings.aiName = preservedState.aiName;
+                        state.settings.aiIconBlob = preservedState.aiIconBlob;
+                        state.settings.backgroundImageBlob = preservedState.backgroundImageBlob;
+                        state.aiIconUrl = preservedState.aiIconUrl;
+                        state.backgroundImageUrl = preservedState.backgroundImageUrl;
+                        reject(`チャット保存トランザクション失敗: ${event.target.error.name} - ${event.target.error.message}`);
+                    };
                 });
             },
             async updateChatTitleDb(id, newTitle) {
@@ -9763,19 +9805,39 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (state.settings.backgroundImageBlob instanceof Blob) {
                         uiUtils.revokeExistingObjectUrl();
                         try {
-                             state.backgroundImageUrl = URL.createObjectURL(state.settings.backgroundImageBlob);
-                             document.documentElement.style.setProperty('--chat-background-image', `url(${state.backgroundImageUrl})`);
+                             // Safari対策: Blob URLの生成を安全に行う
+                             const blob = state.settings.backgroundImageBlob;
+                             if (blob.size > 0) {
+                                 state.backgroundImageUrl = URL.createObjectURL(blob);
+                                 document.documentElement.style.setProperty('--chat-background-image', `url(${state.backgroundImageUrl})`);
+                             } else {
+                                 console.warn('Background image blob is empty');
+                                 document.documentElement.style.setProperty('--chat-background-image', 'none');
+                             }
                         } catch (e) {
+                             console.error('Failed to create background image URL:', e);
                              document.documentElement.style.setProperty('--chat-background-image', 'none');
                         }
                     } else {
                         document.documentElement.style.setProperty('--chat-background-image', 'none');
                     }
                     if (state.settings.userIconBlob instanceof Blob) {
-                        try { state.userIconUrl = URL.createObjectURL(state.settings.userIconBlob); } catch (e) { }
+                        try {
+                            if (state.settings.userIconBlob.size > 0) {
+                                state.userIconUrl = URL.createObjectURL(state.settings.userIconBlob);
+                            }
+                        } catch (e) {
+                            console.error('Failed to create user icon URL:', e);
+                        }
                     }
                     if (state.settings.aiIconBlob instanceof Blob) {
-                        try { state.aiIconUrl = URL.createObjectURL(state.settings.aiIconBlob); } catch (e) { }
+                        try {
+                            if (state.settings.aiIconBlob.size > 0) {
+                                state.aiIconUrl = URL.createObjectURL(state.settings.aiIconBlob);
+                            }
+                        } catch (e) {
+                            console.error('Failed to create AI icon URL:', e);
+                        }
                     }
     
                     // イベントリスナーを最初に設定
@@ -12479,7 +12541,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             } catch (error) {
                 const isAbort = error.message === "リクエストがキャンセルされました。" || modelResponseMetadata.finishReason === 'ABORTED';
-                const displayErrorMessage = isAbort ? error.message : (error.message || "不明なエラーが発生しました");
+                
+                // Safari固有のエラーメッセージを検出
+                const isSafariError = error.message && (
+                    error.message.includes('QuotaExceededError') ||
+                    error.message.includes('DataCloneError') ||
+                    error.message.includes('InvalidStateError') ||
+                    error.message.includes('Failed to store record in an IDBObjectStore') ||
+                    error.message.includes('Blob')
+                );
+                
+                let displayErrorMessage;
+                if (isAbort) {
+                    displayErrorMessage = error.message;
+                } else if (isSafariError) {
+                    displayErrorMessage = "データ保存エラーが発生しました。ページを再読み込みしてください。";
+                    console.error('Safari specific error detected:', error);
+                } else {
+                    displayErrorMessage = error.message || "不明なエラーが発生しました";
+                }
 
                 // Safari Blob エラー対策: 重要な状態変数を保護
                 const preservedAiName = state.settings.aiName;
