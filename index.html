@@ -11321,7 +11321,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // チャット専用システムプロンプトを復元
                     if (chat.chatSystemPrompt) {
                         state.chatSystemPrompt = chat.chatSystemPrompt;
-                        console.log('Restored chat system prompt from chat data');
                     } else {
                         state.chatSystemPrompt = null;
                     }
@@ -16704,8 +16703,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                     chatAiNameInput.value = state.settings.aiName || '';
                 }
                 if (chatSystemPromptTextarea) {
-                    const systemPromptValue = state.chatSystemPrompt || state.settings.commonSystemPrompt || '';
+                    // 現在のチャットのシステムプロンプトを表示
+                    let systemPromptValue = '';
+                    
+                    // システムプロンプトの取得優先順位：
+                    // 1. チャット固有のシステムプロンプト
+                    // 2. メッセージからシステムプロンプトを探す
+                    if (state.chatSystemPrompt) {
+                        systemPromptValue = state.chatSystemPrompt;
+                    } else if (state.currentMessages && state.currentMessages.length > 0) {
+                        const systemMessage = state.currentMessages.find(m => m.role === 'system');
+                        if (systemMessage) {
+                            systemPromptValue = systemMessage.content;
+                        }
+                    }
+                    
                     chatSystemPromptTextarea.value = systemPromptValue;
+                    
+                    // テキストエリアの高さを内容に合わせて自動調整
+                    chatSystemPromptTextarea.style.height = 'auto';
+                    chatSystemPromptTextarea.style.height = Math.max(60, chatSystemPromptTextarea.scrollHeight) + 'px';
                 }
                 
                 // AIアイコンプレビューを表示
@@ -16811,11 +16828,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         aiNameInput.value = aiName;
                     }
                     
-                    // システムプロンプトを更新
-                    const chatSystemPromptTextarea = document.getElementById('chat-system-prompt');
-                    const systemPrompt = chatSystemPromptTextarea ? 
-                        chatSystemPromptTextarea.value.trim() : '';
-                    state.chatSystemPrompt = systemPrompt || null;
+                    // システムプロンプトは読み取り専用なので更新しない
                     
                     // AIアイコンの保存
                     if (state.assetDirty.aiIcon) {
@@ -17035,8 +17048,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
                 
                 <div class="setting-item">
-                    <label for="chat-system-prompt">システムプロンプト</label>
-                    <textarea id="chat-system-prompt" placeholder="このチャット専用のシステムプロンプトを入力"></textarea>
+                    <label for="chat-system-prompt">システムプロンプト（読み取り専用）</label>
+                    <textarea id="chat-system-prompt" readonly 
+                        style="min-height: 60px; max-height: 400px; resize: none; overflow-y: auto; 
+                        background-color: var(--input-bg-disabled, #f5f5f5); 
+                        color: var(--text-secondary); cursor: default;
+                        border: 1px solid var(--border-secondary);" 
+                        placeholder="このチャットにシステムプロンプトは設定されていません"></textarea>
                 </div>
             </div>
         </div>
