@@ -9266,21 +9266,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const blob = file;
                     if(state.aiIconUrl) URL.revokeObjectURL(state.aiIconUrl);
                     
-                    // iOS環境ではBlobをArrayBufferに変換してから保存
-                    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-                    if (isIOS) {
-                        console.log('[iOS Debug] Converting AI icon Blob to ArrayBuffer for storage');
-                        const arrayBuffer = await blob.arrayBuffer();
-                        await dbUtils.saveSetting('aiIconBlob', { arrayBuffer, type: blob.type });
-                        state.settings.aiIconBlob = { arrayBuffer, type: blob.type };
-                        // 表示用に新しいBlobを作成
-                        const displayBlob = new Blob([arrayBuffer], { type: blob.type });
-                        state.aiIconUrl = URL.createObjectURL(displayBlob);
-                    } else {
-                        await dbUtils.saveSetting('aiIconBlob', blob);
-                        state.settings.aiIconBlob = blob;
-                        state.aiIconUrl = URL.createObjectURL(blob);
-                    }
+                    // 一時的にArrayBuffer変換を無効化してデバッグ
+                    await dbUtils.saveSetting('aiIconBlob', blob);
+                    state.settings.aiIconBlob = blob;
+                    state.aiIconUrl = URL.createObjectURL(blob);
                     
                     // dirtyフラグを設定
                     state.assetDirty.aiIcon = true;
@@ -13146,21 +13135,10 @@ document.addEventListener('DOMContentLoaded', async () => {
              try {
                  uiUtils.revokeExistingObjectUrl();
                  const blob = file;
-                 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
                  
-                 if (isIOS) {
-                     console.log('[iOS Debug] Converting background image Blob to ArrayBuffer for storage');
-                     const arrayBuffer = await blob.arrayBuffer();
-                     await dbUtils.saveSetting('backgroundImageBlob', { arrayBuffer, type: blob.type });
-                     state.settings.backgroundImageBlob = { arrayBuffer, type: blob.type };
-                     // 表示用に新しいBlobを作成
-                     const displayBlob = new Blob([arrayBuffer], { type: blob.type });
-                     state.backgroundImageUrl = URL.createObjectURL(displayBlob);
-                 } else {
-                     await dbUtils.saveSetting('backgroundImageBlob', blob);
-                     state.settings.backgroundImageBlob = blob;
-                     state.backgroundImageUrl = URL.createObjectURL(blob);
-                 }
+                 await dbUtils.saveSetting('backgroundImageBlob', blob);
+                 state.settings.backgroundImageBlob = blob;
+                 state.backgroundImageUrl = URL.createObjectURL(blob);
                  
                  // dirtyフラグを設定
                  state.assetDirty.bgImage = true;
@@ -13209,35 +13187,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
              try {
                  const blob = file;
-                 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
                  
                  if (type === 'user') {
                      if(state.userIconUrl) URL.revokeObjectURL(state.userIconUrl);
-                     if (isIOS) {
-                         const arrayBuffer = await blob.arrayBuffer();
-                         await dbUtils.saveSetting('userIconBlob', { arrayBuffer, type: blob.type });
-                         state.settings.userIconBlob = { arrayBuffer, type: blob.type };
-                         const displayBlob = new Blob([arrayBuffer], { type: blob.type });
-                         state.userIconUrl = URL.createObjectURL(displayBlob);
-                     } else {
-                         await dbUtils.saveSetting('userIconBlob', blob);
-                         state.settings.userIconBlob = blob;
-                         state.userIconUrl = URL.createObjectURL(blob);
-                     }
+                     await dbUtils.saveSetting('userIconBlob', blob);
+                     state.settings.userIconBlob = blob;
+                     state.userIconUrl = URL.createObjectURL(blob);
                  } else if (type === 'ai') {
                      if(state.aiIconUrl) URL.revokeObjectURL(state.aiIconUrl);
-                     if (isIOS) {
-                         console.log('[iOS Debug] Converting AI icon Blob to ArrayBuffer for storage');
-                         const arrayBuffer = await blob.arrayBuffer();
-                         await dbUtils.saveSetting('aiIconBlob', { arrayBuffer, type: blob.type });
-                         state.settings.aiIconBlob = { arrayBuffer, type: blob.type };
-                         const displayBlob = new Blob([arrayBuffer], { type: blob.type });
-                         state.aiIconUrl = URL.createObjectURL(displayBlob);
-                     } else {
-                         await dbUtils.saveSetting('aiIconBlob', blob);
-                         state.settings.aiIconBlob = blob;
-                         state.aiIconUrl = URL.createObjectURL(blob);
-                     }
+                     await dbUtils.saveSetting('aiIconBlob', blob);
+                     state.settings.aiIconBlob = blob;
+                     state.aiIconUrl = URL.createObjectURL(blob);
                      // dirtyフラグを設定
                      state.assetDirty.aiIcon = true;
                  }
