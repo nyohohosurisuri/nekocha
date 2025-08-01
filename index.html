@@ -16532,10 +16532,141 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     // チャット設定モーダル機能の初期化
     function initializeChatSettingsModal() {
-        // 既に初期化済みの場合はスキップ
-        if (window.chatSettingsModal) {
-            return;
-        }
+        
+        // イベントハンドラー設定関数を先に定義
+        const setupEventHandlers = () => {
+            
+            // AIアイコンファイル選択
+            const chatAiIconInput = document.getElementById('chat-ai-icon');
+            if (chatAiIconInput) {
+                chatAiIconInput.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    
+                    // ファイルサイズチェック
+                    const maxSize = 1 * 1024 * 1024; // 1MB
+                    if (file.size > maxSize) {
+                        await uiUtils.showCustomAlert('ファイルサイズは1MB以下にしてください。');
+                        chatAiIconInput.value = '';
+                        return;
+                    }
+                    
+                    // ファイルタイプチェック
+                    if (!file.type.startsWith('image/')) {
+                        await uiUtils.showCustomAlert('画像ファイルを選択してください。');
+                        chatAiIconInput.value = '';
+                        return;
+                    }
+                    
+                    try {
+                        // 既存のURLを解放
+                        if (state.aiIconUrl) {
+                            URL.revokeObjectURL(state.aiIconUrl);
+                        }
+                        
+                        // 新しいBlobを設定
+                        state.settings.aiIconBlob = file;
+                        // dirtyフラグを設定
+                        state.assetDirty.aiIcon = true;
+                        // 即座に保存せず、保存ボタンクリック時に保存する
+                        
+                        // プレビューを更新
+                        try {
+                            state.aiIconUrl = URL.createObjectURL(file);
+                        } catch (e) {
+                            console.warn('Safari Blob URL creation failed in chat settings:', e);
+                            state.aiIconUrl = null;
+                        }
+                        const chatAiIconPreview = document.getElementById('chat-ai-icon-preview');
+                        const chatAiIconRemove = document.getElementById('chat-ai-icon-remove');
+                        if (chatAiIconPreview) {
+                            chatAiIconPreview.src = state.aiIconUrl;
+                            chatAiIconPreview.style.display = 'inline-block';
+                        }
+                        if (chatAiIconRemove) {
+                            chatAiIconRemove.style.display = 'inline-block';
+                        }
+                        
+                        // モーダル内のプレビューのみ更新（保存時に反映）
+                        
+                    } catch (error) {
+                        console.error('AIアイコンのアップロードに失敗しました:', error);
+                        await uiUtils.showCustomAlert('AIアイコンのアップロードに失敗しました。');
+                    }
+                };
+            }
+            
+            // AIアイコン削除ボタン
+            const chatAiIconRemove = document.getElementById('chat-ai-icon-remove');
+            if (chatAiIconRemove) {
+                chatAiIconRemove.onclick = async () => {
+                    window.chatSettingsModal.removeIcon();
+                    // 即座に保存せず、保存ボタンクリック時に保存する
+                };
+            }
+            
+            // 背景画像アップロード
+            const chatBackgroundImageInput = document.getElementById('chat-background-image');
+            if (chatBackgroundImageInput) {
+                chatBackgroundImageInput.onchange = async (e) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    
+                    try {
+                        // 既存のURLを解放
+                        if (state.backgroundImageUrl) {
+                            URL.revokeObjectURL(state.backgroundImageUrl);
+                        }
+                        
+                        // 新しいBlobを設定
+                        state.settings.backgroundImageBlob = file;
+                        // dirtyフラグを設定
+                        state.assetDirty.bgImage = true;
+                        // 即座に保存せず、保存ボタンクリック時に保存する
+                        
+                        // プレビューを更新
+                        try {
+                            state.backgroundImageUrl = URL.createObjectURL(file);
+                        } catch (e) {
+                            console.warn('Safari Blob URL creation failed for chat background:', e);
+                            state.backgroundImageUrl = null;
+                        }
+                        const chatBackgroundPreview = document.getElementById('chat-background-preview');
+                        const chatBackgroundRemove = document.getElementById('chat-background-remove');
+                        if (chatBackgroundPreview) {
+                            chatBackgroundPreview.src = state.backgroundImageUrl;
+                            chatBackgroundPreview.style.display = 'inline-block';
+                        }
+                        if (chatBackgroundRemove) {
+                            chatBackgroundRemove.style.display = 'inline-block';
+                        }
+                        
+                        // チャット画面に背景画像を適用
+                        document.documentElement.style.setProperty('--chat-background-image', `url(${state.backgroundImageUrl})`);
+                        
+                        // 設定画面のサムネイルを更新
+                        uiUtils.updateBackgroundSettingsUI();
+                        uiUtils.updatePromptBackgroundDisplay();
+                        
+                    } catch (error) {
+                        console.error('背景画像のアップロードに失敗しました:', error);
+                    }
+                };
+            }
+            
+            // 背景画像削除ボタン
+            const chatBackgroundRemove = document.getElementById('chat-background-remove');
+            if (chatBackgroundRemove) {
+                chatBackgroundRemove.onclick = async () => {
+                    window.chatSettingsModal.removeBackground();
+                    // 即座に保存せず、保存ボタンクリック時に保存する
+                    
+                    // 設定画面のサムネイルを更新
+                    uiUtils.updateBackgroundSettingsUI();
+                    uiUtils.updatePromptBackgroundDisplay();
+                };
+            }
+        };
         
         // チャット設定モーダル機能
         const chatSettingsModal = {
@@ -16629,7 +16760,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 // モーダルを表示
                 modal.style.display = 'flex';
-                console.log('モーダルの表示を設定しました');
+                
+                // イベントハンドラーを設定
+                setupEventHandlers();
+                
             },
         
             hide() {
@@ -16747,14 +16881,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                     URL.revokeObjectURL(state.aiIconUrl);
                     state.aiIconUrl = null;
                 }
-                if (elements.chatAiIconPreview) {
-                    elements.chatAiIconPreview.style.display = 'none';
+                const chatAiIconPreview = document.getElementById('chat-ai-icon-preview');
+                const chatAiIconRemove = document.getElementById('chat-ai-icon-remove');
+                const chatAiIconInput = document.getElementById('chat-ai-icon');
+                
+                if (chatAiIconPreview) {
+                    chatAiIconPreview.style.display = 'none';
                 }
-                if (elements.chatAiIconRemove) {
-                    elements.chatAiIconRemove.style.display = 'none';
+                if (chatAiIconRemove) {
+                    chatAiIconRemove.style.display = 'none';
                 }
-                if (elements.chatAiIconInput) {
-                    elements.chatAiIconInput.value = '';
+                if (chatAiIconInput) {
+                    chatAiIconInput.value = '';
                 }
                 
                 // AIアイコンサムネイルを更新
@@ -16811,133 +16949,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             });
         }
-    
-        // AIアイコンファイル選択
-        if (elements.chatAiIconInput) {
-            elements.chatAiIconInput.addEventListener('change', async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                
-                // ファイルサイズチェック
-                const maxSize = 1 * 1024 * 1024; // 1MB
-                if (file.size > maxSize) {
-                    await uiUtils.showCustomAlert('ファイルサイズは1MB以下にしてください。');
-                    elements.chatAiIconInput.value = '';
-                    return;
-                }
-                
-                // ファイルタイプチェック
-                if (!file.type.startsWith('image/')) {
-                    await uiUtils.showCustomAlert('画像ファイルを選択してください。');
-                    elements.chatAiIconInput.value = '';
-                    return;
-                }
-                
-                try {
-                    // 既存のURLを解放
-                    if (state.aiIconUrl) {
-                        URL.revokeObjectURL(state.aiIconUrl);
-                    }
-                    
-                    // 新しいBlobを設定
-                    state.settings.aiIconBlob = file;
-                    // dirtyフラグを設定
-                    state.assetDirty.aiIcon = true;
-                    // 即座に保存せず、保存ボタンクリック時に保存する
-                    
-                    // プレビューを更新
-                    try {
-                        state.aiIconUrl = URL.createObjectURL(file);
-                    } catch (e) {
-                        console.warn('Safari Blob URL creation failed in chat settings:', e);
-                        state.aiIconUrl = null;
-                    }
-                    if (elements.chatAiIconPreview) {
-                        elements.chatAiIconPreview.src = state.aiIconUrl;
-                        elements.chatAiIconPreview.style.display = 'inline-block';
-                    }
-                    if (elements.chatAiIconRemove) {
-                        elements.chatAiIconRemove.style.display = 'inline-block';
-                    }
-                    
-                    // モーダル内のプレビューのみ更新（保存時に反映）
-                    
-                } catch (error) {
-                    console.error('AIアイコンのアップロードに失敗しました:', error);
-                    await uiUtils.showCustomAlert('AIアイコンのアップロードに失敗しました。');
-                }
-            });
-        }
-    
-        // AIアイコン削除ボタン
-        if (elements.chatAiIconRemove) {
-            elements.chatAiIconRemove.addEventListener('click', async () => {
-                chatSettingsModal.removeIcon();
-                // 即座に保存せず、保存ボタンクリック時に保存する
-            });
-        }
-        
-        // 背景画像アップロード
-        if (elements.chatBackgroundImageInput) {
-            elements.chatBackgroundImageInput.addEventListener('change', async (e) => {
-                const file = e.target.files[0];
-                if (!file) return;
-                
-                try {
-                    // 既存のURLを解放
-                    if (state.backgroundImageUrl) {
-                        URL.revokeObjectURL(state.backgroundImageUrl);
-                    }
-                    
-                    // 新しいBlobを設定
-                    state.settings.backgroundImageBlob = file;
-                    // dirtyフラグを設定
-                    state.assetDirty.bgImage = true;
-                    // 即座に保存せず、保存ボタンクリック時に保存する
-                    
-                    // プレビューを更新
-                    try {
-                        state.backgroundImageUrl = URL.createObjectURL(file);
-                    } catch (e) {
-                        console.warn('Safari Blob URL creation failed for chat background:', e);
-                        state.backgroundImageUrl = null;
-                    }
-                    if (elements.chatBackgroundPreview) {
-                        elements.chatBackgroundPreview.src = state.backgroundImageUrl;
-                        elements.chatBackgroundPreview.style.display = 'inline-block';
-                    }
-                    if (elements.chatBackgroundRemove) {
-                        elements.chatBackgroundRemove.style.display = 'inline-block';
-                    }
-                    
-                    // チャット画面に背景画像を適用
-                    document.documentElement.style.setProperty('--chat-background-image', `url(${state.backgroundImageUrl})`);
-                    
-                    // 設定画面のサムネイルを更新
-                    uiUtils.updateBackgroundSettingsUI();
-                    uiUtils.updatePromptBackgroundDisplay();
-                    
-                } catch (error) {
-                    console.error('背景画像のアップロードに失敗しました:', error);
-                }
-            });
-        }
-        
-        // 背景画像削除ボタン
-        if (elements.chatBackgroundRemove) {
-            elements.chatBackgroundRemove.addEventListener('click', async () => {
-                chatSettingsModal.removeBackground();
-                // 即座に保存せず、保存ボタンクリック時に保存する
-                
-                // 設定画面のサムネイルを更新
-                uiUtils.updateBackgroundSettingsUI();
-                uiUtils.updatePromptBackgroundDisplay();
-            });
-        }
-        
         // ESCキーでモーダルを閉じる
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && elements.chatSettingsModal && elements.chatSettingsModal.style.display === 'flex') {
+            const modal = document.getElementById('chat-settings-modal');
+            if (e.key === 'Escape' && modal && modal.style.display === 'flex') {
                 chatSettingsModal.hide();
             }
         });
