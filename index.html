@@ -7674,6 +7674,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                         elements.historyTitle.textContent = `履歴一覧 (${sortOrderText})`;
 
                         chats.forEach(chat => {
+                            // チャットアセットをchatAssetsマップに保存（履歴画面でアイコンを表示するため）
+                            if (chat.aiIconBlob || chat.aiName || chat.backgroundImageBlob) {
+                                state.chatAssets.set(chat.id, {
+                                    aiName: chat.aiName || 'AI',
+                                    aiIconBlob: chat.aiIconBlob || null,
+                                    backgroundImageBlob: chat.backgroundImageBlob || null
+                                });
+                            }
+                            
                             const li = elements.historyItemTemplate.cloneNode(true);
                             li.classList.remove('js-history-item-template');
                             li.dataset.chatId = chat.id;
@@ -7700,27 +7709,52 @@ document.addEventListener('DOMContentLoaded', async () => {
                             
                             // AIアイコンを表示
                             const aiIconEl = li.querySelector('.history-item-ai-icon');
-                            if (chat.aiIconBlob && state.settings.showAiIcon) {
+                            // showAiIconのデフォルト値をtrueに設定
+                            const showAiIcon = state.settings.showAiIcon !== false;
+                            
+                            // chatAssetsから保存済みのアイコンを優先的に使用
+                            const savedAssets = state.chatAssets.get(chat.id);
+                            const iconBlob = savedAssets?.aiIconBlob || chat.aiIconBlob;
+                            
+                            if (iconBlob && iconBlob !== 'None' && showAiIcon) {
                                 try {
                                     let aiIconBlob;
-                                    if (chat.aiIconBlob instanceof Blob) {
-                                        aiIconBlob = chat.aiIconBlob;
-                                    } else if (chat.aiIconBlob instanceof ArrayBuffer) {
-                                        aiIconBlob = new Blob([chat.aiIconBlob], { type: 'image/jpeg' });
-                                    } else if (chat.aiIconBlob.constructor === Uint8Array || Array.isArray(chat.aiIconBlob)) {
-                                        aiIconBlob = new Blob([new Uint8Array(chat.aiIconBlob)], { type: 'image/jpeg' });
+                                    if (iconBlob instanceof Blob) {
+                                        aiIconBlob = iconBlob;
+                                    } else if (iconBlob instanceof ArrayBuffer) {
+                                        aiIconBlob = new Blob([iconBlob], { type: 'image/jpeg' });
+                                    } else if (iconBlob && iconBlob.arrayBuffer && iconBlob.type) {
+                                        // iOS環境でArrayBufferとして保存されたデータ
+                                        aiIconBlob = new Blob([iconBlob.arrayBuffer], { type: iconBlob.type });
+                                    } else if (iconBlob && iconBlob.constructor === Uint8Array || Array.isArray(iconBlob)) {
+                                        aiIconBlob = new Blob([new Uint8Array(iconBlob)], { type: 'image/jpeg' });
+                                    } else {
                                     }
                                     
                                     if (aiIconBlob) {
-                                        const aiIconUrl = URL.createObjectURL(aiIconBlob);
-                                        aiIconEl.src = aiIconUrl;
-                                        aiIconEl.style.display = 'inline-block';
-                                        console.log('Displaying AI icon for chat:', chat.id);
-                                        
-                                        // メモリリークを防ぐため、画像読み込み後にURLを解放
-                                        aiIconEl.onload = () => {
-                                            setTimeout(() => URL.revokeObjectURL(aiIconUrl), 1000);
-                                        };
+                                        try {
+                                            const aiIconUrl = URL.createObjectURL(aiIconBlob);
+                                            aiIconEl.src = aiIconUrl;
+                                            aiIconEl.style.display = 'inline-block';
+                                            
+                                            // メモリリークを防ぐため、画像読み込み後にURLを解放
+                                            // iOS Safariでは解放を遅らせる
+                                            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                                            aiIconEl.onload = () => {
+                                                if (!isIOS) {
+                                                    setTimeout(() => URL.revokeObjectURL(aiIconUrl), 1000);
+                                                }
+                                            };
+                                            
+                                            // iOS Safari対策：エラー時の処理
+                                            aiIconEl.onerror = () => {
+                                                console.warn('Failed to load AI icon in history:', chat.id);
+                                                aiIconEl.style.display = 'none';
+                                            };
+                                        } catch (e) {
+                                            console.warn('Failed to create blob URL for history icon:', e);
+                                            aiIconEl.style.display = 'none';
+                                        }
                                     } else {
                                         aiIconEl.style.display = 'none';
                                     }
