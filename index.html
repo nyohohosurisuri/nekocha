@@ -6120,6 +6120,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 if (key === 'backgroundImageBlob' || key === 'userIconBlob' || key === 'aiIconBlob') {
                                     if (loadedValue instanceof Blob) {
                                          state.settings[key] = loadedValue;
+                                    } else if (loadedValue && loadedValue.arrayBuffer && loadedValue.type) {
+                                         // iOS環境でArrayBufferとして保存されたデータを復元
+                                         console.log(`[iOS Debug] Converting ${key} from ArrayBuffer to Blob`);
+                                         state.settings[key] = { arrayBuffer: loadedValue.arrayBuffer, type: loadedValue.type };
                                     } else {
                                          state.settings[key] = null;
                                     }
@@ -6353,8 +6357,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // iOS環境でのBlob検証
                         if (isIOS) {
                             console.log('[iOS Debug] Checking blobs for iOS', {
-                                aiIcon: finalAiIconBlob ? (finalAiIconBlob instanceof Blob ? 'Blob' : 'Other') : 'null',
-                                bgImage: finalBgBlob ? (finalBgBlob instanceof Blob ? 'Blob' : 'Other') : 'null'
+                                aiIcon: finalAiIconBlob ? (finalAiIconBlob instanceof Blob ? 'Blob' : (finalAiIconBlob.arrayBuffer ? 'ArrayBuffer format' : 'Other')) : 'null',
+                                bgImage: finalBgBlob ? (finalBgBlob instanceof Blob ? 'Blob' : (finalBgBlob.arrayBuffer ? 'ArrayBuffer format' : 'Other')) : 'null'
                             });
                             
                             // iOS環境では、非アクティブなチャットのBlobは既存値を保持
@@ -6363,6 +6367,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 finalAiIconBlob = prev.aiIconBlob || null;
                                 finalBgBlob = prev.backgroundImageBlob || null;
                             }
+                            
+                            // ArrayBuffer形式のデータはそのまま保存
+                            // (すでにArrayBuffer形式になっているので変換不要)
                         }
                         
                         const chatData = {
@@ -9259,10 +9266,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const blob = file;
                     if(state.aiIconUrl) URL.revokeObjectURL(state.aiIconUrl);
                     
-                    // 一時的にArrayBuffer変換を無効化してデバッグ
-                    await dbUtils.saveSetting('aiIconBlob', blob);
-                    state.settings.aiIconBlob = blob;
-                    state.aiIconUrl = URL.createObjectURL(blob);
+                    // iOS環境ではBlobをArrayBufferに変換してから保存
+                    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+                    if (isIOS) {
+                        console.log('[iOS Debug] Converting AI icon Blob to ArrayBuffer for storage');
+                        const arrayBuffer = await blob.arrayBuffer();
+                        await dbUtils.saveSetting('aiIconBlob', { arrayBuffer, type: blob.type });
+                        state.settings.aiIconBlob = { arrayBuffer, type: blob.type };
+                        // 表示用に新しいBlobを作成
+                        const displayBlob = new Blob([arrayBuffer], { type: blob.type });
+                        state.aiIconUrl = URL.createObjectURL(displayBlob);
+                    } else {
+                        await dbUtils.saveSetting('aiIconBlob', blob);
+                        state.settings.aiIconBlob = blob;
+                        state.aiIconUrl = URL.createObjectURL(blob);
+                    }
                     
                     // dirtyフラグを設定
                     state.assetDirty.aiIcon = true;
@@ -9862,18 +9880,28 @@ document.addEventListener('DOMContentLoaded', async () => {
                     uiUtils.applyFontFamily();
                     uiUtils.applySidePanelSettingsToUI();
     
-                    if (state.settings.backgroundImageBlob instanceof Blob) {
+                    if (state.settings.backgroundImageBlob) {
                         uiUtils.revokeExistingObjectUrl();
                         try {
-                             // Safari対策: Blob URLの生成を安全に行う
-                             const blob = state.settings.backgroundImageBlob;
-                             if (blob.size > 0) {
-                                 state.backgroundImageUrl = URL.createObjectURL(blob);
-                                 document.documentElement.style.setProperty('--chat-background-image', `url(${state.backgroundImageUrl})`);
-                             } else {
-                                 console.warn('Background image blob is empty');
-                                 document.documentElement.style.setProperty('--chat-background-image', 'none');
-                             }
+                            if (state.settings.backgroundImageBlob instanceof Blob) {
+                                // Safari対策: Blob URLの生成を安全に行う
+                                const blob = state.settings.backgroundImageBlob;
+                                if (blob.size > 0) {
+                                    state.backgroundImageUrl = URL.createObjectURL(blob);
+                                    document.documentElement.style.setProperty('--chat-background-image', `url(${state.backgroundImageUrl})`);
+                                } else {
+                                    console.warn('Background image blob is empty');
+                                    document.documentElement.style.setProperty('--chat-background-image', 'none');
+                                }
+                            } else if (state.settings.backgroundImageBlob.arrayBuffer && state.settings.backgroundImageBlob.type) {
+                                // iOS環境でArrayBufferとして保存されたデータ
+                                console.log('[iOS Debug] Creating background image URL from ArrayBuffer');
+                                const blob = new Blob([state.settings.backgroundImageBlob.arrayBuffer], { type: state.settings.backgroundImageBlob.type });
+                                state.backgroundImageUrl = URL.createObjectURL(blob);
+                                document.documentElement.style.setProperty('--chat-background-image', `url(${state.backgroundImageUrl})`);
+                            } else {
+                                document.documentElement.style.setProperty('--chat-background-image', 'none');
+                            }
                         } catch (e) {
                              console.error('Failed to create background image URL:', e);
                              document.documentElement.style.setProperty('--chat-background-image', 'none');
@@ -9881,19 +9909,32 @@ document.addEventListener('DOMContentLoaded', async () => {
                     } else {
                         document.documentElement.style.setProperty('--chat-background-image', 'none');
                     }
-                    if (state.settings.userIconBlob instanceof Blob) {
+                    if (state.settings.userIconBlob) {
                         try {
-                            if (state.settings.userIconBlob.size > 0) {
-                                state.userIconUrl = URL.createObjectURL(state.settings.userIconBlob);
+                            if (state.settings.userIconBlob instanceof Blob) {
+                                if (state.settings.userIconBlob.size > 0) {
+                                    state.userIconUrl = URL.createObjectURL(state.settings.userIconBlob);
+                                }
+                            } else if (state.settings.userIconBlob.arrayBuffer && state.settings.userIconBlob.type) {
+                                // iOS環境でArrayBufferとして保存されたデータ
+                                const blob = new Blob([state.settings.userIconBlob.arrayBuffer], { type: state.settings.userIconBlob.type });
+                                state.userIconUrl = URL.createObjectURL(blob);
                             }
                         } catch (e) {
                             console.error('Failed to create user icon URL:', e);
                         }
                     }
-                    if (state.settings.aiIconBlob instanceof Blob) {
+                    if (state.settings.aiIconBlob) {
                         try {
-                            if (state.settings.aiIconBlob.size > 0) {
-                                state.aiIconUrl = URL.createObjectURL(state.settings.aiIconBlob);
+                            if (state.settings.aiIconBlob instanceof Blob) {
+                                if (state.settings.aiIconBlob.size > 0) {
+                                    state.aiIconUrl = URL.createObjectURL(state.settings.aiIconBlob);
+                                }
+                            } else if (state.settings.aiIconBlob.arrayBuffer && state.settings.aiIconBlob.type) {
+                                // iOS環境でArrayBufferとして保存されたデータ
+                                console.log('[iOS Debug] Creating AI icon URL from ArrayBuffer');
+                                const blob = new Blob([state.settings.aiIconBlob.arrayBuffer], { type: state.settings.aiIconBlob.type });
+                                state.aiIconUrl = URL.createObjectURL(blob);
                             }
                         } catch (e) {
                             console.error('Failed to create AI icon URL:', e);
@@ -11179,6 +11220,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         let restoredBlob;
                         if (chat.aiIconBlob instanceof Blob) {
                             restoredBlob = chat.aiIconBlob;
+                        } else if (chat.aiIconBlob && chat.aiIconBlob.arrayBuffer && chat.aiIconBlob.type) {
+                            // iOS環境でArrayBufferとして保存されたデータ
+                            console.log('[iOS Debug] Converting AI icon from ArrayBuffer to Blob');
+                            restoredBlob = new Blob([chat.aiIconBlob.arrayBuffer], { type: chat.aiIconBlob.type });
                         } else if (chat.aiIconBlob instanceof ArrayBuffer) {
                             restoredBlob = new Blob([chat.aiIconBlob], { type: 'image/jpeg' });
                         } else if (chat.aiIconBlob.constructor === Uint8Array || Array.isArray(chat.aiIconBlob)) {
@@ -11235,6 +11280,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         let restoredBgBlob;
                         if (chat.backgroundImageBlob instanceof Blob) {
                             restoredBgBlob = chat.backgroundImageBlob;
+                        } else if (chat.backgroundImageBlob && chat.backgroundImageBlob.arrayBuffer && chat.backgroundImageBlob.type) {
+                            // iOS環境でArrayBufferとして保存されたデータ
+                            console.log('[iOS Debug] Converting background image from ArrayBuffer to Blob');
+                            restoredBgBlob = new Blob([chat.backgroundImageBlob.arrayBuffer], { type: chat.backgroundImageBlob.type });
                         } else if (chat.backgroundImageBlob instanceof ArrayBuffer) {
                             restoredBgBlob = new Blob([chat.backgroundImageBlob], { type: 'image/jpeg' });
                         } else if (chat.backgroundImageBlob.constructor === Uint8Array || Array.isArray(chat.backgroundImageBlob)) {
@@ -13097,10 +13146,21 @@ document.addEventListener('DOMContentLoaded', async () => {
              try {
                  uiUtils.revokeExistingObjectUrl();
                  const blob = file;
+                 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
                  
-                 await dbUtils.saveSetting('backgroundImageBlob', blob);
-                 state.settings.backgroundImageBlob = blob;
-                 state.backgroundImageUrl = URL.createObjectURL(blob);
+                 if (isIOS) {
+                     console.log('[iOS Debug] Converting background image Blob to ArrayBuffer for storage');
+                     const arrayBuffer = await blob.arrayBuffer();
+                     await dbUtils.saveSetting('backgroundImageBlob', { arrayBuffer, type: blob.type });
+                     state.settings.backgroundImageBlob = { arrayBuffer, type: blob.type };
+                     // 表示用に新しいBlobを作成
+                     const displayBlob = new Blob([arrayBuffer], { type: blob.type });
+                     state.backgroundImageUrl = URL.createObjectURL(displayBlob);
+                 } else {
+                     await dbUtils.saveSetting('backgroundImageBlob', blob);
+                     state.settings.backgroundImageBlob = blob;
+                     state.backgroundImageUrl = URL.createObjectURL(blob);
+                 }
                  
                  // dirtyフラグを設定
                  state.assetDirty.bgImage = true;
@@ -13149,17 +13209,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 
              try {
                  const blob = file;
+                 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
                  
                  if (type === 'user') {
                      if(state.userIconUrl) URL.revokeObjectURL(state.userIconUrl);
-                     await dbUtils.saveSetting('userIconBlob', blob);
-                     state.settings.userIconBlob = blob;
-                     state.userIconUrl = URL.createObjectURL(blob);
+                     if (isIOS) {
+                         const arrayBuffer = await blob.arrayBuffer();
+                         await dbUtils.saveSetting('userIconBlob', { arrayBuffer, type: blob.type });
+                         state.settings.userIconBlob = { arrayBuffer, type: blob.type };
+                         const displayBlob = new Blob([arrayBuffer], { type: blob.type });
+                         state.userIconUrl = URL.createObjectURL(displayBlob);
+                     } else {
+                         await dbUtils.saveSetting('userIconBlob', blob);
+                         state.settings.userIconBlob = blob;
+                         state.userIconUrl = URL.createObjectURL(blob);
+                     }
                  } else if (type === 'ai') {
                      if(state.aiIconUrl) URL.revokeObjectURL(state.aiIconUrl);
-                     await dbUtils.saveSetting('aiIconBlob', blob);
-                     state.settings.aiIconBlob = blob;
-                     state.aiIconUrl = URL.createObjectURL(blob);
+                     if (isIOS) {
+                         console.log('[iOS Debug] Converting AI icon Blob to ArrayBuffer for storage');
+                         const arrayBuffer = await blob.arrayBuffer();
+                         await dbUtils.saveSetting('aiIconBlob', { arrayBuffer, type: blob.type });
+                         state.settings.aiIconBlob = { arrayBuffer, type: blob.type };
+                         const displayBlob = new Blob([arrayBuffer], { type: blob.type });
+                         state.aiIconUrl = URL.createObjectURL(displayBlob);
+                     } else {
+                         await dbUtils.saveSetting('aiIconBlob', blob);
+                         state.settings.aiIconBlob = blob;
+                         state.aiIconUrl = URL.createObjectURL(blob);
+                     }
                      // dirtyフラグを設定
                      state.assetDirty.aiIcon = true;
                  }
@@ -16554,14 +16632,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                         if (chatBackgroundRemove) {
                             chatBackgroundRemove.style.display = 'inline-block';
                         }
-                    } else if (state.settings.backgroundImageBlob instanceof Blob) {
-                        const url = URL.createObjectURL(state.settings.backgroundImageBlob);
-                        if (chatBackgroundPreview) {
-                            chatBackgroundPreview.src = url;
-                            chatBackgroundPreview.style.display = 'inline-block';
+                    } else if (state.settings.backgroundImageBlob) {
+                        let url;
+                        if (state.settings.backgroundImageBlob instanceof Blob) {
+                            url = URL.createObjectURL(state.settings.backgroundImageBlob);
+                        } else if (state.settings.backgroundImageBlob.arrayBuffer && state.settings.backgroundImageBlob.type) {
+                            // iOS環境でArrayBufferとして保存されたデータ
+                            const blob = new Blob([state.settings.backgroundImageBlob.arrayBuffer], { type: state.settings.backgroundImageBlob.type });
+                            url = URL.createObjectURL(blob);
                         }
-                        if (chatBackgroundRemove) {
-                            chatBackgroundRemove.style.display = 'inline-block';
+                        if (url) {
+                            if (chatBackgroundPreview) {
+                                chatBackgroundPreview.src = url;
+                                chatBackgroundPreview.style.display = 'inline-block';
+                            }
+                            if (chatBackgroundRemove) {
+                                chatBackgroundRemove.style.display = 'inline-block';
+                            }
                         }
                     }
                 } else {
