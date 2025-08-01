@@ -6275,6 +6275,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                         ...(msg.thoughtSummaryOpen !== undefined && { thoughtSummaryOpen: msg.thoughtSummaryOpen }),
                     }));
                     const determineTitleAndSave = (existingChatData = null) => {
+                        // iOS Debug: 保存処理開始
+                        console.log('[iOS Debug] saveChat - determineTitleAndSave called', {
+                            currentChatId: state.currentChatId,
+                            existingChatId: existingChatData?.id,
+                            assetDirty: JSON.parse(JSON.stringify(state.assetDirty)),
+                            settingsAiName: state.settings.aiName,
+                            settingsAiIconBlob: state.settings.aiIconBlob ? 'Blob exists' : 'No blob',
+                            previousAiName: existingChatData?.aiName,
+                            previousAiIconBlob: existingChatData?.aiIconBlob ? 'Blob exists' : 'No blob'
+                        });
                         
                         let title;
                         if (optionalTitle !== null) {
@@ -6306,25 +6316,33 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // IndexedDBが使用できない場合はアセット変更を無効化
                         const isIdbUsable = state.env?.idbUsable !== false;
                         
-                        // Safari対策: チャットごとのアセット管理を改善
-                        // 既存チャットの場合は、そのチャットの値を優先
+                        // iOS対策: チャットごとのアセット管理を完全に独立させる
                         const isExistingChat = !!existingChatData;
                         
-                        // aiName: 既存チャットの場合は既存値を優先、新規またはdirtyの場合は更新
-                        const nextAiName = (isExistingChat && !state.assetDirty.aiName)
-                            ? (prev.aiName || state.settings.aiName || 'AI')
-                            : (state.settings.aiName || prev.aiName || 'AI');
+                        // 重要: 各チャットは独自のアセットを持つ
+                        let nextAiName, nextAiIconBlob, nextBgBlob;
+                        
+                        if (isExistingChat) {
+                            // 既存チャット: そのチャットの値を保持（dirtyフラグが立っている場合のみ更新）
+                            nextAiName = state.assetDirty.aiName ? state.settings.aiName : (prev.aiName || state.settings.aiName || 'AI');
+                            nextAiIconBlob = state.assetDirty.aiIcon ? state.settings.aiIconBlob : prev.aiIconBlob;
+                            nextBgBlob = state.assetDirty.bgImage ? state.settings.backgroundImageBlob : prev.backgroundImageBlob;
+                        } else {
+                            // 新規チャット: 現在の設定値を使用
+                            nextAiName = state.settings.aiName || 'AI';
+                            nextAiIconBlob = state.settings.aiIconBlob;
+                            nextBgBlob = state.settings.backgroundImageBlob;
+                        }
 
-                        // AIアイコン: 既存チャットの場合は既存値を優先、新規またはdirtyの場合は更新
-                        const nextAiIconBlob = (isExistingChat && !state.assetDirty.aiIcon)
-                            ? (prev.aiIconBlob !== undefined ? prev.aiIconBlob : state.settings.aiIconBlob)
-                            : (state.settings.aiIconBlob !== undefined ? state.settings.aiIconBlob : prev.aiIconBlob);
-
-                        // 背景画像: 既存チャットの場合は既存値を優先、新規またはdirtyの場合は更新
-                        const nextBgBlob = (isExistingChat && !state.assetDirty.bgImage)
-                            ? (prev.backgroundImageBlob !== undefined ? prev.backgroundImageBlob : state.settings.backgroundImageBlob)
-                            : (state.settings.backgroundImageBlob !== undefined ? state.settings.backgroundImageBlob : prev.backgroundImageBlob);
-
+                        // iOS Debug: アセット決定後の値を確認
+                        console.log('[iOS Debug] Asset values determined', {
+                            isExistingChat,
+                            nextAiName,
+                            nextAiIconBlob: nextAiIconBlob ? 'Blob exists' : 'No blob',
+                            nextBgBlob: nextBgBlob ? 'Blob exists' : 'No blob',
+                            'state.assetDirty': JSON.parse(JSON.stringify(state.assetDirty))
+                        });
+                        
                         // iOS環境を検出
                         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
                         
@@ -6337,17 +6355,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     console.warn('Empty blob detected, skipping');
                                     return null;
                                 }
-                                // iOS環境では新規チャットのBlobは保存しない（既存チャットは保持）
-                                if (isIOS && !existingChatData) {
-                                    console.log('iOS: Skipping blob for new chat');
-                                    return null;
-                                }
                                 return blob;
                             } catch (e) {
                                 console.error('Blob validation error:', e);
                                 return null;
                             }
                         };
+                        
+                        // iOS環境での特別な処理
+                        let finalAiIconBlob, finalBgBlob;
+                        
+                        if (isIOS && isExistingChat && chatIdForOperation !== state.currentChatId) {
+                            // iOS: 他のチャットを保存する場合、Blobは既存の値をそのまま使用
+                            console.log('[iOS Debug] Preserving existing blobs for non-active chat');
+                            finalAiIconBlob = prev.aiIconBlob;
+                            finalBgBlob = prev.backgroundImageBlob;
+                        } else {
+                            // 通常の検証処理
+                            finalAiIconBlob = validateBlob(nextAiIconBlob);
+                            finalBgBlob = validateBlob(nextBgBlob);
+                        }
                         
                         const chatData = {
                             messages: messagesToSave,
@@ -6356,8 +6383,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                             title: title,
                             characterName: characterName,
                             aiName: nextAiName,
-                            aiIconBlob: validateBlob(nextAiIconBlob),
-                            backgroundImageBlob: validateBlob(nextBgBlob),
+                            aiIconBlob: finalAiIconBlob,
+                            backgroundImageBlob: finalBgBlob,
                             chatSystemPrompt: state.chatSystemPrompt || null,
                         };
                         
@@ -6370,15 +6397,39 @@ document.addEventListener('DOMContentLoaded', async () => {
                         if (chatIdForOperation) {
                             chatData.id = chatIdForOperation;
                         }
+                        
+                        // iOS Debug: 保存直前の最終データ
+                        console.log('[iOS Debug] Final chatData before save', {
+                            id: chatData.id,
+                            title: chatData.title,
+                            aiName: chatData.aiName,
+                            aiIconBlob: chatData.aiIconBlob ? 'Blob exists' : 'No blob',
+                            backgroundImageBlob: chatData.backgroundImageBlob ? 'Blob exists' : 'No blob',
+                            messageCount: chatData.messages.length,
+                            currentChatId: state.currentChatId,
+                            isIOS
+                        });
+                        
                         const request = store.put(chatData);
                         request.onsuccess = (event) => {
                             const savedId = event.target.result;
                             
-                            // Safari対策: 現在アクティブなチャットの場合のみdirtyフラグをクリア
+                            // iOS対策: dirtyフラグのクリアを厳密に管理
                             const savedChatId = chatIdForOperation || savedId;
-                            if (state.currentChatId === savedChatId) {
-                                // 成功したらdirtyフラグをクリア
+                            
+                            // 重要: 保存したチャットが現在アクティブなチャットと完全に一致する場合のみクリア
+                            // かつ、新規作成時（!existingChatData）または明示的な変更時のみクリア
+                            if (state.currentChatId === savedChatId && (!existingChatData || 
+                                state.assetDirty.aiIcon || state.assetDirty.bgImage || state.assetDirty.aiName)) {
+                                console.log('[iOS Debug] Clearing dirty flags for chat:', savedChatId);
                                 state.assetDirty = { aiIcon: false, bgImage: false, aiName: false };
+                            } else {
+                                console.log('[iOS Debug] NOT clearing dirty flags', {
+                                    currentChatId: state.currentChatId,
+                                    savedChatId,
+                                    existingChatData: !!existingChatData,
+                                    assetDirty: state.assetDirty
+                                });
                             }
                             
                             if (!state.currentChatId && savedId) {
