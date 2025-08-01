@@ -3588,7 +3588,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <button id="toggle-all-content-btn" class="header-button" aria-label="全メッセージ表示切替" title="全メッセージの表示/非表示を切り替え">🖼️</button>
                 <button id="toggle-clipboard-stack-btn" class="header-button" aria-label="クリップボードスタックを開閉">🗒️</button>
                 <button id="toggle-memo-btn" class="header-button" aria-label="メモを開閉">📝</button>
-                <button id="chat-settings-btn" class="header-button" aria-label="チャット設定" title="チャット設定">🔧</button>
+                <button id="chat-settings-btn" class="header-button" aria-label="チャット設定" title="チャット設定">👤</button>
                 <button id="goto-settings-btn" class="header-button" aria-label="設定へ">⚙</button>
             </header>
 
@@ -16666,38 +16666,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                         chatSystemPromptTextarea.value.trim() : '';
                     state.chatSystemPrompt = systemPrompt || null;
                     
-                    // AIアイコンの状態を確認（既にファイル選択時に保存済み）
-                    // 削除された場合の処理
-                    const chatAiIconInput = document.getElementById('chat-ai-icon');
-                    const chatAiIconPreview = document.getElementById('chat-ai-icon-preview');
-                    if (chatAiIconInput && chatAiIconInput.value === '' && 
-                        chatAiIconPreview && chatAiIconPreview.style.display === 'none') {
-                        // アイコンが削除されている場合
-                        state.settings.aiIconBlob = null;
-                        if (state.aiIconUrl) {
-                            URL.revokeObjectURL(state.aiIconUrl);
-                            state.aiIconUrl = null;
-                        }
-                        await dbUtils.saveSetting('aiIconBlob', null);
+                    // AIアイコンの保存
+                    if (state.assetDirty.aiIcon) {
+                        await dbUtils.saveSetting('aiIconBlob', state.settings.aiIconBlob);
                     }
                     
-                    // 背景画像の状態を確認
-                    const chatBackgroundImageInput = document.getElementById('chat-background-image');
-                    const chatBackgroundPreview = document.getElementById('chat-background-preview');
-                    if (chatBackgroundImageInput && chatBackgroundImageInput.value === '' && 
-                        chatBackgroundPreview && chatBackgroundPreview.style.display === 'none') {
-                        // 背景画像が削除されている場合
-                        state.settings.backgroundImageBlob = null;
-                        if (state.backgroundImageUrl) {
-                            URL.revokeObjectURL(state.backgroundImageUrl);
-                            state.backgroundImageUrl = null;
-                        }
-                        document.documentElement.style.setProperty('--chat-background-image', 'none');
-                        await dbUtils.saveSetting('backgroundImageBlob', null);
+                    // 背景画像の保存
+                    if (state.assetDirty.bgImage) {
+                        await dbUtils.saveSetting('backgroundImageBlob', state.settings.backgroundImageBlob);
                     }
                     
                     // チャットを保存（設定を反映）
                     if (state.currentChatId && state.currentMessages && state.currentMessages.length > 0) {
+                        // chatAssetsマップも更新
+                        state.chatAssets.set(state.currentChatId, {
+                            aiName: state.settings.aiName || 'AI',
+                            aiIconBlob: state.settings.aiIconBlob || null,
+                            backgroundImageBlob: state.settings.backgroundImageBlob || null
+                        });
+                        
                         await dbUtils.saveChat();
                     }
                     
@@ -16709,6 +16696,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // アイコン表示の更新
                     if (uiUtils && uiUtils.updateIconSettingsUI) {
                         uiUtils.updateIconSettingsUI();
+                    }
+                    
+                    // 背景画像表示の更新
+                    if (uiUtils && uiUtils.updateBackgroundSettingsUI) {
+                        uiUtils.updateBackgroundSettingsUI();
                     }
                     
                     this.hide();
@@ -16851,7 +16843,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     state.settings.aiIconBlob = file;
                     // dirtyフラグを設定
                     state.assetDirty.aiIcon = true;
-                    await dbUtils.saveSetting('aiIconBlob', file);
+                    // 即座に保存せず、保存ボタンクリック時に保存する
                     
                     // プレビューを更新
                     try {
@@ -16868,17 +16860,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         elements.chatAiIconRemove.style.display = 'inline-block';
                     }
                     
-                    // AIアイコンサムネイルを更新
-                    const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
-                    if (aiIconThumbnail) {
-                        aiIconThumbnail.src = state.aiIconUrl;
-                        aiIconThumbnail.style.display = 'block';
-                    }
-                    
-                    // チャット画面のメッセージを再描画してアイコンを反映
-                    if (uiUtils && uiUtils.renderChatMessages) {
-                        uiUtils.renderChatMessages(true);
-                    }
+                    // モーダル内のプレビューのみ更新（保存時に反映）
                     
                 } catch (error) {
                     console.error('AIアイコンのアップロードに失敗しました:', error);
@@ -16891,12 +16873,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (elements.chatAiIconRemove) {
             elements.chatAiIconRemove.addEventListener('click', async () => {
                 chatSettingsModal.removeIcon();
-                await dbUtils.saveSetting('aiIconBlob', null);
-                
-                // チャット画面のメッセージを再描画してアイコンを反映
-                if (uiUtils && uiUtils.renderChatMessages) {
-                    uiUtils.renderChatMessages(true);
-                }
+                // 即座に保存せず、保存ボタンクリック時に保存する
             });
         }
         
@@ -16916,7 +16893,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     state.settings.backgroundImageBlob = file;
                     // dirtyフラグを設定
                     state.assetDirty.bgImage = true;
-                    await dbUtils.saveSetting('backgroundImageBlob', file);
+                    // 即座に保存せず、保存ボタンクリック時に保存する
                     
                     // プレビューを更新
                     try {
@@ -16950,7 +16927,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (elements.chatBackgroundRemove) {
             elements.chatBackgroundRemove.addEventListener('click', async () => {
                 chatSettingsModal.removeBackground();
-                await dbUtils.saveSetting('backgroundImageBlob', null);
+                // 即座に保存せず、保存ボタンクリック時に保存する
                 
                 // 設定画面のサムネイルを更新
                 uiUtils.updateBackgroundSettingsUI();
