@@ -5666,6 +5666,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 bgImage: false,
                 aiName: false
             },
+            // チャットごとのアセット情報を保持
+            chatAssets: new Map(),
             settings: {
                 apiKey: '',
                 modelName: DEFAULT_MODEL,
@@ -6317,12 +6319,29 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // 既存値
                         const prev = existingChatData || {};
                         
+                        // chatAssetsから保存済みのアセット情報を取得
+                        const savedAssets = state.chatAssets.get(chatIdForOperation);
+                        if (savedAssets) {
+                            console.log('[DEBUG] Using saved assets for chat:', chatIdForOperation);
+                            // chatAssetsの情報を優先
+                            if (!prev.aiIconBlob && savedAssets.aiIconBlob) {
+                                prev.aiIconBlob = savedAssets.aiIconBlob;
+                            }
+                            if (!prev.backgroundImageBlob && savedAssets.backgroundImageBlob) {
+                                prev.backgroundImageBlob = savedAssets.backgroundImageBlob;
+                            }
+                            if (!prev.aiName && savedAssets.aiName) {
+                                prev.aiName = savedAssets.aiName;
+                            }
+                        }
+                        
                         console.log('[DEBUG] saveChat - Before asset determination', {
                             chatIdForOperation,
                             currentChatId: state.currentChatId,
                             isExisting: !!existingChatData,
                             'prev.aiIconBlob': prev.aiIconBlob ? 'Exists' : 'None',
-                            'state.settings.aiIconBlob': state.settings.aiIconBlob ? 'Exists' : 'None'
+                            'state.settings.aiIconBlob': state.settings.aiIconBlob ? 'Exists' : 'None',
+                            hasSavedAssets: !!savedAssets
                         });
 
                         // IndexedDBが使用できない場合はアセット変更を無効化
@@ -6451,9 +6470,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                             const request = store.put(chatData);
                             request.onsuccess = (event) => {
                             const savedId = event.target.result;
+                            const savedChatId = chatIdForOperation || savedId;
+                            
+                            // 保存したチャットのアセット情報をchatAssetsに記録
+                            state.chatAssets.set(savedChatId, {
+                                aiName: chatData.aiName,
+                                aiIconBlob: chatData.aiIconBlob,
+                                backgroundImageBlob: chatData.backgroundImageBlob
+                            });
+                            console.log('[DEBUG] Updated chat assets after save for chat:', savedChatId);
                             
                             // iOS対策: dirtyフラグのクリアを厳密に管理
-                            const savedChatId = chatIdForOperation || savedId;
                             
                             // 重要: 保存したチャットが現在アクティブなチャットと完全に一致する場合のみクリア
                             // かつ、新規作成時（!existingChatData）または明示的な変更時のみクリア
@@ -11136,6 +11163,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             state.currentChatId = null;
             state.currentMessages = [];
             
+            // 新規チャットの場合、chatAssetsもクリア
+            if (state.currentChatId) {
+                state.chatAssets.delete(state.currentChatId);
+            }
+            
             if (state.settings.commonSystemPrompt && state.settings.commonSystemPrompt.trim() !== '') {
             }
             
@@ -11254,6 +11286,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // ただし、dirtyフラグはリセット済みなので、他のチャットには影響しない
                         state.settings.aiName = chat.aiName;
                     }
+                    
+                    // このチャットのアセット情報を保存
+                    state.chatAssets.set(chat.id, {
+                        aiName: chat.aiName || 'AI',
+                        aiIconBlob: chat.aiIconBlob || null,
+                        backgroundImageBlob: chat.backgroundImageBlob || null
+                    });
+                    console.log('[DEBUG] Saved chat assets for chat:', chat.id);
                     
                     // Safari対策: アセット復元前の状態を保持
                     const previousAiIconBlob = state.settings.aiIconBlob;
