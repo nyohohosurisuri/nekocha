@@ -6344,6 +6344,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                             // 現在アクティブなチャットの場合のみ、dirtyフラグをチェック
                             const isActiveChat = chatIdForOperation === state.currentChatId;
                             if (isActiveChat) {
+                                // 既存のデータがない場合は、現在の設定を使用
+                                if (!prev.aiIconBlob && state.settings.aiIconBlob) {
+                                    console.log('[DEBUG] No previous aiIconBlob, using current settings');
+                                    nextAiIconBlob = state.settings.aiIconBlob;
+                                }
+                                if (!prev.backgroundImageBlob && state.settings.backgroundImageBlob) {
+                                    nextBgBlob = state.settings.backgroundImageBlob;
+                                }
+                                
+                                // dirtyフラグが立っている場合も更新
                                 if (state.assetDirty.aiName) {
                                     nextAiName = state.settings.aiName || 'AI';
                                 }
@@ -6490,6 +6500,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const getRequest = store.get(state.currentChatId);
                         getRequest.onsuccess = (event) => {
                             const existingChat = event.target.result;
+                            console.log('[DEBUG] Retrieved existing chat data:', {
+                                id: existingChat?.id,
+                                hasAiIconBlob: existingChat?.aiIconBlob ? 'Yes' : 'No',
+                                aiName: existingChat?.aiName
+                            });
                              if (!existingChat) {
                                  state.currentChatId = null;
                                  determineTitleAndSave(null);
