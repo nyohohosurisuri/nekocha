@@ -6272,7 +6272,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     aiIconBlob: state.settings.aiIconBlob,
                     backgroundImageBlob: state.settings.backgroundImageBlob,
                     aiIconUrl: state.aiIconUrl,
-                    backgroundImageUrl: state.backgroundImageUrl
+                    backgroundImageUrl: state.backgroundImageUrl,
+                    chatSystemPrompt: state.chatSystemPrompt
                 };
                 
                 return new Promise((resolve, reject) => {
@@ -6462,6 +6463,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             state.settings.backgroundImageBlob = preservedState.backgroundImageBlob;
                             state.aiIconUrl = preservedState.aiIconUrl;
                             state.backgroundImageUrl = preservedState.backgroundImageUrl;
+                            state.chatSystemPrompt = preservedState.chatSystemPrompt;
                             reject(`チャット保存putエラー: ${event.target.error.name} - ${event.target.error.message}`);
                         };
                     };
@@ -6490,6 +6492,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         state.settings.backgroundImageBlob = preservedState.backgroundImageBlob;
                         state.aiIconUrl = preservedState.aiIconUrl;
                         state.backgroundImageUrl = preservedState.backgroundImageUrl;
+                        state.chatSystemPrompt = preservedState.chatSystemPrompt;
                         reject(`チャット保存トランザクション失敗: ${event.target.error.name} - ${event.target.error.message}`);
                     };
                 });
@@ -6601,6 +6604,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
 
         const uiUtils = {
+            // iOS Safari判定関数
+            isIOSSafari() {
+                const ua = navigator.userAgent;
+                const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+                const isSafari = /Safari/.test(ua) && !/Chrome/.test(ua) && !/CriOS/.test(ua);
+                return isIOS && isSafari;
+            },
             _sanitizeAndParseMarkdown(content) {
                 if (typeof DOMPurify === 'undefined') {
                     const div = document.createElement('div');
@@ -12681,7 +12691,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     backgroundImageBlob: state.settings.backgroundImageBlob,
                     aiIconUrl: state.aiIconUrl,
                     backgroundImageUrl: state.backgroundImageUrl,
-                    assetDirty: {...state.assetDirty}
+                    assetDirty: {...state.assetDirty},
+                    chatSystemPrompt: state.chatSystemPrompt
                 };
 
                 let partialThoughtContentOnError, partialContentOnError;
@@ -12739,6 +12750,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                              state.aiIconUrl = preservedState.aiIconUrl;
                              state.backgroundImageUrl = preservedState.backgroundImageUrl;
                              state.assetDirty = preservedState.assetDirty;
+                             state.chatSystemPrompt = preservedState.chatSystemPrompt;
                          }
                     } else {
                          uiUtils.displayError(displayErrorMessage, !isAbort);
@@ -12749,6 +12761,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                          state.aiIconUrl = preservedState.aiIconUrl;
                          state.backgroundImageUrl = preservedState.backgroundImageUrl;
                          state.assetDirty = preservedState.assetDirty;
+                         state.chatSystemPrompt = preservedState.chatSystemPrompt;
                     }
                 } else {
                     if (useStreamingForThisCall && !isAbort && modelMessageObjectForStream) {
@@ -12765,6 +12778,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     state.aiIconUrl = preservedState.aiIconUrl;
                     state.backgroundImageUrl = preservedState.backgroundImageUrl;
                     state.assetDirty = preservedState.assetDirty;
+                    state.chatSystemPrompt = preservedState.chatSystemPrompt;
                 }
             } finally {
                 if (!isBackgroundProcess) {
@@ -16569,8 +16583,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     
                     try {
-                        // 既存のURLを解放
-                        if (state.aiIconUrl) {
+                        // 既存のURLを解放（iOS Safariを除く）
+                        if (state.aiIconUrl && !uiUtils.isIOSSafari()) {
                             URL.revokeObjectURL(state.aiIconUrl);
                         }
                         
@@ -16585,11 +16599,43 @@ document.addEventListener('DOMContentLoaded', async () => {
                             state.aiIconUrl = URL.createObjectURL(file);
                         } catch (e) {
                             console.warn('Safari Blob URL creation failed in chat settings:', e);
-                            state.aiIconUrl = null;
+                            // iOS Safariでエラーが発生した場合、FileReaderを使用
+                            try {
+                                const reader = new FileReader();
+                                reader.onload = function(event) {
+                                    const dataUrl = event.target.result;
+                                    state.aiIconUrl = dataUrl;
+                                    
+                                    const chatAiIconPreview = document.getElementById('chat-ai-icon-preview');
+                                    if (chatAiIconPreview) {
+                                        chatAiIconPreview.src = dataUrl;
+                                        chatAiIconPreview.style.display = 'inline-block';
+                                    }
+                                    
+                                    // 設定画面のサムネイルも更新
+                                    const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
+                                    if (aiIconThumbnail) {
+                                        aiIconThumbnail.src = dataUrl;
+                                        aiIconThumbnail.style.display = '';
+                                        aiIconThumbnail.classList.remove('hidden');
+                                    }
+                                };
+                                reader.readAsDataURL(file);
+                                
+                                const chatAiIconRemove = document.getElementById('chat-ai-icon-remove');
+                                if (chatAiIconRemove) {
+                                    chatAiIconRemove.style.display = 'inline-block';
+                                }
+                                return;
+                            } catch (readerError) {
+                                console.error('FileReader fallback failed:', readerError);
+                                state.aiIconUrl = null;
+                            }
                         }
+                        
                         const chatAiIconPreview = document.getElementById('chat-ai-icon-preview');
                         const chatAiIconRemove = document.getElementById('chat-ai-icon-remove');
-                        if (chatAiIconPreview) {
+                        if (chatAiIconPreview && state.aiIconUrl) {
                             chatAiIconPreview.src = state.aiIconUrl;
                             chatAiIconPreview.style.display = 'inline-block';
                         }
@@ -16629,8 +16675,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (!file) return;
                     
                     try {
-                        // 既存のURLを解放
-                        if (state.backgroundImageUrl) {
+                        // 既存のURLを解放（iOS Safariを除く）
+                        if (state.backgroundImageUrl && !uiUtils.isIOSSafari()) {
                             URL.revokeObjectURL(state.backgroundImageUrl);
                         }
                         
@@ -16645,11 +16691,44 @@ document.addEventListener('DOMContentLoaded', async () => {
                             state.backgroundImageUrl = URL.createObjectURL(file);
                         } catch (e) {
                             console.warn('Safari Blob URL creation failed for chat background:', e);
-                            state.backgroundImageUrl = null;
+                            // iOS Safariでエラーが発生した場合、FileReaderを使用
+                            try {
+                                const reader = new FileReader();
+                                reader.onload = function(event) {
+                                    const dataUrl = event.target.result;
+                                    state.backgroundImageUrl = dataUrl;
+                                    
+                                    const chatBackgroundPreview = document.getElementById('chat-background-preview');
+                                    if (chatBackgroundPreview) {
+                                        chatBackgroundPreview.src = dataUrl;
+                                        chatBackgroundPreview.style.display = 'inline-block';
+                                    }
+                                    
+                                    // チャット画面に背景画像を適用
+                                    document.documentElement.style.setProperty('--chat-background-image', `url(${dataUrl})`);
+                                    
+                                    // 設定画面のサムネイルを更新
+                                    if (uiUtils) {
+                                        uiUtils.updateBackgroundSettingsUI();
+                                        uiUtils.updatePromptBackgroundDisplay();
+                                    }
+                                };
+                                reader.readAsDataURL(file);
+                                
+                                const chatBackgroundRemove = document.getElementById('chat-background-remove');
+                                if (chatBackgroundRemove) {
+                                    chatBackgroundRemove.style.display = 'inline-block';
+                                }
+                                return;
+                            } catch (readerError) {
+                                console.error('FileReader fallback failed:', readerError);
+                                state.backgroundImageUrl = null;
+                            }
                         }
+                        
                         const chatBackgroundPreview = document.getElementById('chat-background-preview');
                         const chatBackgroundRemove = document.getElementById('chat-background-remove');
-                        if (chatBackgroundPreview) {
+                        if (chatBackgroundPreview && state.backgroundImageUrl) {
                             chatBackgroundPreview.src = state.backgroundImageUrl;
                             chatBackgroundPreview.style.display = 'inline-block';
                         }
@@ -16658,14 +16737,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                         
                         // チャット画面に背景画像を適用
-                        document.documentElement.style.setProperty('--chat-background-image', `url(${state.backgroundImageUrl})`);
+                        if (state.backgroundImageUrl) {
+                            document.documentElement.style.setProperty('--chat-background-image', `url(${state.backgroundImageUrl})`);
+                        }
                         
                         // 設定画面のサムネイルを更新
-                        uiUtils.updateBackgroundSettingsUI();
-                        uiUtils.updatePromptBackgroundDisplay();
+                        if (uiUtils) {
+                            uiUtils.updateBackgroundSettingsUI();
+                            uiUtils.updatePromptBackgroundDisplay();
+                        }
                         
                     } catch (error) {
                         console.error('背景画像のアップロードに失敗しました:', error);
+                        await uiUtils.showCustomAlert('背景画像のアップロードに失敗しました。');
                     }
                 };
             }
@@ -16808,6 +16892,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             },
             
             async save() {
+                // Safari Blob エラー対策: 保存前に状態を保護
+                const preservedState = {
+                    aiName: state.settings.aiName,
+                    aiIconBlob: state.settings.aiIconBlob,
+                    backgroundImageBlob: state.settings.backgroundImageBlob,
+                    aiIconUrl: state.aiIconUrl,
+                    backgroundImageUrl: state.backgroundImageUrl,
+                    assetDirty: {...state.assetDirty},
+                    chatSystemPrompt: state.chatSystemPrompt
+                };
+                
                 try {
                     // AI名を更新
                     const chatAiNameInput = document.getElementById('chat-ai-name');
@@ -16830,25 +16925,67 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     // システムプロンプトは読み取り専用なので更新しない
                     
-                    // AIアイコンの保存
+                    // AIアイコンの保存（iOS対応）
                     if (state.assetDirty.aiIcon) {
-                        await dbUtils.saveSetting('aiIconBlob', state.settings.aiIconBlob);
+                        try {
+                            // iOS SafariでBlobを直接保存できない場合があるため、ArrayBufferに変換
+                            if (state.settings.aiIconBlob instanceof Blob) {
+                                const arrayBuffer = await state.settings.aiIconBlob.arrayBuffer();
+                                await dbUtils.saveSetting('aiIconBlob', arrayBuffer);
+                            } else {
+                                await dbUtils.saveSetting('aiIconBlob', state.settings.aiIconBlob);
+                            }
+                        } catch (iconError) {
+                            console.error('AIアイコン保存エラー:', iconError);
+                            // エラーが発生しても続行
+                        }
                     }
                     
-                    // 背景画像の保存
+                    // 背景画像の保存（iOS対応）
                     if (state.assetDirty.bgImage) {
-                        await dbUtils.saveSetting('backgroundImageBlob', state.settings.backgroundImageBlob);
+                        try {
+                            // iOS SafariでBlobを直接保存できない場合があるため、ArrayBufferに変換
+                            if (state.settings.backgroundImageBlob instanceof Blob) {
+                                const arrayBuffer = await state.settings.backgroundImageBlob.arrayBuffer();
+                                await dbUtils.saveSetting('backgroundImageBlob', arrayBuffer);
+                            } else {
+                                await dbUtils.saveSetting('backgroundImageBlob', state.settings.backgroundImageBlob);
+                            }
+                        } catch (bgError) {
+                            console.error('背景画像保存エラー:', bgError);
+                            // エラーが発生しても続行
+                        }
                     }
                     
                     // チャットを保存（設定を反映）
                     if (state.currentChatId && state.currentMessages && state.currentMessages.length > 0) {
                         try {
-                            // chatAssetsマップも更新
-                            state.chatAssets.set(state.currentChatId, {
+                            // chatAssetsマップも更新（iOS対応でArrayBufferに変換）
+                            const assetData = {
                                 aiName: state.settings.aiName || 'AI',
-                                aiIconBlob: state.settings.aiIconBlob || null,
-                                backgroundImageBlob: state.settings.backgroundImageBlob || null
-                            });
+                                aiIconBlob: null,
+                                backgroundImageBlob: null
+                            };
+                            
+                            // アイコンのArrayBuffer変換
+                            if (state.settings.aiIconBlob) {
+                                if (state.settings.aiIconBlob instanceof Blob) {
+                                    assetData.aiIconBlob = await state.settings.aiIconBlob.arrayBuffer();
+                                } else {
+                                    assetData.aiIconBlob = state.settings.aiIconBlob;
+                                }
+                            }
+                            
+                            // 背景画像のArrayBuffer変換
+                            if (state.settings.backgroundImageBlob) {
+                                if (state.settings.backgroundImageBlob instanceof Blob) {
+                                    assetData.backgroundImageBlob = await state.settings.backgroundImageBlob.arrayBuffer();
+                                } else {
+                                    assetData.backgroundImageBlob = state.settings.backgroundImageBlob;
+                                }
+                            }
+                            
+                            state.chatAssets.set(state.currentChatId, assetData);
                             
                             await dbUtils.saveChat();
                             
@@ -16858,6 +16995,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                             state.assetDirty.aiName = false;
                         } catch (saveError) {
                             console.error('チャット保存中のエラー:', saveError);
+                            
+                            // Safari Blob エラー対策: エラー時に状態を復元
+                            state.settings.aiName = preservedState.aiName;
+                            state.settings.aiIconBlob = preservedState.aiIconBlob;
+                            state.settings.backgroundImageBlob = preservedState.backgroundImageBlob;
+                            state.aiIconUrl = preservedState.aiIconUrl;
+                            state.backgroundImageUrl = preservedState.backgroundImageUrl;
+                            state.assetDirty = preservedState.assetDirty;
+                            state.chatSystemPrompt = preservedState.chatSystemPrompt;
+                            
                             // エラーが発生してもUIの更新は続行
                         }
                     }
@@ -16886,6 +17033,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                 } catch (error) {
                     console.error('チャット設定の保存に失敗しました:', error);
+                    
+                    // Safari Blob エラー対策: エラー時に状態を復元
+                    state.settings.aiName = preservedState.aiName;
+                    state.settings.aiIconBlob = preservedState.aiIconBlob;
+                    state.settings.backgroundImageBlob = preservedState.backgroundImageBlob;
+                    state.aiIconUrl = preservedState.aiIconUrl;
+                    state.backgroundImageUrl = preservedState.backgroundImageUrl;
+                    state.assetDirty = preservedState.assetDirty;
+                    state.chatSystemPrompt = preservedState.chatSystemPrompt;
+                    
                     if (uiUtils && uiUtils.showCustomAlert) {
                         await uiUtils.showCustomAlert('チャット設定の保存に失敗しました。');
                     }
