@@ -5994,6 +5994,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
+        // iOS ArrayBuffer変換用のユーティリティ関数
+        const convertArrayBufferToBlob = (data) => {
+            if (!data) return null;
+            if (data instanceof Blob) return data;
+            if (data instanceof ArrayBuffer) {
+                return new Blob([data], { type: 'image/jpeg' });
+            }
+            if (data && data.arrayBuffer && data.type) {
+                return new Blob([data.arrayBuffer], { type: data.type });
+            }
+            if (data && data.constructor === Uint8Array || Array.isArray(data)) {
+                return new Blob([new Uint8Array(data)], { type: 'image/jpeg' });
+            }
+            return null;
+        };
+
         const dbUtils = {
             openDB() {
                 return new Promise((resolve, reject) => {
@@ -6124,7 +6140,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                                          state.settings[key] = loadedValue;
                                     } else if (loadedValue && loadedValue.arrayBuffer && loadedValue.type) {
                                          // iOS環境でArrayBufferとして保存されたデータを復元
-                                         console.log(`[iOS Debug] Converting ${key} from ArrayBuffer to Blob`);
                                          state.settings[key] = { arrayBuffer: loadedValue.arrayBuffer, type: loadedValue.type };
                                     } else {
                                          state.settings[key] = null;
@@ -6281,16 +6296,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         ...(msg.thoughtSummaryOpen !== undefined && { thoughtSummaryOpen: msg.thoughtSummaryOpen }),
                     }));
                     const determineTitleAndSave = (existingChatData = null) => {
-                        // iOS Debug: 保存処理開始
-                        console.log('[iOS Debug] saveChat - determineTitleAndSave called', {
-                            currentChatId: state.currentChatId,
-                            existingChatId: existingChatData?.id,
-                            assetDirty: JSON.parse(JSON.stringify(state.assetDirty)),
-                            settingsAiName: state.settings.aiName,
-                            settingsAiIconBlob: state.settings.aiIconBlob ? 'Blob exists' : 'No blob',
-                            previousAiName: existingChatData?.aiName,
-                            previousAiIconBlob: existingChatData?.aiIconBlob ? 'Blob exists' : 'No blob'
-                        });
                         
                         let title;
                         if (optionalTitle !== null) {
@@ -6322,7 +6327,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // chatAssetsから保存済みのアセット情報を取得
                         const savedAssets = state.chatAssets.get(chatIdForOperation);
                         if (savedAssets) {
-                            console.log('[DEBUG] Using saved assets for chat:', chatIdForOperation);
                             // chatAssetsの情報を優先
                             if (!prev.aiIconBlob && savedAssets.aiIconBlob) {
                                 prev.aiIconBlob = savedAssets.aiIconBlob;
@@ -6335,19 +6339,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }
                         }
                         
-                        console.log('[DEBUG] saveChat - Before asset determination', {
-                            chatIdForOperation,
-                            currentChatId: state.currentChatId,
-                            isExisting: !!existingChatData,
-                            'prev.aiIconBlob': prev.aiIconBlob ? 'Exists' : 'None',
-                            'state.settings.aiIconBlob': state.settings.aiIconBlob ? 'Exists' : 'None',
-                            hasSavedAssets: !!savedAssets
-                        });
 
                         // IndexedDBが使用できない場合はアセット変更を無効化
                         const isIdbUsable = state.env?.idbUsable !== false;
-                        
-                        // iOS対策: チャットごとのアセット管理を完全に独立させる
                         const isExistingChat = !!existingChatData;
                         
                         // 重要: 各チャットは独自のアセットを持つ
@@ -6365,7 +6359,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                             if (isActiveChat) {
                                 // 既存のデータがない場合は、現在の設定を使用
                                 if (!prev.aiIconBlob && state.settings.aiIconBlob) {
-                                    console.log('[DEBUG] No previous aiIconBlob, using current settings');
                                     nextAiIconBlob = state.settings.aiIconBlob;
                                 }
                                 if (!prev.backgroundImageBlob && state.settings.backgroundImageBlob) {
@@ -6389,40 +6382,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                             nextAiIconBlob = state.settings.aiIconBlob;
                             nextBgBlob = state.settings.backgroundImageBlob;
                         }
-
-                        // iOS Debug: アセット決定後の値を確認
-                        console.log('[iOS Debug] Asset values determined', {
-                            isExistingChat,
-                            isActiveChat: chatIdForOperation === state.currentChatId,
-                            chatIdForOperation,
-                            currentChatId: state.currentChatId,
-                            nextAiName,
-                            'prev.aiName': prev.aiName,
-                            'state.settings.aiName': state.settings.aiName,
-                            nextAiIconBlob: nextAiIconBlob ? 'Blob exists' : 'No blob',
-                            nextBgBlob: nextBgBlob ? 'Blob exists' : 'No blob',
-                            'state.assetDirty': JSON.parse(JSON.stringify(state.assetDirty)),
-                            'prev.aiIconBlob': prev.aiIconBlob ? 'Blob exists' : 'No blob',
-                            'state.settings.aiIconBlob': state.settings.aiIconBlob ? 'Blob exists' : 'No blob'
-                        });
-                        
                         // iOS環境を検出
                         const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-                        
-                        // iOS対策: Blobの処理を最適化
                         let finalAiIconBlob = nextAiIconBlob;
                         let finalBgBlob = nextBgBlob;
                         
                         // iOS環境でのBlob検証
                         if (isIOS) {
-                            console.log('[iOS Debug] Checking blobs for iOS', {
-                                aiIcon: finalAiIconBlob ? (finalAiIconBlob instanceof Blob ? 'Blob' : (finalAiIconBlob.arrayBuffer ? 'ArrayBuffer format' : 'Other')) : 'null',
-                                bgImage: finalBgBlob ? (finalBgBlob instanceof Blob ? 'Blob' : (finalBgBlob.arrayBuffer ? 'ArrayBuffer format' : 'Other')) : 'null'
-                            });
                             
                             // iOS環境では、非アクティブなチャットのBlobは既存値を保持
                             if (isExistingChat && chatIdForOperation !== state.currentChatId) {
-                                console.log('[iOS Debug] Preserving existing blobs for non-active chat');
                                 finalAiIconBlob = prev.aiIconBlob || null;
                                 finalBgBlob = prev.backgroundImageBlob || null;
                             }
@@ -6452,21 +6421,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                             if (chatIdForOperation) {
                                 chatData.id = chatIdForOperation;
                             }
-                            
-                            // iOS Debug: 保存直前の最終データ
-                            console.log('[iOS Debug] Final chatData before save', {
-                                id: chatData.id,
-                                title: chatData.title,
-                                aiName: chatData.aiName,
-                                aiIconBlob: chatData.aiIconBlob ? (chatData.aiIconBlob instanceof ArrayBuffer ? 'ArrayBuffer' : 'Blob') : 'No data',
-                                'finalAiIconBlob': finalAiIconBlob ? 'Exists' : 'None',
-                                'nextAiIconBlob': nextAiIconBlob ? 'Exists' : 'None',
-                                backgroundImageBlob: chatData.backgroundImageBlob ? (chatData.backgroundImageBlob instanceof ArrayBuffer ? 'ArrayBuffer' : 'Blob') : 'No data',
-                                messageCount: chatData.messages.length,
-                                currentChatId: state.currentChatId,
-                                isIOS
-                            });
-                            
                             const request = store.put(chatData);
                             request.onsuccess = (event) => {
                             const savedId = event.target.result;
@@ -6478,23 +6432,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 aiIconBlob: chatData.aiIconBlob,
                                 backgroundImageBlob: chatData.backgroundImageBlob
                             });
-                            console.log('[DEBUG] Updated chat assets after save for chat:', savedChatId);
-                            
-                            // iOS対策: dirtyフラグのクリアを厳密に管理
-                            
                             // 重要: 保存したチャットが現在アクティブなチャットと完全に一致する場合のみクリア
                             // かつ、新規作成時（!existingChatData）または明示的な変更時のみクリア
                             if (state.currentChatId === savedChatId && (!existingChatData || 
                                 state.assetDirty.aiIcon || state.assetDirty.bgImage || state.assetDirty.aiName)) {
-                                console.log('[iOS Debug] Clearing dirty flags for chat:', savedChatId);
                                 state.assetDirty = { aiIcon: false, bgImage: false, aiName: false };
                             } else {
-                                console.log('[iOS Debug] NOT clearing dirty flags', {
-                                    currentChatId: state.currentChatId,
-                                    savedChatId,
-                                    existingChatData: !!existingChatData,
-                                    assetDirty: state.assetDirty
-                                });
                             }
                             
                             if (!state.currentChatId && savedId) {
@@ -6505,7 +6448,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }
                             // 新しいチャットが作成されたらpendingCharacterNameをクリア
                             if (!existingChatData && state.pendingCharacterName) {
-                                console.log('New chat created with character:', state.pendingCharacterName);
                                 // キャラクター情報が保存されたので、pendingをクリア
                                 setTimeout(() => {
                                     state.pendingCharacterName = null;
@@ -6527,11 +6469,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const getRequest = store.get(state.currentChatId);
                         getRequest.onsuccess = (event) => {
                             const existingChat = event.target.result;
-                            console.log('[DEBUG] Retrieved existing chat data:', {
-                                id: existingChat?.id,
-                                hasAiIconBlob: existingChat?.aiIconBlob ? 'Yes' : 'No',
-                                aiName: existingChat?.aiName
-                            });
                              if (!existingChat) {
                                  state.currentChatId = null;
                                  determineTitleAndSave(null);
@@ -7693,18 +7630,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                             
                             // キャラクター名またはAI名を表示
                             const characterEl = li.querySelector('.history-item-character');
-                            console.log('Chat character info:', { chatId: chat.id, characterName: chat.characterName, aiName: chat.aiName });
                             if (chat.characterName) {
                                 characterEl.textContent = `🗣️ ${chat.characterName}`;
                                 characterEl.style.display = 'block';
-                                console.log('Displaying character:', chat.characterName);
                             } else if (chat.aiName && chat.aiName !== 'AI') {
                                 characterEl.textContent = `🤖 ${chat.aiName}`;
                                 characterEl.style.display = 'block';
-                                console.log('Displaying AI name:', chat.aiName);
                             } else {
                                 characterEl.style.display = 'none';
-                                console.log('No character name or AI name for chat:', chat.id);
                             }
                             
                             // AIアイコンを表示
@@ -7718,18 +7651,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             
                             if (iconBlob && iconBlob !== 'None' && showAiIcon) {
                                 try {
-                                    let aiIconBlob;
-                                    if (iconBlob instanceof Blob) {
-                                        aiIconBlob = iconBlob;
-                                    } else if (iconBlob instanceof ArrayBuffer) {
-                                        aiIconBlob = new Blob([iconBlob], { type: 'image/jpeg' });
-                                    } else if (iconBlob && iconBlob.arrayBuffer && iconBlob.type) {
-                                        // iOS環境でArrayBufferとして保存されたデータ
-                                        aiIconBlob = new Blob([iconBlob.arrayBuffer], { type: iconBlob.type });
-                                    } else if (iconBlob && iconBlob.constructor === Uint8Array || Array.isArray(iconBlob)) {
-                                        aiIconBlob = new Blob([new Uint8Array(iconBlob)], { type: 'image/jpeg' });
-                                    } else {
-                                    }
+                                    const aiIconBlob = convertArrayBufferToBlob(iconBlob);
                                     
                                     if (aiIconBlob) {
                                         try {
@@ -7748,11 +7670,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                                             
                                             // iOS Safari対策：エラー時の処理
                                             aiIconEl.onerror = () => {
-                                                console.warn('Failed to load AI icon in history:', chat.id);
-                                                aiIconEl.style.display = 'none';
+                                                    aiIconEl.style.display = 'none';
                                             };
                                         } catch (e) {
-                                            console.warn('Failed to create blob URL for history icon:', e);
                                             aiIconEl.style.display = 'none';
                                         }
                                     } else {
@@ -9376,7 +9296,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // iOS環境ではBlobをArrayBufferに変換してから保存
                     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
                     if (isIOS) {
-                        console.log('[iOS Debug] Converting AI icon Blob to ArrayBuffer for storage');
                         const arrayBuffer = await blob.arrayBuffer();
                         await dbUtils.saveSetting('aiIconBlob', { arrayBuffer, type: blob.type });
                         state.settings.aiIconBlob = { arrayBuffer, type: blob.type };
@@ -9990,23 +9909,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (state.settings.backgroundImageBlob) {
                         uiUtils.revokeExistingObjectUrl();
                         try {
-                            if (state.settings.backgroundImageBlob instanceof Blob) {
-                                // Safari対策: Blob URLの生成を安全に行う
-                                const blob = state.settings.backgroundImageBlob;
-                                if (blob.size > 0) {
-                                    state.backgroundImageUrl = URL.createObjectURL(blob);
-                                    document.documentElement.style.setProperty('--chat-background-image', `url(${state.backgroundImageUrl})`);
-                                } else {
-                                    console.warn('Background image blob is empty');
-                                    document.documentElement.style.setProperty('--chat-background-image', 'none');
-                                }
-                            } else if (state.settings.backgroundImageBlob.arrayBuffer && state.settings.backgroundImageBlob.type) {
-                                // iOS環境でArrayBufferとして保存されたデータ
-                                console.log('[iOS Debug] Creating background image URL from ArrayBuffer');
-                                const blob = new Blob([state.settings.backgroundImageBlob.arrayBuffer], { type: state.settings.backgroundImageBlob.type });
+                            const blob = convertArrayBufferToBlob(state.settings.backgroundImageBlob);
+                            if (blob && blob.size > 0) {
                                 state.backgroundImageUrl = URL.createObjectURL(blob);
                                 document.documentElement.style.setProperty('--chat-background-image', `url(${state.backgroundImageUrl})`);
                             } else {
+                                if (blob && blob.size === 0) {
+                                    console.warn('Background image blob is empty');
+                                }
                                 document.documentElement.style.setProperty('--chat-background-image', 'none');
                             }
                         } catch (e) {
@@ -10018,13 +9928,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     if (state.settings.userIconBlob) {
                         try {
-                            if (state.settings.userIconBlob instanceof Blob) {
-                                if (state.settings.userIconBlob.size > 0) {
-                                    state.userIconUrl = URL.createObjectURL(state.settings.userIconBlob);
-                                }
-                            } else if (state.settings.userIconBlob.arrayBuffer && state.settings.userIconBlob.type) {
-                                // iOS環境でArrayBufferとして保存されたデータ
-                                const blob = new Blob([state.settings.userIconBlob.arrayBuffer], { type: state.settings.userIconBlob.type });
+                            const blob = convertArrayBufferToBlob(state.settings.userIconBlob);
+                            if (blob && blob.size > 0) {
                                 state.userIconUrl = URL.createObjectURL(blob);
                             }
                         } catch (e) {
@@ -10033,14 +9938,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     if (state.settings.aiIconBlob) {
                         try {
-                            if (state.settings.aiIconBlob instanceof Blob) {
-                                if (state.settings.aiIconBlob.size > 0) {
-                                    state.aiIconUrl = URL.createObjectURL(state.settings.aiIconBlob);
-                                }
-                            } else if (state.settings.aiIconBlob.arrayBuffer && state.settings.aiIconBlob.type) {
-                                // iOS環境でArrayBufferとして保存されたデータ
-                                console.log('[iOS Debug] Creating AI icon URL from ArrayBuffer');
-                                const blob = new Blob([state.settings.aiIconBlob.arrayBuffer], { type: state.settings.aiIconBlob.type });
+                            const blob = convertArrayBufferToBlob(state.settings.aiIconBlob);
+                            if (blob && blob.size > 0) {
                                 state.aiIconUrl = URL.createObjectURL(blob);
                             }
                         } catch (e) {
@@ -10052,9 +9951,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     this.setupEventListeners();
                     
                     // 初期画面をホーム画面に設定（最優先で実行）
-                    console.log('Initializing home screen');
-                    console.log('Home screen element:', elements.homeScreen);
-                    console.log('Chat screen element:', elements.chatScreen);
                     
                     // 全画面を非アクティブにしてからホーム画面を表示
                     const allScreens = [elements.homeScreen, elements.chatScreen, elements.historyScreen, elements.promptSetupScreen, elements.settingsScreen];
@@ -11295,13 +11191,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // キャラクター情報を復元
                     if (chat.characterName) {
                         state.pendingCharacterName = chat.characterName;
-                        console.log('Restored character from chat data:', chat.characterName);
                     } else {
                         // メッセージからキャラクター情報を復元
                         const characterMessage = state.currentMessages.find(m => m.role === 'character');
                         if (characterMessage) {
                             state.pendingCharacterName = characterMessage.content;
-                            console.log('Restored character from message:', characterMessage.content);
                         } else {
                             state.pendingCharacterName = null;
                         }
@@ -11310,7 +11204,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // AI名とAIアイコンを復元
                     if (chat.aiName) {
                         // チャット固有のAI名は、state.settingsを更新せずに画面にのみ反映
-                        console.log('Restored AI name from chat data:', chat.aiName);
                         // AI名入力フィールドに反映
                         const aiNameInput = document.getElementById('ai-name-input');
                         if (aiNameInput) {
@@ -11327,9 +11220,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         aiIconBlob: chat.aiIconBlob || null,
                         backgroundImageBlob: chat.backgroundImageBlob || null
                     });
-                    console.log('[DEBUG] Saved chat assets for chat:', chat.id);
-                    
-                    // Safari対策: アセット復元前の状態を保持
                     const previousAiIconBlob = state.settings.aiIconBlob;
                     const previousBackgroundBlob = state.settings.backgroundImageBlob;
                     const previousAiName = state.settings.aiName;
@@ -11339,34 +11229,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     state.assetDirty = { aiIcon: false, bgImage: false, aiName: false };
                     
                     if (chat.aiIconBlob) {
-                        console.log('Restored AI icon from chat data', {
-                            chatId: chat.id,
-                            currentChatId: state.currentChatId,
-                            'before state.settings.aiIconBlob': state.settings.aiIconBlob ? 'Exists' : 'None'
-                        });
                         // AIアイコンのBlobデータを復元
-                        let restoredBlob;
-                        if (chat.aiIconBlob instanceof Blob) {
-                            restoredBlob = chat.aiIconBlob;
-                        } else if (chat.aiIconBlob && chat.aiIconBlob.arrayBuffer && chat.aiIconBlob.type) {
-                            // iOS環境でArrayBufferとして保存されたデータ
-                            console.log('[iOS Debug] Converting AI icon from ArrayBuffer to Blob');
-                            restoredBlob = new Blob([chat.aiIconBlob.arrayBuffer], { type: chat.aiIconBlob.type });
-                        } else if (chat.aiIconBlob instanceof ArrayBuffer) {
-                            restoredBlob = new Blob([chat.aiIconBlob], { type: 'image/jpeg' });
-                        } else if (chat.aiIconBlob.constructor === Uint8Array || Array.isArray(chat.aiIconBlob)) {
-                            restoredBlob = new Blob([new Uint8Array(chat.aiIconBlob)], { type: 'image/jpeg' });
-                        } else {
+                        const restoredBlob = convertArrayBufferToBlob(chat.aiIconBlob);
+                        if (!restoredBlob && chat.aiIconBlob) {
                             console.warn('Unknown aiIconBlob format:', typeof chat.aiIconBlob);
-                            restoredBlob = null;
                         }
                         
                         if (restoredBlob) {
-                            // Safari対策: Blobが有効かチェック
                             if (restoredBlob.size > 0) {
                                 // チャット固有のアイコンとして設定（dirtyフラグはfalseなので他のチャットには影響しない）
                                 state.settings.aiIconBlob = restoredBlob;
-                                console.log('Set state.settings.aiIconBlob to restored blob');
                                 // 既存のURL解放
                                 if (state.aiIconUrl) {
                                     URL.revokeObjectURL(state.aiIconUrl);
@@ -11374,11 +11246,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 try {
                                     state.aiIconUrl = URL.createObjectURL(restoredBlob);
                                 } catch (e) {
-                                    console.warn('Safari Blob URL creation failed during chat load:', e);
                                     state.aiIconUrl = null;
                                 }
                             } else {
-                                console.warn('Restored blob is empty');
                             }
                             
                             // AIアイコンを画面に反映
@@ -11404,25 +11274,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     // 背景画像を復元
                     if (chat.backgroundImageBlob) {
-                        console.log('Restored background image from chat data');
-                        let restoredBgBlob;
-                        if (chat.backgroundImageBlob instanceof Blob) {
-                            restoredBgBlob = chat.backgroundImageBlob;
-                        } else if (chat.backgroundImageBlob && chat.backgroundImageBlob.arrayBuffer && chat.backgroundImageBlob.type) {
-                            // iOS環境でArrayBufferとして保存されたデータ
-                            console.log('[iOS Debug] Converting background image from ArrayBuffer to Blob');
-                            restoredBgBlob = new Blob([chat.backgroundImageBlob.arrayBuffer], { type: chat.backgroundImageBlob.type });
-                        } else if (chat.backgroundImageBlob instanceof ArrayBuffer) {
-                            restoredBgBlob = new Blob([chat.backgroundImageBlob], { type: 'image/jpeg' });
-                        } else if (chat.backgroundImageBlob.constructor === Uint8Array || Array.isArray(chat.backgroundImageBlob)) {
-                            restoredBgBlob = new Blob([new Uint8Array(chat.backgroundImageBlob)], { type: 'image/jpeg' });
-                        } else {
-                            console.warn('Unknown backgroundImageBlob format:', typeof chat.backgroundImageBlob);
-                            restoredBgBlob = null;
-                        }
+                        const restoredBgBlob = convertArrayBufferToBlob(chat.backgroundImageBlob);
                         
                         if (restoredBgBlob) {
-                            // Safari対策: Blobが有効かチェック
                             if (restoredBgBlob.size > 0) {
                                 state.settings.backgroundImageBlob = restoredBgBlob;
                                 // 既存のURL解放
@@ -11432,13 +11286,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 try {
                                     state.backgroundImageUrl = URL.createObjectURL(restoredBgBlob);
                                 } catch (e) {
-                                    console.warn('Safari Blob URL creation failed for background image:', e);
                                     state.backgroundImageUrl = null;
                                     // 復元失敗時は前の状態を保持
                                     state.settings.backgroundImageBlob = previousBackgroundBlob;
                                 }
                             } else {
-                                console.warn('Background blob is empty, keeping previous state');
                                 state.settings.backgroundImageBlob = previousBackgroundBlob;
                             }
                             
@@ -11851,7 +11703,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 generatedByApiProvider: null
                             };
                             state.currentMessages.push(characterMessage);
-                            console.log('Added character message:', state.pendingCharacterName);
                         }
                     }
                     
@@ -13016,7 +12867,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const systemMessage = importedMessages.find(m => m.role === 'system');
                     if (systemMessage) {
                         state.settings.commonSystemPrompt = systemMessage.content;
-                        console.log('Restored system prompt from import:', systemMessage.content.substring(0, 100) + '...');
                     }
                     
                     const newChatData = {
@@ -13277,7 +13127,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
                  
                  if (isIOS) {
-                     console.log('[iOS Debug] Converting background image Blob to ArrayBuffer for storage');
                      const arrayBuffer = await blob.arrayBuffer();
                      await dbUtils.saveSetting('backgroundImageBlob', { arrayBuffer, type: blob.type });
                      state.settings.backgroundImageBlob = { arrayBuffer, type: blob.type };
@@ -13355,7 +13204,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                  } else if (type === 'ai') {
                      if(state.aiIconUrl) URL.revokeObjectURL(state.aiIconUrl);
                      if (isIOS) {
-                         console.log('[iOS Debug] Converting AI icon Blob to ArrayBuffer for storage');
                          const arrayBuffer = await blob.arrayBuffer();
                          await dbUtils.saveSetting('aiIconBlob', { arrayBuffer, type: blob.type });
                          state.settings.aiIconBlob = { arrayBuffer, type: blob.type };
@@ -16692,11 +16540,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         // チャット設定モーダル機能
         const chatSettingsModal = {
             show() {
-                console.log('チャット設定モーダル show() が呼ばれました');
-                
                 // モーダル要素の確認
                 const modal = document.getElementById('chat-settings-modal');
-                console.log('モーダル要素:', modal);
                 
                 if (!modal) {
                     console.error('モーダル要素が見つかりません');
@@ -16761,14 +16606,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                             chatBackgroundRemove.style.display = 'inline-block';
                         }
                     } else if (state.settings.backgroundImageBlob) {
-                        let url;
-                        if (state.settings.backgroundImageBlob instanceof Blob) {
-                            url = URL.createObjectURL(state.settings.backgroundImageBlob);
-                        } else if (state.settings.backgroundImageBlob.arrayBuffer && state.settings.backgroundImageBlob.type) {
-                            // iOS環境でArrayBufferとして保存されたデータ
-                            const blob = new Blob([state.settings.backgroundImageBlob.arrayBuffer], { type: state.settings.backgroundImageBlob.type });
-                            url = URL.createObjectURL(blob);
-                        }
+                        const blob = convertArrayBufferToBlob(state.settings.backgroundImageBlob);
+                        const url = blob ? URL.createObjectURL(blob) : null;
                         if (url) {
                             if (chatBackgroundPreview) {
                                 chatBackgroundPreview.src = url;
@@ -16936,16 +16775,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     
         // イベントリスナー設定（null チェック付き）
         const chatSettingsBtn = document.getElementById('chat-settings-btn');
-        console.log('チャット設定ボタン:', chatSettingsBtn);
         
         if (chatSettingsBtn) {
             chatSettingsBtn.addEventListener('click', function(e) {
-                console.log('チャット設定ボタンがクリックされました');
                 e.preventDefault();
                 e.stopPropagation();
                 chatSettingsModal.show();
             });
-            console.log('チャット設定ボタンにイベントリスナーを追加しました');
         } else {
             console.error('チャット設定ボタンが見つかりません');
         }
