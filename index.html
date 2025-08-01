@@ -6274,15 +6274,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         ...(msg.usageMetadata && { usageMetadata: msg.usageMetadata }),
                         ...(msg.thoughtSummaryOpen !== undefined && { thoughtSummaryOpen: msg.thoughtSummaryOpen }),
                     }));
-                    const determineTitleAndSave = async (existingChatData = null) => {
-                        // iOS Debug: 保存処理開始
-                        console.log('[iOS Debug] saveChat - determineTitleAndSave called', {
-                            currentChatId: state.currentChatId,
-                            existingChatId: existingChatData?.id,
-                            assetDirty: JSON.parse(JSON.stringify(state.assetDirty)),
-                            settingsAiName: state.settings.aiName,
-                            settingsAiIconBlob: state.settings.aiIconBlob ? 'Blob exists' : 'No blob'
-                        });
+                    const determineTitleAndSave = (existingChatData = null) => {
                         
                         let title;
                         if (optionalTitle !== null) {
@@ -6333,38 +6325,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                             ? (prev.backgroundImageBlob !== undefined ? prev.backgroundImageBlob : state.settings.backgroundImageBlob)
                             : (state.settings.backgroundImageBlob !== undefined ? state.settings.backgroundImageBlob : prev.backgroundImageBlob);
 
-                        // iOS Debug: アセット決定後の値を確認
-                        console.log('[iOS Debug] Asset values determined', {
-                            nextAiName,
-                            nextAiIconBlob: nextAiIconBlob ? 'Blob exists' : 'No blob',
-                            nextBgBlob: nextBgBlob ? 'Blob exists' : 'No blob',
-                            prevAiName: prev.aiName,
-                            prevAiIconBlob: prev.aiIconBlob ? 'Blob exists' : 'No blob'
-                        });
-                        
-                        // iOS対策: BlobをBase64に変換して保存
-                        const blobToBase64 = (blob) => {
-                            return new Promise((resolve) => {
-                                if (!blob || !(blob instanceof Blob)) {
-                                    resolve(null);
-                                    return;
-                                }
-                                if (blob.size === 0) {
-                                    console.warn('Empty blob detected');
-                                    resolve(null);
-                                    return;
-                                }
-                                const reader = new FileReader();
-                                reader.onloadend = () => {
-                                    resolve(reader.result); // data:image/jpeg;base64,... 形式
-                                };
-                                reader.onerror = () => {
-                                    console.error('Blob to Base64 conversion failed');
-                                    resolve(null);
-                                };
-                                reader.readAsDataURL(blob);
-                            });
-                        };
+                        // iOS環境を検出
+                        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
                         
                         // Safari Blob エラー対策: Blobデータの検証
                         const validateBlob = (blob) => {
@@ -6375,6 +6337,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     console.warn('Empty blob detected, skipping');
                                     return null;
                                 }
+                                // iOS環境では新規チャットのBlobは保存しない（既存チャットは保持）
+                                if (isIOS && !existingChatData) {
+                                    console.log('iOS: Skipping blob for new chat');
+                                    return null;
+                                }
                                 return blob;
                             } catch (e) {
                                 console.error('Blob validation error:', e);
@@ -6382,70 +6349,29 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }
                         };
                         
-                        // iOS環境を検出
-                        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-                        
-                        // iOS対策: 非同期でBlobを処理
-                        const processAssetData = async () => {
-                            let processedAiIcon = nextAiIconBlob;
-                            let processedBgImage = nextBgBlob;
-                            
-                            if (isIOS) {
-                                console.log('[iOS Debug] Converting blobs to base64 for iOS');
-                                // iOSの場合はBase64に変換
-                                if (nextAiIconBlob instanceof Blob) {
-                                    const base64 = await blobToBase64(nextAiIconBlob);
-                                    processedAiIcon = base64 || null;
-                                }
-                                if (nextBgBlob instanceof Blob) {
-                                    const base64 = await blobToBase64(nextBgBlob);
-                                    processedBgImage = base64 || null;
-                                }
-                            } else {
-                                // iOS以外は従来通りBlobを検証
-                                processedAiIcon = validateBlob(nextAiIconBlob);
-                                processedBgImage = validateBlob(nextBgBlob);
-                            }
-                            
-                            return {
-                                messages: messagesToSave,
-                                updatedAt: now,
-                                createdAt: existingChatData ? existingChatData.createdAt : now,
-                                title: title,
-                                characterName: characterName,
-                                aiName: nextAiName,
-                                aiIconBlob: processedAiIcon,
-                                backgroundImageBlob: processedBgImage,
-                                chatSystemPrompt: state.chatSystemPrompt || null,
-                                isIOS: isIOS // iOS環境フラグを保存
-                            };
+                        const chatData = {
+                            messages: messagesToSave,
+                            updatedAt: now,
+                            createdAt: existingChatData ? existingChatData.createdAt : now,
+                            title: title,
+                            characterName: characterName,
+                            aiName: nextAiName,
+                            aiIconBlob: validateBlob(nextAiIconBlob),
+                            backgroundImageBlob: validateBlob(nextBgBlob),
+                            chatSystemPrompt: state.chatSystemPrompt || null,
                         };
                         
-                        // chatDataを非同期で作成
-                        try {
-                            const chatData = await processAssetData();
-                            
-                            // iOS Debug: 保存前のchatDataを確認
-                            console.log('[iOS Debug] chatData before save', {
-                                id: chatData.id,
-                                title: chatData.title,
-                                aiName: chatData.aiName,
-                                aiIconBlob: chatData.aiIconBlob ? (typeof chatData.aiIconBlob === 'string' ? 'Base64 string' : 'Blob exists') : 'No data',
-                                backgroundImageBlob: chatData.backgroundImageBlob ? (typeof chatData.backgroundImageBlob === 'string' ? 'Base64 string' : 'Blob exists') : 'No data',
-                                isIOS: chatData.isIOS
-                            });
-                            
-                            if (state.settings.persistMessageCollapseState) {
-                                chatData.collapsedStates = Object.fromEntries(state.messageCollapsedStates);
-                            } else if (existingChatData && existingChatData.collapsedStates) {
-                                 chatData.collapsedStates = undefined;
-                            }
+                        if (state.settings.persistMessageCollapseState) {
+                            chatData.collapsedStates = Object.fromEntries(state.messageCollapsedStates);
+                        } else if (existingChatData && existingChatData.collapsedStates) {
+                             chatData.collapsedStates = undefined;
+                        }
 
-                            if (chatIdForOperation) {
-                                chatData.id = chatIdForOperation;
-                            }
-                            const request = store.put(chatData);
-                            request.onsuccess = (event) => {
+                        if (chatIdForOperation) {
+                            chatData.id = chatIdForOperation;
+                        }
+                        const request = store.put(chatData);
+                        request.onsuccess = (event) => {
                             const savedId = event.target.result;
                             
                             // Safari対策: 現在アクティブなチャットの場合のみdirtyフラグをクリア
@@ -6472,14 +6398,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                             resolve(state.currentChatId || savedId);
                         };
                         request.onerror = (event) => {
-                            // iOS Debug: エラー詳細をログ出力
-                            console.error('[iOS Debug] IndexedDB put error', {
-                                errorName: event.target.error?.name,
-                                errorMessage: event.target.error?.message,
-                                chatId: chatIdForOperation || savedId,
-                                currentChatId: state.currentChatId
-                            });
-                            
                             // Safari Blob エラー対策: エラー時に状態を復元
                             state.settings.aiName = preservedState.aiName;
                             state.settings.aiIconBlob = preservedState.aiIconBlob;
@@ -6488,10 +6406,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                             state.backgroundImageUrl = preservedState.backgroundImageUrl;
                             reject(`チャット保存putエラー: ${event.target.error.name} - ${event.target.error.message}`);
                         };
-                        } catch (error) {
-                            console.error('[iOS Debug] Asset processing error:', error);
-                            reject(`アセット処理エラー: ${error.message}`);
-                        }
                     };
                     if (state.currentChatId) {
                         const getRequest = store.get(state.currentChatId);
@@ -11221,23 +11135,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         let restoredBlob;
                         if (chat.aiIconBlob instanceof Blob) {
                             restoredBlob = chat.aiIconBlob;
-                        } else if (typeof chat.aiIconBlob === 'string' && chat.aiIconBlob.startsWith('data:')) {
-                            // iOS: Base64文字列からBlobに変換
-                            console.log('[iOS Debug] Converting base64 to blob for AI icon');
-                            try {
-                                const base64Data = chat.aiIconBlob.split(',')[1];
-                                const mimeType = chat.aiIconBlob.match(/data:([^;]+);/)[1] || 'image/jpeg';
-                                const byteCharacters = atob(base64Data);
-                                const byteNumbers = new Array(byteCharacters.length);
-                                for (let i = 0; i < byteCharacters.length; i++) {
-                                    byteNumbers[i] = byteCharacters.charCodeAt(i);
-                                }
-                                const byteArray = new Uint8Array(byteNumbers);
-                                restoredBlob = new Blob([byteArray], { type: mimeType });
-                            } catch (e) {
-                                console.error('[iOS Debug] Failed to convert base64 to blob:', e);
-                                restoredBlob = null;
-                            }
                         } else if (chat.aiIconBlob instanceof ArrayBuffer) {
                             restoredBlob = new Blob([chat.aiIconBlob], { type: 'image/jpeg' });
                         } else if (chat.aiIconBlob.constructor === Uint8Array || Array.isArray(chat.aiIconBlob)) {
@@ -11294,23 +11191,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         let restoredBgBlob;
                         if (chat.backgroundImageBlob instanceof Blob) {
                             restoredBgBlob = chat.backgroundImageBlob;
-                        } else if (typeof chat.backgroundImageBlob === 'string' && chat.backgroundImageBlob.startsWith('data:')) {
-                            // iOS: Base64文字列からBlobに変換
-                            console.log('[iOS Debug] Converting base64 to blob for background image');
-                            try {
-                                const base64Data = chat.backgroundImageBlob.split(',')[1];
-                                const mimeType = chat.backgroundImageBlob.match(/data:([^;]+);/)[1] || 'image/jpeg';
-                                const byteCharacters = atob(base64Data);
-                                const byteNumbers = new Array(byteCharacters.length);
-                                for (let i = 0; i < byteCharacters.length; i++) {
-                                    byteNumbers[i] = byteCharacters.charCodeAt(i);
-                                }
-                                const byteArray = new Uint8Array(byteNumbers);
-                                restoredBgBlob = new Blob([byteArray], { type: mimeType });
-                            } catch (e) {
-                                console.error('[iOS Debug] Failed to convert base64 to blob for background:', e);
-                                restoredBgBlob = null;
-                            }
                         } else if (chat.backgroundImageBlob instanceof ArrayBuffer) {
                             restoredBgBlob = new Blob([chat.backgroundImageBlob], { type: 'image/jpeg' });
                         } else if (chat.backgroundImageBlob.constructor === Uint8Array || Array.isArray(chat.backgroundImageBlob)) {
