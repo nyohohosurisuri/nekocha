@@ -6327,26 +6327,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                         let nextAiName, nextAiIconBlob, nextBgBlob;
                         
                         if (isExistingChat) {
-                            // 既存チャット: 基本的にそのチャットの保存済みの値を保持
-                            // ただし、現在アクティブなチャットかつdirtyフラグが立っている場合のみ更新
+                            // 既存チャット: そのチャットの保存済みの値を基本とする
+                            // dirtyフラグが立っている場合のみ、現在の設定で上書き
+                            nextAiName = prev.aiName || state.settings.aiName || 'AI';
+                            nextAiIconBlob = prev.aiIconBlob;
+                            nextBgBlob = prev.backgroundImageBlob;
+                            
+                            // 現在アクティブなチャットの場合のみ、dirtyフラグをチェック
                             const isActiveChat = chatIdForOperation === state.currentChatId;
-                            
-                            if (isActiveChat && state.assetDirty.aiName) {
-                                nextAiName = state.settings.aiName;
-                            } else {
-                                nextAiName = prev.aiName || 'AI';
-                            }
-                            
-                            if (isActiveChat && state.assetDirty.aiIcon) {
-                                nextAiIconBlob = state.settings.aiIconBlob;
-                            } else {
-                                nextAiIconBlob = prev.aiIconBlob;
-                            }
-                            
-                            if (isActiveChat && state.assetDirty.bgImage) {
-                                nextBgBlob = state.settings.backgroundImageBlob;
-                            } else {
-                                nextBgBlob = prev.backgroundImageBlob;
+                            if (isActiveChat) {
+                                if (state.assetDirty.aiName) {
+                                    nextAiName = state.settings.aiName || 'AI';
+                                }
+                                if (state.assetDirty.aiIcon) {
+                                    nextAiIconBlob = state.settings.aiIconBlob;
+                                }
+                                if (state.assetDirty.bgImage) {
+                                    nextBgBlob = state.settings.backgroundImageBlob;
+                                }
                             }
                         } else {
                             // 新規チャット: 現在の設定値を使用
@@ -6362,10 +6360,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                             chatIdForOperation,
                             currentChatId: state.currentChatId,
                             nextAiName,
+                            'prev.aiName': prev.aiName,
+                            'state.settings.aiName': state.settings.aiName,
                             nextAiIconBlob: nextAiIconBlob ? 'Blob exists' : 'No blob',
                             nextBgBlob: nextBgBlob ? 'Blob exists' : 'No blob',
                             'state.assetDirty': JSON.parse(JSON.stringify(state.assetDirty)),
-                            'prev.aiIconBlob': prev.aiIconBlob ? 'Blob exists' : 'No blob'
+                            'prev.aiIconBlob': prev.aiIconBlob ? 'Blob exists' : 'No blob',
+                            'state.settings.aiIconBlob': state.settings.aiIconBlob ? 'Blob exists' : 'No blob'
                         });
                         
                         // iOS環境を検出
@@ -9383,10 +9384,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // 新規チャットを開始
                     appLogic.startNewChat();
                     
-                    // プロンプト設定画面から新規チャット作成時は、現在の設定を使用することを示す
-                    // startNewChatの後に設定して、新規チャットに反映させる
-                    state.assetDirty = { aiIcon: true, bgImage: true, aiName: true };
-                    
                     // キャラクター名を一時保存（新しいチャット作成時に使用）
                     if (characterValue) {
                         state.pendingCharacterName = characterValue;
@@ -11221,13 +11218,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     // AI名とAIアイコンを復元
                     if (chat.aiName) {
-                        state.settings.aiName = chat.aiName;
+                        // チャット固有のAI名は、state.settingsを更新せずに画面にのみ反映
                         console.log('Restored AI name from chat data:', chat.aiName);
                         // AI名入力フィールドに反映
                         const aiNameInput = document.getElementById('ai-name-input');
                         if (aiNameInput) {
                             aiNameInput.value = chat.aiName;
                         }
+                        // チャット画面のタイトルなどに使用するため、一時的に設定
+                        // ただし、dirtyフラグはリセット済みなので、他のチャットには影響しない
+                        state.settings.aiName = chat.aiName;
                     }
                     
                     // Safari対策: アセット復元前の状態を保持
@@ -11261,6 +11261,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         if (restoredBlob) {
                             // Safari対策: Blobが有効かチェック
                             if (restoredBlob.size > 0) {
+                                // チャット固有のアイコンとして設定（dirtyフラグはfalseなので他のチャットには影響しない）
                                 state.settings.aiIconBlob = restoredBlob;
                                 // 既存のURL解放
                                 if (state.aiIconUrl) {
@@ -11271,12 +11272,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 } catch (e) {
                                     console.warn('Safari Blob URL creation failed during chat load:', e);
                                     state.aiIconUrl = null;
-                                    // 復元失敗時は前の状態を保持
-                                    state.settings.aiIconBlob = previousAiIconBlob;
                                 }
                             } else {
-                                console.warn('Restored blob is empty, keeping previous state');
-                                state.settings.aiIconBlob = previousAiIconBlob;
+                                console.warn('Restored blob is empty');
                             }
                             
                             // AIアイコンを画面に反映
