@@ -3553,6 +3553,69 @@ document.addEventListener('DOMContentLoaded', async () => {
         #chat-settings-btn:hover {
             background-color: var(--bg-secondary);
         }
+        
+        /* チャット設定モーダルのファイル入力スタイル */
+        .ai-icon-upload-container,
+        .background-image-upload-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        /* ファイル入力フィールドを非表示に */
+        #chat-ai-icon,
+        #chat-background-image {
+            display: none;
+        }
+        
+        /* ファイル選択ボタンを追加 */
+        .file-select-btn {
+            background-color: var(--bg-secondary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-primary);
+            padding: 5px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .file-select-btn:hover {
+            background-color: var(--bg-tertiary);
+        }
+        
+        /* プレビュー画像のスタイル */
+        .ai-icon-preview {
+            width: 32px;
+            height: 32px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid var(--border-secondary);
+        }
+        
+        .background-preview {
+            width: 60px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid var(--border-secondary);
+        }
+        
+        /* 削除ボタンのスタイル */
+        .icon-remove-btn {
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background-color 0.2s ease;
+        }
+        
+        .icon-remove-btn:hover {
+            background-color: #cc0000;
+        }
     </style>
     <script src="marked.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
@@ -11349,6 +11412,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }
                         }, 100);
                     }
+                    
+                    // チャット切り替え時にファイル入力フィールドをクリア
+                    const chatAiIconInput = document.getElementById('chat-ai-icon');
+                    if (chatAiIconInput) {
+                        chatAiIconInput.value = '';
+                    }
+                    const chatBackgroundImageInput = document.getElementById('chat-background-image');
+                    if (chatBackgroundImageInput) {
+                        chatBackgroundImageInput.value = '';
+                    }
                     elements.userInput.value = '';
                     uiUtils.adjustTextareaHeight();
                     uiUtils.setSendingState(false);
@@ -16548,6 +16621,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         // イベントハンドラー設定関数を先に定義
         const setupEventHandlers = () => {
             
+            // ファイル選択ボタンのクリックイベント
+            const chatAiIconSelectBtn = document.getElementById('chat-ai-icon-select');
+            if (chatAiIconSelectBtn) {
+                chatAiIconSelectBtn.onclick = () => {
+                    const chatAiIconInput = document.getElementById('chat-ai-icon');
+                    if (chatAiIconInput) {
+                        chatAiIconInput.click();
+                    }
+                };
+            }
+            
+            const chatBackgroundSelectBtn = document.getElementById('chat-background-select');
+            if (chatBackgroundSelectBtn) {
+                chatBackgroundSelectBtn.onclick = () => {
+                    const chatBackgroundImageInput = document.getElementById('chat-background-image');
+                    if (chatBackgroundImageInput) {
+                        chatBackgroundImageInput.click();
+                    }
+                };
+            }
+            
             // AIアイコンファイル選択
             const chatAiIconInput = document.getElementById('chat-ai-icon');
             if (chatAiIconInput) {
@@ -16576,8 +16670,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                             URL.revokeObjectURL(state.aiIconUrl);
                         }
                         
-                        // 新しいBlobを設定
-                        state.settings.aiIconBlob = file;
+                        // モーダル用の一時変数に保存（state.settingsは更新しない）
+                        if (!state.modalTemp) {
+                            state.modalTemp = {};
+                        }
+                        state.modalTemp.aiIconBlob = file;
                         // dirtyフラグを設定
                         state.assetDirty.aiIcon = true;
                         // 即座に保存せず、保存ボタンクリック時に保存する
@@ -16668,8 +16765,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                             URL.revokeObjectURL(state.backgroundImageUrl);
                         }
                         
-                        // 新しいBlobを設定
-                        state.settings.backgroundImageBlob = file;
+                        // モーダル用の一時変数に保存（state.settingsは更新しない）
+                        if (!state.modalTemp) {
+                            state.modalTemp = {};
+                        }
+                        state.modalTemp.backgroundImageBlob = file;
                         // dirtyフラグを設定
                         state.assetDirty.bgImage = true;
                         // 即座に保存せず、保存ボタンクリック時に保存する
@@ -16767,9 +16867,28 @@ document.addEventListener('DOMContentLoaded', async () => {
                     return;
                 }
                 
+                // ファイル入力フィールドをクリア（前のチャットの値が残らないように）
+                const chatAiIconInput = document.getElementById('chat-ai-icon');
+                if (chatAiIconInput) {
+                    chatAiIconInput.value = '';
+                }
+                const chatBackgroundImageInput = document.getElementById('chat-background-image');
+                if (chatBackgroundImageInput) {
+                    chatBackgroundImageInput.value = '';
+                }
+                
+                // モーダル用の一時変数を初期化
+                state.modalTemp = {};
+                
                 // 現在のチャットのアセット情報を取得
                 const currentChatAssets = state.currentChatId ? 
                     state.chatAssets.get(state.currentChatId) : null;
+                
+                // 現在のアセットをモーダル用の一時変数にコピー
+                if (currentChatAssets) {
+                    state.modalTemp.aiIconBlob = currentChatAssets.aiIconBlob;
+                    state.modalTemp.backgroundImageBlob = currentChatAssets.backgroundImageBlob;
+                }
                 
                 // 現在の値を設定
                 const chatAiNameInput = document.getElementById('chat-ai-name');
@@ -16912,6 +17031,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     URL.revokeObjectURL(state.tempBgUrl);
                     state.tempBgUrl = null;
                 }
+                
+                // モーダル用の一時変数をクリア
+                state.modalTemp = null;
             },
             
             async save() {
@@ -16970,20 +17092,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                             // dirtyフラグがtrueの場合のみ更新
                             
                             // アイコンが変更された場合の処理
-                            if (state.assetDirty.aiIcon && state.settings.aiIconBlob) {
-                                if (state.settings.aiIconBlob instanceof Blob) {
-                                    assetData.aiIconBlob = await state.settings.aiIconBlob.arrayBuffer();
+                            if (state.assetDirty.aiIcon && state.modalTemp?.aiIconBlob !== undefined) {
+                                if (state.modalTemp.aiIconBlob === null) {
+                                    // 削除された場合
+                                    assetData.aiIconBlob = null;
+                                } else if (state.modalTemp.aiIconBlob instanceof Blob) {
+                                    assetData.aiIconBlob = await state.modalTemp.aiIconBlob.arrayBuffer();
                                 } else {
-                                    assetData.aiIconBlob = state.settings.aiIconBlob;
+                                    assetData.aiIconBlob = state.modalTemp.aiIconBlob;
                                 }
                             }
                             
                             // 背景画像が変更された場合の処理
-                            if (state.assetDirty.bgImage && state.settings.backgroundImageBlob) {
-                                if (state.settings.backgroundImageBlob instanceof Blob) {
-                                    assetData.backgroundImageBlob = await state.settings.backgroundImageBlob.arrayBuffer();
+                            if (state.assetDirty.bgImage && state.modalTemp?.backgroundImageBlob !== undefined) {
+                                if (state.modalTemp.backgroundImageBlob === null) {
+                                    // 削除された場合
+                                    assetData.backgroundImageBlob = null;
+                                } else if (state.modalTemp.backgroundImageBlob instanceof Blob) {
+                                    assetData.backgroundImageBlob = await state.modalTemp.backgroundImageBlob.arrayBuffer();
                                 } else {
-                                    assetData.backgroundImageBlob = state.settings.backgroundImageBlob;
+                                    assetData.backgroundImageBlob = state.modalTemp.backgroundImageBlob;
                                 }
                             }
                             
@@ -16995,6 +17123,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                             state.assetDirty.aiIcon = false;
                             state.assetDirty.bgImage = false;
                             state.assetDirty.aiName = false;
+                            
+                            // モーダル用の一時変数をクリア
+                            state.modalTemp = null;
                         } catch (saveError) {
                             console.error('チャット保存中のエラー:', saveError);
                             
@@ -17052,17 +17183,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             },
         
             removeBackground() {
-                state.settings.backgroundImageBlob = null;
+                // モーダル用の一時変数をクリア
+                if (!state.modalTemp) {
+                    state.modalTemp = {};
+                }
+                state.modalTemp.backgroundImageBlob = null;
                 // dirtyフラグを設定
                 state.assetDirty.bgImage = true;
-                if (state.backgroundImageUrl) {
+                if (state.backgroundImageUrl && !uiUtils.isIOSSafari()) {
                     URL.revokeObjectURL(state.backgroundImageUrl);
-                    state.backgroundImageUrl = null;
                 }
+                state.backgroundImageUrl = null;
                 document.documentElement.style.setProperty('--chat-background-image', 'none');
                 
                 const chatBackgroundPreview = document.getElementById('chat-background-preview');
                 const chatBackgroundRemove = document.getElementById('chat-background-remove');
+                const chatBackgroundImageInput = document.getElementById('chat-background-image');
                 
                 if (chatBackgroundPreview) {
                     chatBackgroundPreview.style.display = 'none';
@@ -17070,16 +17206,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (chatBackgroundRemove) {
                     chatBackgroundRemove.style.display = 'none';
                 }
+                if (chatBackgroundImageInput) {
+                    chatBackgroundImageInput.value = '';
+                }
             },
         
             removeIcon() {
-                state.settings.aiIconBlob = null;
+                // モーダル用の一時変数をクリア
+                if (!state.modalTemp) {
+                    state.modalTemp = {};
+                }
+                state.modalTemp.aiIconBlob = null;
                 // dirtyフラグを設定
                 state.assetDirty.aiIcon = true;
-                if (state.aiIconUrl) {
+                if (state.aiIconUrl && !uiUtils.isIOSSafari()) {
                     URL.revokeObjectURL(state.aiIconUrl);
-                    state.aiIconUrl = null;
                 }
+                state.aiIconUrl = null;
                 const chatAiIconPreview = document.getElementById('chat-ai-icon-preview');
                 const chatAiIconRemove = document.getElementById('chat-ai-icon-remove');
                 const chatAiIconInput = document.getElementById('chat-ai-icon');
@@ -17189,8 +17332,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
                 
                 <div class="setting-item">
-                    <label for="chat-ai-icon">AIアイコン</label>
+                    <label>AIアイコン</label>
                     <div class="ai-icon-upload-container">
+                        <button type="button" id="chat-ai-icon-select" class="file-select-btn">ファイルを選択</button>
                         <input type="file" id="chat-ai-icon" accept="image/*">
                         <img id="chat-ai-icon-preview" class="ai-icon-preview" style="display: none;">
                         <button type="button" id="chat-ai-icon-remove" class="icon-remove-btn" style="display: none;">削除</button>
@@ -17198,10 +17342,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
                 
                 <div class="setting-item">
-                    <label for="chat-background-image">背景画像</label>
+                    <label>背景画像</label>
                     <div class="background-image-upload-container">
+                        <button type="button" id="chat-background-select" class="file-select-btn">ファイルを選択</button>
                         <input type="file" id="chat-background-image" accept="image/*">
-                        <img id="chat-background-preview" class="background-preview" style="display: none; width: 60px; height: 40px; object-fit: cover; border: 1px solid var(--border-primary);">
+                        <img id="chat-background-preview" class="background-preview" style="display: none;">
                         <button type="button" id="chat-background-remove" class="icon-remove-btn" style="display: none;">削除</button>
                     </div>
                 </div>
