@@ -6300,6 +6300,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                             title = firstUserMessage ? firstUserMessage.content.substring(0, 50) : "無題のチャット";
                         }
                         const chatIdForOperation = existingChatData ? existingChatData.id : state.currentChatId;
+                        
+                        // 非アクティブなチャットの保存を早期に終了
+                        if (existingChatData && chatIdForOperation !== state.currentChatId) {
+                            console.log('[iOS Debug] Skipping save for non-active chat:', chatIdForOperation);
+                            resolve(chatIdForOperation);
+                            return;
+                        }
                         // キャラクター名を取得（メッセージからまたはpendingから）
                         let characterName = null;
                         if (existingChatData && existingChatData.characterName) {
@@ -11290,7 +11297,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                             URL.revokeObjectURL(state.aiIconUrl);
                             state.aiIconUrl = null;
                         }
-                        state.settings.aiIconBlob = null;
+                        // 重要: チャット読み込み時はstate.settingsを変更しない
+                        // dirtyフラグがfalseなので、他のチャットには影響しない
                         const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
                         if (aiIconThumbnail) {
                             aiIconThumbnail.style.display = 'none';
@@ -11350,7 +11358,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             URL.revokeObjectURL(state.backgroundImageUrl);
                             state.backgroundImageUrl = null;
                         }
-                        state.settings.backgroundImageBlob = null;
+                        // 重要: チャット読み込み時はstate.settingsを変更しない
                         document.documentElement.style.setProperty('--chat-background-image', 'none');
                         uiUtils.updateBackgroundSettingsUI();
                         uiUtils.updatePromptBackgroundDisplay();
