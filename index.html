@@ -6453,7 +6453,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                             state.backgroundImageUrl = preservedState.backgroundImageUrl;
                             reject(`チャット保存putエラー: ${event.target.error.name} - ${event.target.error.message}`);
                         };
-                        } // proceedWithSave関数の終了
                     };
                     if (state.currentChatId) {
                         const getRequest = store.get(state.currentChatId);
