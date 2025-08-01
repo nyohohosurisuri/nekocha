@@ -6305,24 +6305,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // IndexedDBが使用できない場合はアセット変更を無効化
                         const isIdbUsable = state.env?.idbUsable !== false;
                         
-                        // aiName: dirtyの場合は state.settings.aiNameを使用、そうでない場合は既存値を優先
-                        const nextAiName = (isIdbUsable && state.assetDirty.aiName && typeof state.settings.aiName === 'string' && state.settings.aiName.trim() !== '')
-                            ? state.settings.aiName.trim()
-                            : (prev.aiName || state.settings.aiName || 'AI');
+                        // Safari対策: チャットごとのアセット管理を改善
+                        // 既存チャットの場合は、そのチャットの値を優先
+                        const isExistingChat = !!existingChatData;
+                        
+                        // aiName: 既存チャットの場合は既存値を優先、新規またはdirtyの場合は更新
+                        const nextAiName = (isExistingChat && !state.assetDirty.aiName)
+                            ? (prev.aiName || state.settings.aiName || 'AI')
+                            : (state.settings.aiName || prev.aiName || 'AI');
 
-                        // AIアイコン: dirtyの場合は変更を反映、そうでない場合は既存値を優先
-                        const nextAiIconBlob =
-                            (isIdbUsable && state.assetDirty.aiIcon)
-                                ? (state.settings.aiIconBlob instanceof Blob ? state.settings.aiIconBlob
-                                    : state.settings.aiIconBlob === null ? null : prev.aiIconBlob)
-                                : (prev.aiIconBlob || state.settings.aiIconBlob);
+                        // AIアイコン: 既存チャットの場合は既存値を優先、新規またはdirtyの場合は更新
+                        const nextAiIconBlob = (isExistingChat && !state.assetDirty.aiIcon)
+                            ? (prev.aiIconBlob !== undefined ? prev.aiIconBlob : state.settings.aiIconBlob)
+                            : (state.settings.aiIconBlob !== undefined ? state.settings.aiIconBlob : prev.aiIconBlob);
 
-                        // 背景画像: dirtyの場合は変更を反映、そうでない場合は既存値を優先
-                        const nextBgBlob =
-                            (isIdbUsable && state.assetDirty.bgImage)
-                                ? (state.settings.backgroundImageBlob instanceof Blob ? state.settings.backgroundImageBlob
-                                    : state.settings.backgroundImageBlob === null ? null : prev.backgroundImageBlob)
-                                : (prev.backgroundImageBlob || state.settings.backgroundImageBlob);
+                        // 背景画像: 既存チャットの場合は既存値を優先、新規またはdirtyの場合は更新
+                        const nextBgBlob = (isExistingChat && !state.assetDirty.bgImage)
+                            ? (prev.backgroundImageBlob !== undefined ? prev.backgroundImageBlob : state.settings.backgroundImageBlob)
+                            : (state.settings.backgroundImageBlob !== undefined ? state.settings.backgroundImageBlob : prev.backgroundImageBlob);
 
                         // Safari Blob エラー対策: Blobデータの検証
                         const validateBlob = (blob) => {
@@ -6362,13 +6362,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const request = store.put(chatData);
                         request.onsuccess = (event) => {
                             const savedId = event.target.result;
-                            // 成功したらdirtyフラグをクリア
-                            state.assetDirty = { aiIcon: false, bgImage: false, aiName: false };
+                            
+                            // Safari対策: 現在アクティブなチャットの場合のみdirtyフラグをクリア
+                            const savedChatId = chatIdForOperation || savedId;
+                            if (state.currentChatId === savedChatId) {
+                                // 成功したらdirtyフラグをクリア
+                                state.assetDirty = { aiIcon: false, bgImage: false, aiName: false };
+                            }
                             
                             if (!state.currentChatId && savedId) {
                                 state.currentChatId = savedId;
                             }
-                            if ((state.currentChatId || savedId) === (chatIdForOperation || savedId)) {
+                            if ((state.currentChatId || savedId) === savedChatId) {
                                 uiUtils.updateChatTitle(chatData.title);
                             }
                             // 新しいチャットが作成されたらpendingCharacterNameをクリア
@@ -11105,6 +11110,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                     }
                     
+                    // Safari対策: アセット復元前の状態を保持
+                    const previousAiIconBlob = state.settings.aiIconBlob;
+                    const previousBackgroundBlob = state.settings.backgroundImageBlob;
+                    const previousAiName = state.settings.aiName;
+                    
                     // dirtyフラグをリセット（チャットから復元したため）
                     state.assetDirty = { aiIcon: false, bgImage: false, aiName: false };
                     
@@ -11124,16 +11134,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                         
                         if (restoredBlob) {
-                            state.settings.aiIconBlob = restoredBlob;
-                            // 既存のURL解放
-                            if (state.aiIconUrl) {
-                                URL.revokeObjectURL(state.aiIconUrl);
-                            }
-                            try {
-                                state.aiIconUrl = URL.createObjectURL(restoredBlob);
-                            } catch (e) {
-                                console.warn('Safari Blob URL creation failed during chat load:', e);
-                                state.aiIconUrl = null;
+                            // Safari対策: Blobが有効かチェック
+                            if (restoredBlob.size > 0) {
+                                state.settings.aiIconBlob = restoredBlob;
+                                // 既存のURL解放
+                                if (state.aiIconUrl) {
+                                    URL.revokeObjectURL(state.aiIconUrl);
+                                }
+                                try {
+                                    state.aiIconUrl = URL.createObjectURL(restoredBlob);
+                                } catch (e) {
+                                    console.warn('Safari Blob URL creation failed during chat load:', e);
+                                    state.aiIconUrl = null;
+                                    // 復元失敗時は前の状態を保持
+                                    state.settings.aiIconBlob = previousAiIconBlob;
+                                }
+                            } else {
+                                console.warn('Restored blob is empty, keeping previous state');
+                                state.settings.aiIconBlob = previousAiIconBlob;
                             }
                             
                             // AIアイコンを画面に反映
@@ -11172,16 +11190,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                         
                         if (restoredBgBlob) {
-                            state.settings.backgroundImageBlob = restoredBgBlob;
-                            // 既存のURL解放
-                            if (state.backgroundImageUrl) {
-                                URL.revokeObjectURL(state.backgroundImageUrl);
-                            }
-                            try {
-                                state.backgroundImageUrl = URL.createObjectURL(restoredBgBlob);
-                            } catch (e) {
-                                console.warn('Safari Blob URL creation failed for background image:', e);
-                                state.backgroundImageUrl = null;
+                            // Safari対策: Blobが有効かチェック
+                            if (restoredBgBlob.size > 0) {
+                                state.settings.backgroundImageBlob = restoredBgBlob;
+                                // 既存のURL解放
+                                if (state.backgroundImageUrl) {
+                                    URL.revokeObjectURL(state.backgroundImageUrl);
+                                }
+                                try {
+                                    state.backgroundImageUrl = URL.createObjectURL(restoredBgBlob);
+                                } catch (e) {
+                                    console.warn('Safari Blob URL creation failed for background image:', e);
+                                    state.backgroundImageUrl = null;
+                                    // 復元失敗時は前の状態を保持
+                                    state.settings.backgroundImageBlob = previousBackgroundBlob;
+                                }
+                            } else {
+                                console.warn('Background blob is empty, keeping previous state');
+                                state.settings.backgroundImageBlob = previousBackgroundBlob;
                             }
                             
                             // 背景画像をチャット画面に適用
