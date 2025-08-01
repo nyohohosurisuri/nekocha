@@ -6782,10 +6782,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 } else if (role === 'model') {
                     // 現在のチャットのアセット情報を取得
+                    // 新規チャットの場合は"pending"から取得
                     const currentChatAssets = state.currentChatId ? 
-                        state.chatAssets.get(state.currentChatId) : null;
+                        state.chatAssets.get(state.currentChatId) : 
+                        state.chatAssets.get("pending");
                     const iconUrl = currentChatAssets?.aiIconUrl || state.aiIconUrl;
-                    const aiName = currentChatAssets?.aiName || 'AI';
+                    const aiName = currentChatAssets?.aiName || state.settings.aiName || 'AI';
                     
                     if (state.settings.showAiIcon && iconUrl) {
                         const iconImg = document.createElement('img');
@@ -9492,11 +9494,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     state.settings.showAiIcon = elements.showAiIconCheckbox ? elements.showAiIconCheckbox.checked : true;
                     state.settings.showAiName = elements.showAiNameCheckbox ? elements.showAiNameCheckbox.checked : true;
                     
-                    // 新規チャットを開始
-                    appLogic.startNewChat();
-                    
                     // 新規チャット用の一時的なアセット情報を作成
                     // IDはまだないので、"pending"として保存
+                    // startNewChatを呼ぶ前に設定する（URLがクリーンアップされる前）
                     state.chatAssets.set("pending", {
                         aiName: aiName || 'AI',
                         aiIconBlob: state.settings.aiIconBlob || null,
@@ -9504,6 +9504,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         aiIconUrl: state.aiIconUrl || null,
                         backgroundImageUrl: state.backgroundImageUrl || null
                     });
+                    
+                    // 新規チャットを開始（アセットを保持）
+                    appLogic.startNewChat(true);
                     
                     // キャラクター名を一時保存（新しいチャット作成時に使用）
                     if (characterValue) {
@@ -11205,15 +11208,22 @@ document.addEventListener('DOMContentLoaded', async () => {
             this.startNewChat();
             uiUtils.showScreen('chat');
         },
-        startNewChat() {
-            // 既存のチャットのURLをクリーンアップ
-            if (state.aiIconUrl && !uiUtils.isIOSSafari()) {
-                URL.revokeObjectURL(state.aiIconUrl);
-                state.aiIconUrl = null;
-            }
-            if (state.backgroundImageUrl && !uiUtils.isIOSSafari()) {
-                URL.revokeObjectURL(state.backgroundImageUrl);
-                state.backgroundImageUrl = null;
+        startNewChat(preserveAssets = false) {
+            // preserveAssetsがfalseの場合のみURLをクリーンアップ
+            if (!preserveAssets) {
+                // 既存のチャットのURLをクリーンアップ
+                if (state.aiIconUrl && !uiUtils.isIOSSafari()) {
+                    URL.revokeObjectURL(state.aiIconUrl);
+                    state.aiIconUrl = null;
+                }
+                if (state.backgroundImageUrl && !uiUtils.isIOSSafari()) {
+                    URL.revokeObjectURL(state.backgroundImageUrl);
+                    state.backgroundImageUrl = null;
+                }
+                // "pending"エントリも削除
+                if (state.chatAssets.has("pending")) {
+                    state.chatAssets.delete("pending");
+                }
             }
             
             state.currentChatId = null;
@@ -16930,8 +16940,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 state.modalTemp = {};
                 
                 // 現在のチャットのアセット情報を取得
+                // 新規チャットの場合は"pending"から取得
                 const currentChatAssets = state.currentChatId ? 
-                    state.chatAssets.get(state.currentChatId) : null;
+                    state.chatAssets.get(state.currentChatId) : 
+                    state.chatAssets.get("pending");
                 
                 // 現在のアセットをモーダル用の一時変数にコピー
                 if (currentChatAssets) {
@@ -17104,8 +17116,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         (chatAiNameInput.value.trim() || 'AI') : 'AI';
                     
                     // 現在のチャットのアセット情報を取得
+                    // 新規チャットの場合は"pending"から取得
                     const currentChatAssets = state.currentChatId ? 
-                        state.chatAssets.get(state.currentChatId) : null;
+                        state.chatAssets.get(state.currentChatId) : 
+                        state.chatAssets.get("pending");
                     
                     // AI名が変更された場合はdirtyフラグを設定
                     if (!currentChatAssets || currentChatAssets.aiName !== aiName) {
@@ -17227,6 +17241,86 @@ document.addEventListener('DOMContentLoaded', async () => {
                             
                             // エラーが発生してもUIの更新は続行
                         }
+                    } else if (!state.currentChatId && state.currentMessages && state.currentMessages.length > 0) {
+                        // 新規チャットでまだIDがない場合は"pending"に保存
+                        const pendingAssets = state.chatAssets.get("pending") || {
+                            aiName: 'AI',
+                            aiIconBlob: null,
+                            backgroundImageBlob: null,
+                            aiIconUrl: null,
+                            backgroundImageUrl: null
+                        };
+                        
+                        // chatAssetsマップを更新
+                        const assetData = {
+                            aiName: aiName,
+                            aiIconBlob: pendingAssets.aiIconBlob,
+                            backgroundImageBlob: pendingAssets.backgroundImageBlob,
+                            aiIconUrl: pendingAssets.aiIconUrl,
+                            backgroundImageUrl: pendingAssets.backgroundImageUrl
+                        };
+                        
+                        // アイコンが変更された場合の処理
+                        if (state.assetDirty.aiIcon && state.modalTemp?.aiIconBlob !== undefined) {
+                            if (assetData.aiIconUrl && !uiUtils.isIOSSafari()) {
+                                URL.revokeObjectURL(assetData.aiIconUrl);
+                            }
+                            
+                            if (state.modalTemp.aiIconBlob === null) {
+                                assetData.aiIconBlob = null;
+                                assetData.aiIconUrl = null;
+                                state.aiIconUrl = null;
+                            } else if (state.modalTemp.aiIconBlob instanceof Blob) {
+                                assetData.aiIconBlob = await state.modalTemp.aiIconBlob.arrayBuffer();
+                                try {
+                                    const newUrl = URL.createObjectURL(state.modalTemp.aiIconBlob);
+                                    assetData.aiIconUrl = newUrl;
+                                    state.aiIconUrl = newUrl;
+                                } catch (e) {
+                                    console.warn('Failed to create icon URL:', e);
+                                    assetData.aiIconUrl = null;
+                                    state.aiIconUrl = null;
+                                }
+                            } else {
+                                assetData.aiIconBlob = state.modalTemp.aiIconBlob;
+                            }
+                        }
+                        
+                        // 背景画像が変更された場合の処理
+                        if (state.assetDirty.bgImage && state.modalTemp?.backgroundImageBlob !== undefined) {
+                            if (assetData.backgroundImageUrl && !uiUtils.isIOSSafari()) {
+                                URL.revokeObjectURL(assetData.backgroundImageUrl);
+                            }
+                            
+                            if (state.modalTemp.backgroundImageBlob === null) {
+                                assetData.backgroundImageBlob = null;
+                                assetData.backgroundImageUrl = null;
+                                state.backgroundImageUrl = null;
+                            } else if (state.modalTemp.backgroundImageBlob instanceof Blob) {
+                                assetData.backgroundImageBlob = await state.modalTemp.backgroundImageBlob.arrayBuffer();
+                                try {
+                                    const newUrl = URL.createObjectURL(state.modalTemp.backgroundImageBlob);
+                                    assetData.backgroundImageUrl = newUrl;
+                                    state.backgroundImageUrl = newUrl;
+                                } catch (e) {
+                                    console.warn('Failed to create background URL:', e);
+                                    assetData.backgroundImageUrl = null;
+                                    state.backgroundImageUrl = null;
+                                }
+                            } else {
+                                assetData.backgroundImageBlob = state.modalTemp.backgroundImageBlob;
+                            }
+                        }
+                        
+                        state.chatAssets.set("pending", assetData);
+                        
+                        // 新規チャットの場合もdirtyフラグをリセット
+                        state.assetDirty.aiIcon = false;
+                        state.assetDirty.bgImage = false;
+                        state.assetDirty.aiName = false;
+                        
+                        // モーダル用の一時変数をクリア
+                        state.modalTemp = null;
                     }
                     
                     // メッセージを再描画してAI名とアイコンを反映
