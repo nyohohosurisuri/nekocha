@@ -6300,13 +6300,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                             title = firstUserMessage ? firstUserMessage.content.substring(0, 50) : "無題のチャット";
                         }
                         const chatIdForOperation = existingChatData ? existingChatData.id : state.currentChatId;
-                        
-                        // 非アクティブなチャットの保存を早期に終了
-                        if (existingChatData && chatIdForOperation !== state.currentChatId) {
-                            console.log('[iOS Debug] Skipping save for non-active chat:', chatIdForOperation);
-                            resolve(chatIdForOperation);
-                            return;
-                        }
                         // キャラクター名を取得（メッセージからまたはpendingから）
                         let characterName = null;
                         if (existingChatData && existingChatData.characterName) {
@@ -6323,6 +6316,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                         
                         // 既存値
                         const prev = existingChatData || {};
+                        
+                        console.log('[DEBUG] saveChat - Before asset determination', {
+                            chatIdForOperation,
+                            currentChatId: state.currentChatId,
+                            isExisting: !!existingChatData,
+                            'prev.aiIconBlob': prev.aiIconBlob ? 'Exists' : 'None',
+                            'state.settings.aiIconBlob': state.settings.aiIconBlob ? 'Exists' : 'None'
+                        });
 
                         // IndexedDBが使用できない場合はアセット変更を無効化
                         const isIdbUsable = state.env?.idbUsable !== false;
@@ -6429,6 +6430,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 title: chatData.title,
                                 aiName: chatData.aiName,
                                 aiIconBlob: chatData.aiIconBlob ? (chatData.aiIconBlob instanceof ArrayBuffer ? 'ArrayBuffer' : 'Blob') : 'No data',
+                                'finalAiIconBlob': finalAiIconBlob ? 'Exists' : 'None',
+                                'nextAiIconBlob': nextAiIconBlob ? 'Exists' : 'None',
                                 backgroundImageBlob: chatData.backgroundImageBlob ? (chatData.backgroundImageBlob instanceof ArrayBuffer ? 'ArrayBuffer' : 'Blob') : 'No data',
                                 messageCount: chatData.messages.length,
                                 currentChatId: state.currentChatId,
@@ -11247,7 +11250,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     state.assetDirty = { aiIcon: false, bgImage: false, aiName: false };
                     
                     if (chat.aiIconBlob) {
-                        console.log('Restored AI icon from chat data');
+                        console.log('Restored AI icon from chat data', {
+                            chatId: chat.id,
+                            currentChatId: state.currentChatId,
+                            'before state.settings.aiIconBlob': state.settings.aiIconBlob ? 'Exists' : 'None'
+                        });
                         // AIアイコンのBlobデータを復元
                         let restoredBlob;
                         if (chat.aiIconBlob instanceof Blob) {
@@ -11270,6 +11277,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             if (restoredBlob.size > 0) {
                                 // チャット固有のアイコンとして設定（dirtyフラグはfalseなので他のチャットには影響しない）
                                 state.settings.aiIconBlob = restoredBlob;
+                                console.log('Set state.settings.aiIconBlob to restored blob');
                                 // 既存のURL解放
                                 if (state.aiIconUrl) {
                                     URL.revokeObjectURL(state.aiIconUrl);
