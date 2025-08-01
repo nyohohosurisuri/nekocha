@@ -6274,7 +6274,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         ...(msg.usageMetadata && { usageMetadata: msg.usageMetadata }),
                         ...(msg.thoughtSummaryOpen !== undefined && { thoughtSummaryOpen: msg.thoughtSummaryOpen }),
                     }));
-                    const determineTitleAndSave = (existingChatData = null) => {
+                    const determineTitleAndSave = async (existingChatData = null) => {
                         // iOS Debug: 保存処理開始
                         console.log('[iOS Debug] saveChat - determineTitleAndSave called', {
                             currentChatId: state.currentChatId,
@@ -6422,7 +6422,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         };
                         
                         // chatDataを非同期で作成
-                        processAssetData().then(chatData => {
+                        try {
+                            const chatData = await processAssetData();
+                            
                             // iOS Debug: 保存前のchatDataを確認
                             console.log('[iOS Debug] chatData before save', {
                                 id: chatData.id,
@@ -6432,6 +6434,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 backgroundImageBlob: chatData.backgroundImageBlob ? (typeof chatData.backgroundImageBlob === 'string' ? 'Base64 string' : 'Blob exists') : 'No data',
                                 isIOS: chatData.isIOS
                             });
+                            
                             if (state.settings.persistMessageCollapseState) {
                                 chatData.collapsedStates = Object.fromEntries(state.messageCollapsedStates);
                             } else if (existingChatData && existingChatData.collapsedStates) {
@@ -6485,10 +6488,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                             state.backgroundImageUrl = preservedState.backgroundImageUrl;
                             reject(`チャット保存putエラー: ${event.target.error.name} - ${event.target.error.message}`);
                         };
-                        }).catch(error => {
+                        } catch (error) {
                             console.error('[iOS Debug] Asset processing error:', error);
                             reject(`アセット処理エラー: ${error.message}`);
-                        });
+                        }
+                    };
                     if (state.currentChatId) {
                         const getRequest = store.get(state.currentChatId);
                         getRequest.onsuccess = (event) => {
