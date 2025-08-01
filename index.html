@@ -7612,13 +7612,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                         chats.forEach(chat => {
                             // チャットアセットをchatAssetsマップに保存（履歴画面でアイコンを表示するため）
-                            if (chat.aiIconBlob || chat.aiName || chat.backgroundImageBlob) {
-                                state.chatAssets.set(chat.id, {
-                                    aiName: chat.aiName || 'AI',
-                                    aiIconBlob: chat.aiIconBlob || null,
-                                    backgroundImageBlob: chat.backgroundImageBlob || null
-                                });
-                            }
+                            // 常に設定（存在しない場合も）
+                            state.chatAssets.set(chat.id, {
+                                aiName: chat.aiName || 'AI',
+                                aiIconBlob: chat.aiIconBlob || null,
+                                backgroundImageBlob: chat.backgroundImageBlob || null
+                            });
                             
                             const li = elements.historyItemTemplate.cloneNode(true);
                             li.classList.remove('js-history-item-template');
@@ -7634,7 +7633,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 characterEl.textContent = `🗣️ ${chat.characterName}`;
                                 characterEl.style.display = 'block';
                             } else if (chat.aiName && chat.aiName !== 'AI') {
-                                characterEl.textContent = `🤖 ${chat.aiName}`;
+                                characterEl.textContent = chat.aiName;
                                 characterEl.style.display = 'block';
                             } else {
                                 characterEl.style.display = 'none';
@@ -7771,14 +7770,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                     elements.deleteUserIconBtn.classList.add('hidden');
                 }
 
-                if (state.aiIconUrl) {
+                if (state.aiIconUrl && elements.aiIconThumbnail) {
                     elements.aiIconThumbnail.src = state.aiIconUrl;
+                    elements.aiIconThumbnail.style.display = ''; // 表示を復元
                     elements.aiIconThumbnail.classList.remove('hidden');
-                    elements.deleteAiIconBtn.classList.remove('hidden');
-                } else {
-                    elements.aiIconThumbnail.src = '';
+                    if (elements.deleteAiIconBtn) {
+                        elements.deleteAiIconBtn.classList.remove('hidden');
+                    }
+                } else if (elements.aiIconThumbnail) {
+                    // srcを空にする代わりに非表示にする（「？」表示を防ぐ）
+                    elements.aiIconThumbnail.style.display = 'none';
                     elements.aiIconThumbnail.classList.add('hidden');
-                    elements.deleteAiIconBtn.classList.add('hidden');
+                    if (elements.deleteAiIconBtn) {
+                        elements.deleteAiIconBtn.classList.add('hidden');
+                    }
                 }
             },
             applySidePanelSettingsToUI() {
@@ -12671,11 +12676,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 // Safari Blob エラー対策: 重要な状態変数を保護
-                const preservedAiName = state.settings.aiName;
-                const preservedAiIconBlob = state.settings.aiIconBlob;
-                const preservedBackgroundImageBlob = state.settings.backgroundImageBlob;
-                const preservedAiIconUrl = state.aiIconUrl;
-                const preservedBackgroundImageUrl = state.backgroundImageUrl;
+                const preservedState = {
+                    aiName: state.settings.aiName,
+                    aiIconBlob: state.settings.aiIconBlob,
+                    backgroundImageBlob: state.settings.backgroundImageBlob,
+                    aiIconUrl: state.aiIconUrl,
+                    backgroundImageUrl: state.backgroundImageUrl,
+                    assetDirty: {...state.assetDirty}
+                };
 
                 let partialThoughtContentOnError, partialContentOnError;
                 partialThoughtContentOnError = state.partialThoughtStreamContent;
@@ -12726,20 +12734,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                          } catch (saveError) {
                              uiUtils.displayError(displayErrorMessage, !isAbort);
                              // Safari Blob エラー対策: 状態復元
-                             state.settings.aiName = preservedAiName;
-                             state.settings.aiIconBlob = preservedAiIconBlob;
-                             state.settings.backgroundImageBlob = preservedBackgroundImageBlob;
-                             state.aiIconUrl = preservedAiIconUrl;
-                             state.backgroundImageUrl = preservedBackgroundImageUrl;
+                             state.settings.aiName = preservedState.aiName;
+                             state.settings.aiIconBlob = preservedState.aiIconBlob;
+                             state.settings.backgroundImageBlob = preservedState.backgroundImageBlob;
+                             state.aiIconUrl = preservedState.aiIconUrl;
+                             state.backgroundImageUrl = preservedState.backgroundImageUrl;
+                             state.assetDirty = preservedState.assetDirty;
                          }
                     } else {
                          uiUtils.displayError(displayErrorMessage, !isAbort);
                          // Safari Blob エラー対策: 状態復元
-                         state.settings.aiName = preservedAiName;
-                         state.settings.aiIconBlob = preservedAiIconBlob;
-                         state.settings.backgroundImageBlob = preservedBackgroundImageBlob;
-                         state.aiIconUrl = preservedAiIconUrl;
-                         state.backgroundImageUrl = preservedBackgroundImageUrl;
+                         state.settings.aiName = preservedState.aiName;
+                         state.settings.aiIconBlob = preservedState.aiIconBlob;
+                         state.settings.backgroundImageBlob = preservedState.backgroundImageBlob;
+                         state.aiIconUrl = preservedState.aiIconUrl;
+                         state.backgroundImageUrl = preservedState.backgroundImageUrl;
+                         state.assetDirty = preservedState.assetDirty;
                     }
                 } else {
                     if (useStreamingForThisCall && !isAbort && modelMessageObjectForStream) {
@@ -12750,11 +12760,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     uiUtils.displayError(displayErrorMessage, !isAbort);
                     // Safari Blob エラー対策: 状態復元
-                    state.settings.aiName = preservedAiName;
-                    state.settings.aiIconBlob = preservedAiIconBlob;
-                    state.settings.backgroundImageBlob = preservedBackgroundImageBlob;
-                    state.aiIconUrl = preservedAiIconUrl;
-                    state.backgroundImageUrl = preservedBackgroundImageUrl;
+                    state.settings.aiName = preservedState.aiName;
+                    state.settings.aiIconBlob = preservedState.aiIconBlob;
+                    state.settings.backgroundImageBlob = preservedState.backgroundImageBlob;
+                    state.aiIconUrl = preservedState.aiIconUrl;
+                    state.backgroundImageUrl = preservedState.backgroundImageUrl;
+                    state.assetDirty = preservedState.assetDirty;
                 }
             } finally {
                 if (!isBackgroundProcess) {
@@ -16587,7 +16598,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                             chatAiIconRemove.style.display = 'inline-block';
                         }
                         
-                        // モーダル内のプレビューのみ更新（保存時に反映）
+                        // 設定画面のサムネイルも更新
+                        const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
+                        if (aiIconThumbnail && state.aiIconUrl) {
+                            aiIconThumbnail.src = state.aiIconUrl;
+                            aiIconThumbnail.style.display = '';
+                            aiIconThumbnail.classList.remove('hidden');
+                        }
                         
                     } catch (error) {
                         console.error('AIアイコンのアップロードに失敗しました:', error);
@@ -16812,14 +16829,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     // チャットを保存（設定を反映）
                     if (state.currentChatId && state.currentMessages && state.currentMessages.length > 0) {
-                        // chatAssetsマップも更新
-                        state.chatAssets.set(state.currentChatId, {
-                            aiName: state.settings.aiName || 'AI',
-                            aiIconBlob: state.settings.aiIconBlob || null,
-                            backgroundImageBlob: state.settings.backgroundImageBlob || null
-                        });
-                        
-                        await dbUtils.saveChat();
+                        try {
+                            // chatAssetsマップも更新
+                            state.chatAssets.set(state.currentChatId, {
+                                aiName: state.settings.aiName || 'AI',
+                                aiIconBlob: state.settings.aiIconBlob || null,
+                                backgroundImageBlob: state.settings.backgroundImageBlob || null
+                            });
+                            
+                            await dbUtils.saveChat();
+                            
+                            // 保存後にdirtyフラグをリセット
+                            state.assetDirty.aiIcon = false;
+                            state.assetDirty.bgImage = false;
+                            state.assetDirty.aiName = false;
+                        } catch (saveError) {
+                            console.error('チャット保存中のエラー:', saveError);
+                            // エラーが発生してもUIの更新は続行
+                        }
                     }
                     
                     // メッセージを再描画してAI名とアイコンを反映
@@ -16899,6 +16926,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
                 if (aiIconThumbnail) {
                     aiIconThumbnail.style.display = 'none';
+                    aiIconThumbnail.classList.add('hidden');
+                }
+                const deleteAiIconBtn = document.getElementById('delete-ai-icon-btn');
+                if (deleteAiIconBtn) {
+                    deleteAiIconBtn.classList.add('hidden');
                 }
             }
     };
