@@ -6416,6 +6416,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const currentChatAssets = state.chatAssets.get(chatIdForOperation) || 
                             (!chatIdForOperation ? state.chatAssets.get("pending") : null);
                         
+                        console.log('SaveChat - assets check:', {
+                            chatIdForOperation,
+                            isExistingChat,
+                            hasPending: !!state.chatAssets.get("pending"),
+                            hasCurrentChatAssets: !!currentChatAssets,
+                            pendingAssets: state.chatAssets.get("pending")
+                        });
+                        
                         // 新規チャットで"pending"がない場合、現在のUIの値から取得
                         let updatedCurrentChatAssets = currentChatAssets;
                         if (!isExistingChat && !currentChatAssets) {
@@ -6516,6 +6524,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                             request.onsuccess = (event) => {
                             const savedId = event.target.result;
                             const savedChatId = chatIdForOperation || savedId;
+                            
+                            console.log('SaveChat - after save:', {
+                                savedId,
+                                savedChatId,
+                                chatData: {
+                                    aiName: chatData.aiName,
+                                    hasAiIconBlob: !!chatData.aiIconBlob,
+                                    hasBackgroundImageBlob: !!chatData.backgroundImageBlob
+                                }
+                            });
                             
                             // 既存チャットの場合のみ、保存したチャットのアセット情報をchatAssetsに記録
                             // 新規チャットの場合は後で処理する
@@ -8903,6 +8921,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // 現在のチャットのアセットを復元
                         if (state.currentChatId) {
                             const currentAssets = state.chatAssets.get(state.currentChatId);
+                            console.log('ShowScreen(chat) - restoring assets:', {
+                                currentChatId: state.currentChatId,
+                                hasCurrentAssets: !!currentAssets,
+                                currentAssets
+                            });
                             if (currentAssets) {
                                 // AIアイコンURLの復元
                                 if (currentAssets.aiIconBlob && !currentAssets.aiIconUrl) {
@@ -9582,15 +9605,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                     state.settings.showAiIcon = elements.showAiIconCheckbox ? elements.showAiIconCheckbox.checked : true;
                     state.settings.showAiName = elements.showAiNameCheckbox ? elements.showAiNameCheckbox.checked : true;
                     
+                    console.log('StartChatWithPrompt - state.settings:', {
+                        aiName: state.settings.aiName,
+                        hasAiIconBlob: !!state.settings.aiIconBlob,
+                        hasBackgroundImageBlob: !!state.settings.backgroundImageBlob
+                    });
+                    
                     // 新規チャット用の一時的なアセット情報を作成
                     // IDはまだないので、"pending"として保存
                     // startNewChatを呼ぶ前に設定する（URLがクリーンアップされる前）
-                    state.chatAssets.set("pending", {
+                    const pendingAssets = {
                         aiName: aiName || 'AI',
                         aiIconBlob: state.settings.aiIconBlob || null,
                         backgroundImageBlob: state.settings.backgroundImageBlob || null,
                         aiIconUrl: state.aiIconUrl || null,
                         backgroundImageUrl: state.backgroundImageUrl || null
+                    };
+                    state.chatAssets.set("pending", pendingAssets);
+                    
+                    console.log('StartChatWithPrompt - pending assets:', {
+                        aiName: pendingAssets.aiName,
+                        hasAiIconBlob: !!pendingAssets.aiIconBlob,
+                        hasBackgroundImageBlob: !!pendingAssets.backgroundImageBlob,
+                        hasAiIconUrl: !!pendingAssets.aiIconUrl,
+                        hasBackgroundImageUrl: !!pendingAssets.backgroundImageUrl
                     });
                     
                     // 新規チャットを開始（アセットを保持）
@@ -11374,6 +11412,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             try {
                 const chat = await dbUtils.getChat(id);
+                console.log('LoadChat - loaded data:', {
+                    id,
+                    hasChat: !!chat,
+                    aiName: chat?.aiName,
+                    hasAiIconBlob: !!chat?.aiIconBlob,
+                    hasBackgroundImageBlob: !!chat?.backgroundImageBlob
+                });
                 if (chat) {
                     state.currentChatId = chat.id;
                     state.currentMessages = chat.messages?.map(msg => ({
@@ -11421,12 +11466,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     
                     // このチャットのアセット情報を保存（state.settingsは更新しない）
-                    state.chatAssets.set(chat.id, {
+                    const chatAssetData = {
                         aiName: chat.aiName || 'AI',
                         aiIconBlob: chat.aiIconBlob || null,
                         backgroundImageBlob: chat.backgroundImageBlob || null,
                         aiIconUrl: null,  // URLは後で作成
                         backgroundImageUrl: null  // URLは後で作成
+                    };
+                    state.chatAssets.set(chat.id, chatAssetData);
+                    
+                    console.log('LoadChat - setting chatAssets:', {
+                        chatId: chat.id,
+                        chatAssetData
                     });
                     
                     
