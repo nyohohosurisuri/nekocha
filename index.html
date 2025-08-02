@@ -6416,15 +6416,29 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const currentChatAssets = state.chatAssets.get(chatIdForOperation) || 
                             (!chatIdForOperation ? state.chatAssets.get("pending") : null);
                         
+                        // 新規チャットで"pending"がない場合、現在のUIの値から取得
+                        let updatedCurrentChatAssets = currentChatAssets;
+                        if (!isExistingChat && !currentChatAssets) {
+                            const pendingFromUI = {
+                                aiName: state.settings.aiName || 'AI',
+                                aiIconBlob: state.settings.aiIconBlob || null,
+                                backgroundImageBlob: state.settings.backgroundImageBlob || null
+                            };
+                            if (pendingFromUI.aiIconBlob || pendingFromUI.backgroundImageBlob || pendingFromUI.aiName !== 'AI') {
+                                state.chatAssets.set("pending", pendingFromUI);
+                                updatedCurrentChatAssets = pendingFromUI;
+                            }
+                        }
+                        
                         
                         if (isExistingChat) {
                             // 既存チャット: chatAssetsの値を優先、なければ保存済みの値を使用
-                            if (currentChatAssets) {
-                                nextAiName = currentChatAssets.aiName || prev.aiName || 'AI';
-                                nextAiIconBlob = currentChatAssets.aiIconBlob !== undefined ? 
-                                    currentChatAssets.aiIconBlob : prev.aiIconBlob;
-                                nextBgBlob = currentChatAssets.backgroundImageBlob !== undefined ? 
-                                    currentChatAssets.backgroundImageBlob : prev.backgroundImageBlob;
+                            if (updatedCurrentChatAssets) {
+                                nextAiName = updatedCurrentChatAssets.aiName || prev.aiName || 'AI';
+                                nextAiIconBlob = updatedCurrentChatAssets.aiIconBlob !== undefined ? 
+                                    updatedCurrentChatAssets.aiIconBlob : prev.aiIconBlob;
+                                nextBgBlob = updatedCurrentChatAssets.backgroundImageBlob !== undefined ? 
+                                    updatedCurrentChatAssets.backgroundImageBlob : prev.backgroundImageBlob;
                             } else {
                                 nextAiName = prev.aiName || 'AI';
                                 nextAiIconBlob = prev.aiIconBlob;
@@ -6433,24 +6447,25 @@ document.addEventListener('DOMContentLoaded', async () => {
                             
                             // chatAssetsに最新の情報が含まれているため、dirtyフラグのチェックは不要
                         } else {
-                            // 新規チャット: chatAssetsから取得、なければデフォルト値を使用
-                            if (currentChatAssets) {
-                                nextAiName = currentChatAssets.aiName || 'AI';
+                            // 新規チャット: chatAssetsから取得、なければstate.settingsから取得
+                            if (updatedCurrentChatAssets) {
+                                nextAiName = updatedCurrentChatAssets.aiName || state.settings.aiName || 'AI';
                                 // iOS形式の場合は正しく処理
-                                if (currentChatAssets.aiIconBlob && currentChatAssets.aiIconBlob.arrayBuffer) {
-                                    nextAiIconBlob = currentChatAssets.aiIconBlob;  // { arrayBuffer, type }形式をそのまま使用
+                                if (updatedCurrentChatAssets.aiIconBlob && updatedCurrentChatAssets.aiIconBlob.arrayBuffer) {
+                                    nextAiIconBlob = updatedCurrentChatAssets.aiIconBlob;  // { arrayBuffer, type }形式をそのまま使用
                                 } else {
-                                    nextAiIconBlob = currentChatAssets.aiIconBlob || null;
+                                    nextAiIconBlob = updatedCurrentChatAssets.aiIconBlob || state.settings.aiIconBlob || null;
                                 }
-                                if (currentChatAssets.backgroundImageBlob && currentChatAssets.backgroundImageBlob.arrayBuffer) {
-                                    nextBgBlob = currentChatAssets.backgroundImageBlob;  // { arrayBuffer, type }形式をそのまま使用
+                                if (updatedCurrentChatAssets.backgroundImageBlob && updatedCurrentChatAssets.backgroundImageBlob.arrayBuffer) {
+                                    nextBgBlob = updatedCurrentChatAssets.backgroundImageBlob;  // { arrayBuffer, type }形式をそのまま使用
                                 } else {
-                                    nextBgBlob = currentChatAssets.backgroundImageBlob || null;
+                                    nextBgBlob = updatedCurrentChatAssets.backgroundImageBlob || state.settings.backgroundImageBlob || null;
                                 }
                             } else {
-                                nextAiName = 'AI';
-                                nextAiIconBlob = null;
-                                nextBgBlob = null;
+                                // pendingがない場合はstate.settingsから取得
+                                nextAiName = state.settings.aiName || 'AI';
+                                nextAiIconBlob = state.settings.aiIconBlob || null;
+                                nextBgBlob = state.settings.backgroundImageBlob || null;
                             }
                         }
                         // iOS環境を検出
@@ -6487,6 +6502,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 chatSystemPrompt: state.chatSystemPrompt || null,
                             };
                             
+                            
                             if (state.settings.persistMessageCollapseState) {
                                 chatData.collapsedStates = Object.fromEntries(state.messageCollapsedStates);
                             } else if (existingChatData && existingChatData.collapsedStates) {
@@ -6501,12 +6517,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                             const savedId = event.target.result;
                             const savedChatId = chatIdForOperation || savedId;
                             
-                            // 保存したチャットのアセット情報をchatAssetsに記録
-                            state.chatAssets.set(savedChatId, {
-                                aiName: chatData.aiName,
-                                aiIconBlob: chatData.aiIconBlob,
-                                backgroundImageBlob: chatData.backgroundImageBlob
-                            });
+                            // 既存チャットの場合のみ、保存したチャットのアセット情報をchatAssetsに記録
+                            // 新規チャットの場合は後で処理する
+                            if (existingChatData) {
+                                state.chatAssets.set(savedChatId, {
+                                    aiName: chatData.aiName,
+                                    aiIconBlob: chatData.aiIconBlob,
+                                    backgroundImageBlob: chatData.backgroundImageBlob
+                                });
+                            }
                             // 重要: 保存したチャットが現在アクティブなチャットと完全に一致する場合のみクリア
                             // かつ、新規作成時（!existingChatData）または明示的な変更時のみクリア
                             if (state.currentChatId === savedChatId && (!existingChatData || 
@@ -11409,6 +11428,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         aiIconUrl: null,  // URLは後で作成
                         backgroundImageUrl: null  // URLは後で作成
                     });
+                    
                     
                     // AI名とAIアイコンを復元（state.settingsは更新しない）
                     if (chat.aiName) {
