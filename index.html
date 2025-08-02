@@ -6359,6 +6359,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         ...(msg.usageMetadata && { usageMetadata: msg.usageMetadata }),
                         ...(msg.thoughtSummaryOpen !== undefined && { thoughtSummaryOpen: msg.thoughtSummaryOpen }),
                     }));
+                    const hasPendingAssetsForSave = state.chatAssets.has("pending");
+                    
                     const determineTitleAndSave = (existingChatData = null) => {
                         
                         let title;
@@ -6370,7 +6372,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                             const firstUserMessage = state.currentMessages.find(m => m.role === 'user');
                             title = firstUserMessage ? firstUserMessage.content.substring(0, 50) : "無題のチャット";
                         }
-                        const chatIdForOperation = existingChatData ? existingChatData.id : state.currentChatId;
+                        // pendingアセットがある場合は新規チャットとして扱う
+                        const chatIdForOperation = (existingChatData && !hasPendingAssetsForSave) ? existingChatData.id : 
+                                                  (hasPendingAssetsForSave ? null : state.currentChatId);
                         // キャラクター名を取得（メッセージからまたはpendingから）
                         let characterName = null;
                         if (existingChatData && existingChatData.characterName) {
@@ -6406,7 +6410,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                         // IndexedDBが使用できない場合はアセット変更を無効化
                         const isIdbUsable = state.env?.idbUsable !== false;
-                        const isExistingChat = !!existingChatData;
+                        // pendingアセットがある場合は新規チャットとして扱う
+                        const isExistingChat = !!existingChatData && !hasPendingAssetsForSave;
                         
                         // 重要: 各チャットは独自のアセットを持つ
                         let nextAiName, nextAiIconBlob, nextBgBlob;
@@ -6416,13 +6421,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const currentChatAssets = state.chatAssets.get(chatIdForOperation) || 
                             (!chatIdForOperation ? state.chatAssets.get("pending") : null);
                         
-                        console.log('SaveChat - assets check:', {
-                            chatIdForOperation,
-                            isExistingChat,
-                            hasPending: !!state.chatAssets.get("pending"),
-                            hasCurrentChatAssets: !!currentChatAssets,
-                            pendingAssets: state.chatAssets.get("pending")
-                        });
                         
                         // 新規チャットで"pending"がない場合、現在のUIの値から取得
                         let updatedCurrentChatAssets = currentChatAssets;
@@ -6532,15 +6530,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                             const savedId = event.target.result;
                             const savedChatId = chatIdForOperation || savedId;
                             
-                            console.log('SaveChat - after save:', {
-                                savedId,
-                                savedChatId,
-                                chatData: {
-                                    aiName: chatData.aiName,
-                                    hasAiIconBlob: !!chatData.aiIconBlob,
-                                    hasBackgroundImageBlob: !!chatData.backgroundImageBlob
-                                }
-                            });
                             
                             // 既存チャットの場合のみ、保存したチャットのアセット情報をchatAssetsに記録
                             // 新規チャットの場合は後で処理する
@@ -6559,7 +6548,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                             } else {
                             }
                             
-                            if (!state.currentChatId && savedId) {
+                            // pendingアセットがある場合、または新規チャットの場合
+                            if ((!state.currentChatId || hasPendingAssetsForSave) && savedId) {
                                 state.currentChatId = savedId;
                                 
                                 // 新規チャットの場合、chatAssetsに登録
@@ -6612,14 +6602,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                             reject(`チャット保存putエラー: ${event.target.error.name} - ${event.target.error.message}`);
                         };
                     };
-                    if (state.currentChatId) {
-                        // pendingアセットがある場合は新規チャットとして扱う
-                        const hasPendingAssets = state.chatAssets.has("pending");
-                        if (hasPendingAssets) {
-                            // 新規チャットとして処理
-                            state.currentChatId = null;
-                            determineTitleAndSave(null);
-                        } else {
+                    // pendingアセットがある場合は必ず新規チャットとして扱う
+                    
+                    if (hasPendingAssetsForSave) {
+                        // 新規チャットとして処理（currentChatIdは変更しない）
+                        determineTitleAndSave(null);
+                    } else if (state.currentChatId) {
                             const getRequest = store.get(state.currentChatId);
                             getRequest.onsuccess = (event) => {
                                 const existingChat = event.target.result;
@@ -8936,11 +8924,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // 現在のチャットのアセットを復元
                         if (state.currentChatId) {
                             const currentAssets = state.chatAssets.get(state.currentChatId);
-                            console.log('ShowScreen(chat) - restoring assets:', {
-                                currentChatId: state.currentChatId,
-                                hasCurrentAssets: !!currentAssets,
-                                currentAssets
-                            });
                             if (currentAssets) {
                                 // AIアイコンURLの復元
                                 if (currentAssets.aiIconBlob && !currentAssets.aiIconUrl) {
@@ -9624,11 +9607,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     state.settings.showAiIcon = elements.showAiIconCheckbox ? elements.showAiIconCheckbox.checked : true;
                     state.settings.showAiName = elements.showAiNameCheckbox ? elements.showAiNameCheckbox.checked : true;
                     
-                    console.log('StartChatWithPrompt - state.settings:', {
-                        aiName: state.settings.aiName,
-                        hasAiIconBlob: !!state.settings.aiIconBlob,
-                        hasBackgroundImageBlob: !!state.settings.backgroundImageBlob
-                    });
                     
                     // 新規チャット用の一時的なアセット情報を作成
                     // IDはまだないので、"pending"として保存
@@ -9642,13 +9620,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     };
                     state.chatAssets.set("pending", pendingAssets);
                     
-                    console.log('StartChatWithPrompt - pending assets:', {
-                        aiName: pendingAssets.aiName,
-                        hasAiIconBlob: !!pendingAssets.aiIconBlob,
-                        hasBackgroundImageBlob: !!pendingAssets.backgroundImageBlob,
-                        hasAiIconUrl: !!pendingAssets.aiIconUrl,
-                        hasBackgroundImageUrl: !!pendingAssets.backgroundImageUrl
-                    });
                     
                     // 新規チャットを開始（アセットを保持）
                     appLogic.startNewChat(true);
@@ -11431,13 +11402,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             try {
                 const chat = await dbUtils.getChat(id);
-                console.log('LoadChat - loaded data:', {
-                    id,
-                    hasChat: !!chat,
-                    aiName: chat?.aiName,
-                    hasAiIconBlob: !!chat?.aiIconBlob,
-                    hasBackgroundImageBlob: !!chat?.backgroundImageBlob
-                });
                 if (chat) {
                     state.currentChatId = chat.id;
                     state.currentMessages = chat.messages?.map(msg => ({
@@ -11494,10 +11458,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     };
                     state.chatAssets.set(chat.id, chatAssetData);
                     
-                    console.log('LoadChat - setting chatAssets:', {
-                        chatId: chat.id,
-                        chatAssetData
-                    });
                     
                     
                     // AI名とAIアイコンを復元（state.settingsは更新しない）
