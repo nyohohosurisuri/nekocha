@@ -6324,6 +6324,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             },
             async saveChat(optionalTitle = null) {
+                console.log('saveChat called:', { 
+                    currentChatId: state.currentChatId, 
+                    messageCount: state.currentMessages?.length || 0,
+                    hasPendingAssets: state.chatAssets.has("pending"),
+                    optionalTitle
+                });
+                
                 await this.openDB();
                 if ((!state.currentMessages || state.currentMessages.length === 0)) {
                     return Promise.resolve(state.currentChatId);
@@ -6424,7 +6431,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         
                         // 新規チャットで"pending"がない場合、現在のUIの値から取得
                         let updatedCurrentChatAssets = currentChatAssets;
-                        if (!isExistingChat && !currentChatAssets) {
+                        if (!isExistingChat && !currentChatAssets && !state.currentChatId) {
                             const pendingFromUI = {
                                 aiName: state.settings.aiName || 'AI',
                                 aiIconBlob: state.settings.aiIconBlob || null,
@@ -6530,6 +6537,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                             const savedId = event.target.result;
                             const savedChatId = chatIdForOperation || savedId;
                             
+                            console.log('saveChat result:', { 
+                                savedId, 
+                                savedChatId,
+                                isNewChat: !existingChatData, 
+                                hadPendingAssets: hasPendingAssetsForSave,
+                                chatIdForOperation
+                            });
                             
                             // 既存チャットの場合のみ、保存したチャットのアセット情報をchatAssetsに記録
                             // 新規チャットの場合は後で処理する
@@ -11986,8 +12000,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     uiUtils.adjustTextareaHeight();
                     uiUtils.updateAttachmentBadgeVisibility();
                 }
-                await dbUtils.saveChat();
-                await sleep(300 + Math.random() * 400);
                 
                 const modelMessage = {
                     role: 'model', content: dummyResponseContent, timestamp: Date.now(), generatedByApiProvider: 'dummy'
@@ -11995,7 +12007,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 state.currentMessages.push(modelMessage);
                 const modelMessageIndex = state.currentMessages.length - 1;
                 uiUtils.appendMessage(modelMessage.role, modelMessage.content, modelMessageIndex);
+                
+                // 一度だけ保存する
                 await dbUtils.saveChat();
+                await sleep(300 + Math.random() * 400);
                 uiUtils.setSendingState(false);
                 if (state.settings.autoScrollOnNewMessage) uiUtils.scrollToBottom();
                 return;
@@ -12357,6 +12372,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     titleToSave = firstUserMsg ? firstUserMsg.content.substring(0, 50) : "無題のチャット";
                 }
 
+                // 現在のチャットのアセット情報を取得
+                const currentChatAssets = currentContextSessionId ? 
+                    state.chatAssets.get(currentContextSessionId) : 
+                    state.chatAssets.get("pending");
+                
                 const chatToSave = {
                     messages: currentContextMessages.map(msg => ({
                         role: msg.role, content: msg.content, timestamp: msg.timestamp,
@@ -12376,7 +12396,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                         ...(msg.thoughtSummaryOpen !== undefined && { thoughtSummaryOpen: msg.thoughtSummaryOpen }),
                     })),
                     updatedAt: Date.now(),
-                    title: titleToSave
+                    title: titleToSave,
+                    // アセット情報を追加
+                    aiName: currentChatAssets?.aiName || state.settings.aiName || 'AI',
+                    aiIconBlob: currentChatAssets?.aiIconBlob || state.settings.aiIconBlob || null,
+                    backgroundImageBlob: currentChatAssets?.backgroundImageBlob || state.settings.backgroundImageBlob || null,
+                    chatSystemPrompt: state.chatSystemPrompt || null
                 };
 
                 if (isNewChatForDBSave) {
@@ -12406,8 +12431,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (!isBackgroundProcess && !state.currentChatId && savedId) {
                     state.currentChatId = savedId;
                     uiUtils.updateChatTitle(chatToSave.title);
+                    
+                    // pendingアセットがある場合は、保存したチャットIDにコピーして削除
+                    if (state.chatAssets.has("pending")) {
+                        const pendingAssets = state.chatAssets.get("pending");
+                        state.chatAssets.set(savedId, {
+                            aiName: chatToSave.aiName || pendingAssets.aiName || 'AI',
+                            aiIconBlob: chatToSave.aiIconBlob || pendingAssets.aiIconBlob || null,
+                            backgroundImageBlob: chatToSave.backgroundImageBlob || pendingAssets.backgroundImageBlob || null,
+                            aiIconUrl: state.aiIconUrl || pendingAssets.aiIconUrl || null,
+                            backgroundImageUrl: state.backgroundImageUrl || pendingAssets.backgroundImageUrl || null
+                        });
+                        state.chatAssets.delete("pending");
+                    }
                 } else if (isBackgroundProcess && !sourceSessionContext.sessionId && savedId) {
                     sourceSessionContext.sessionId = savedId;
+                } else if (!isBackgroundProcess && state.currentChatId && savedId) {
+                    // 既存チャットの更新時もchatAssetsを更新
+                    state.chatAssets.set(savedId, {
+                        aiName: chatToSave.aiName,
+                        aiIconBlob: chatToSave.aiIconBlob,
+                        backgroundImageBlob: chatToSave.backgroundImageBlob,
+                        aiIconUrl: state.aiIconUrl,
+                        backgroundImageUrl: state.backgroundImageUrl
+                    });
                 }
 
             } catch (error) {
