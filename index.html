@@ -6435,8 +6435,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                             // 新規チャット: chatAssetsから取得、なければデフォルト値を使用
                             if (currentChatAssets) {
                                 nextAiName = currentChatAssets.aiName || 'AI';
-                                nextAiIconBlob = currentChatAssets.aiIconBlob || null;
-                                nextBgBlob = currentChatAssets.backgroundImageBlob || null;
+                                // iOS形式の場合は正しく処理
+                                if (currentChatAssets.aiIconBlob && currentChatAssets.aiIconBlob.arrayBuffer) {
+                                    nextAiIconBlob = currentChatAssets.aiIconBlob;  // { arrayBuffer, type }形式をそのまま使用
+                                } else {
+                                    nextAiIconBlob = currentChatAssets.aiIconBlob || null;
+                                }
+                                if (currentChatAssets.backgroundImageBlob && currentChatAssets.backgroundImageBlob.arrayBuffer) {
+                                    nextBgBlob = currentChatAssets.backgroundImageBlob;  // { arrayBuffer, type }形式をそのまま使用
+                                } else {
+                                    nextBgBlob = currentChatAssets.backgroundImageBlob || null;
+                                }
                             } else {
                                 nextAiName = 'AI';
                                 nextAiIconBlob = null;
@@ -6455,6 +6464,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                             if (isExistingChat && chatIdForOperation !== state.currentChatId) {
                                 finalAiIconBlob = prev.aiIconBlob || null;
                                 finalBgBlob = prev.backgroundImageBlob || null;
+                            } else {
+                                // 新規チャットまたはアクティブなチャットの場合は、nextの値を使用
+                                finalAiIconBlob = nextAiIconBlob;
+                                finalBgBlob = nextBgBlob;
                             }
                             
                             // ArrayBuffer形式のデータはそのまま保存
