@@ -9038,8 +9038,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                 } else if (screenName === 'history') {
                     activeScreen = elements.historyScreen;
+                    if (previousScreen === 'home') {
+                        // ホーム画面から履歴画面へ：チャット画面は動かさない
+                        elements.chatScreen.style.transition = 'none';
+                        elements.chatScreen.style.transform = 'translateY(100%)';
+                        setTimeout(() => {
+                            elements.chatScreen.style.transition = '';
+                        }, 10);
+                    } else {
+                        // その他の画面から履歴画面へ
+                        elements.chatScreen.style.transform = 'translateX(100%)';
+                    }
                     elements.homeScreen.style.transform = 'translateX(100%)';
-                    elements.chatScreen.style.transform = 'translateX(100%)';
                     elements.historyScreen.style.transform = 'translateX(0)';
                     elements.promptSetupScreen.style.transform = 'translateY(100%)';
                     elements.settingsScreen.style.transform = 'translateX(200%)';
@@ -9048,8 +9058,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     activeScreen = elements.promptSetupScreen;
                     if (previousScreen === 'chat') {
                         // チャット画面からプロンプト作成画面へ：チャット画面は下へ、プロンプト画面は上から
-                        elements.chatScreen.style.transform = 'translateY(100%)';
-                        elements.promptSetupScreen.style.transform = 'translateY(0)';
+                        // まずプロンプト画面を上に配置
+                        elements.promptSetupScreen.style.transition = 'none';
+                        elements.promptSetupScreen.style.transform = 'translateY(-100%)';
+                        
+                        // 少し遅延させてからアニメーション開始
+                        setTimeout(() => {
+                            elements.promptSetupScreen.style.transition = '';
+                            elements.chatScreen.style.transform = 'translateY(100%)';
+                            elements.promptSetupScreen.style.transform = 'translateY(0)';
+                        }, 10);
+                        
                         elements.homeScreen.style.transform = 'translateY(-100%)';
                     } else if (previousScreen === 'home') {
                         // ホーム画面からプロンプト作成画面へ：スムーズな遷移
@@ -9120,7 +9139,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // 遷移アニメーションを実行
                 requestAnimationFrame(() => {
                     // 前の画面を適切な位置に移動してフェードアウト効果を追加
-                    if (previousScreen && activeScreen) {
+                    if (previousScreen && activeScreen && previousScreen !== 'home' && screenName !== 'history') {
+                        // ホーム→履歴の遷移では不透明度の変更をしない
                         const prevScreenElement = document.getElementById(`${previousScreen}-screen`);
                         if (prevScreenElement) {
                             prevScreenElement.style.opacity = '0.5';
