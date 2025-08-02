@@ -1,7 +1,7 @@
 {
-  "name": "GeminiPWA",
-  "short_name": "GeminiPWA",
-  "description": "Chat with Gemini and save history.",
+  "name": "NekoCha",
+  "short_name": "NekoCha",
+  "description": "AI Chat Application with Multiple Providers",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#ffffff",
