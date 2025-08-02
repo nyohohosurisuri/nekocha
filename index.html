@@ -6416,6 +6416,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         const currentChatAssets = state.chatAssets.get(chatIdForOperation) || 
                             (!chatIdForOperation ? state.chatAssets.get("pending") : null);
                         
+                        
                         if (isExistingChat) {
                             // 既存チャット: chatAssetsの値を優先、なければ保存済みの値を使用
                             if (currentChatAssets) {
@@ -6522,20 +6523,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     // "pending"からコピーまたは新規作成
                                     const pendingAssets = state.chatAssets.get("pending");
                                     if (pendingAssets) {
+                                        // pendingAssetsがある場合は、chatDataに保存された値を優先的に使用
                                         state.chatAssets.set(savedId, {
-                                            aiName: nextAiName || pendingAssets.aiName || 'AI',
-                                            aiIconBlob: finalAiIconBlob || pendingAssets.aiIconBlob || null,
-                                            backgroundImageBlob: finalBgBlob || pendingAssets.backgroundImageBlob || null,
+                                            aiName: chatData.aiName || pendingAssets.aiName || 'AI',
+                                            aiIconBlob: chatData.aiIconBlob || pendingAssets.aiIconBlob || null,
+                                            backgroundImageBlob: chatData.backgroundImageBlob || pendingAssets.backgroundImageBlob || null,
                                             aiIconUrl: state.aiIconUrl || pendingAssets.aiIconUrl || null,
                                             backgroundImageUrl: state.backgroundImageUrl || pendingAssets.backgroundImageUrl || null
                                         });
                                         // "pending"を削除
                                         state.chatAssets.delete("pending");
                                     } else {
+                                        // pendingAssetsがない場合は、chatDataから直接設定
                                         state.chatAssets.set(savedId, {
-                                            aiName: nextAiName || 'AI',
-                                            aiIconBlob: finalAiIconBlob || null,
-                                            backgroundImageBlob: finalBgBlob || null,
+                                            aiName: chatData.aiName || 'AI',
+                                            aiIconBlob: chatData.aiIconBlob || null,
+                                            backgroundImageBlob: chatData.backgroundImageBlob || null,
                                             aiIconUrl: state.aiIconUrl || null,
                                             backgroundImageUrl: state.backgroundImageUrl || null
                                         });
@@ -8877,6 +8880,59 @@ document.addEventListener('DOMContentLoaded', async () => {
                         if (typeof initializeChatSettingsModal === 'function') {
                             initializeChatSettingsModal();
                         }
+                        
+                        // 現在のチャットのアセットを復元
+                        if (state.currentChatId) {
+                            const currentAssets = state.chatAssets.get(state.currentChatId);
+                            if (currentAssets) {
+                                // AIアイコンURLの復元
+                                if (currentAssets.aiIconBlob && !currentAssets.aiIconUrl) {
+                                    const restoredBlob = convertArrayBufferToBlob(currentAssets.aiIconBlob);
+                                    if (restoredBlob) {
+                                        try {
+                                            currentAssets.aiIconUrl = URL.createObjectURL(restoredBlob);
+                                            state.aiIconUrl = currentAssets.aiIconUrl;
+                                        } catch (e) {
+                                            console.warn('Failed to restore icon URL:', e);
+                                        }
+                                    }
+                                } else if (currentAssets.aiIconUrl) {
+                                    state.aiIconUrl = currentAssets.aiIconUrl;
+                                }
+                                
+                                // 背景画像URLの復元
+                                if (currentAssets.backgroundImageBlob && !currentAssets.backgroundImageUrl) {
+                                    const restoredBgBlob = convertArrayBufferToBlob(currentAssets.backgroundImageBlob);
+                                    if (restoredBgBlob) {
+                                        try {
+                                            currentAssets.backgroundImageUrl = URL.createObjectURL(restoredBgBlob);
+                                            state.backgroundImageUrl = currentAssets.backgroundImageUrl;
+                                            document.documentElement.style.setProperty('--chat-background-image', `url(${state.backgroundImageUrl})`);
+                                        } catch (e) {
+                                            console.warn('Failed to restore background URL:', e);
+                                        }
+                                    }
+                                } else if (currentAssets.backgroundImageUrl) {
+                                    state.backgroundImageUrl = currentAssets.backgroundImageUrl;
+                                    document.documentElement.style.setProperty('--chat-background-image', `url(${state.backgroundImageUrl})`);
+                                }
+                            }
+                        } else {
+                            // 新規チャットの場合は"pending"から復元
+                            const pendingAssets = state.chatAssets.get("pending");
+                            if (pendingAssets) {
+                                if (pendingAssets.aiIconUrl) {
+                                    state.aiIconUrl = pendingAssets.aiIconUrl;
+                                }
+                                if (pendingAssets.backgroundImageUrl) {
+                                    state.backgroundImageUrl = pendingAssets.backgroundImageUrl;
+                                    document.documentElement.style.setProperty('--chat-background-image', `url(${state.backgroundImageUrl})`);
+                                }
+                            }
+                        }
+                        
+                        // メッセージを再描画してアイコンとAI名を反映
+                        this.renderChatMessages();
                     });
                 } else if (screenName === 'history') {
                     activeScreen = elements.historyScreen;
