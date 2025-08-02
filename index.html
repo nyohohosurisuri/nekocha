@@ -6607,21 +6607,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // 新規チャットとして処理（currentChatIdは変更しない）
                         determineTitleAndSave(null);
                     } else if (state.currentChatId) {
-                            const getRequest = store.get(state.currentChatId);
-                            getRequest.onsuccess = (event) => {
-                                const existingChat = event.target.result;
-                                 if (!existingChat) {
-                                     state.currentChatId = null;
-                                     determineTitleAndSave(null);
-                                } else {
-                                    determineTitleAndSave(existingChat);
-                                }
-                            };
-                            getRequest.onerror = (event) => {
+                        const getRequest = store.get(state.currentChatId);
+                        getRequest.onsuccess = (event) => {
+                            const existingChat = event.target.result;
+                            if (!existingChat) {
                                 state.currentChatId = null;
                                 determineTitleAndSave(null);
-                            };
-                        }
+                            } else {
+                                determineTitleAndSave(existingChat);
+                            }
+                        };
+                        getRequest.onerror = (event) => {
+                            state.currentChatId = null;
+                            determineTitleAndSave(null);
+                        };
                     } else {
                         determineTitleAndSave(null);
                     }
@@ -17548,6 +17547,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
     };
+    
+        // appLogicをグローバルスコープで利用可能にする
+        window.appLogic = appLogic;
     
         // イベントリスナー設定（null チェック付き）
         const chatSettingsBtn = document.getElementById('chat-settings-btn');
