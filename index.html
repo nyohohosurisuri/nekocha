@@ -6441,7 +6441,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                         
                         if (isExistingChat) {
                             // 既存チャット: chatAssetsの値を優先、なければ保存済みの値を使用
-                            if (updatedCurrentChatAssets) {
+                            // ただし、pendingアセットがある場合は新規として扱う
+                            const pendingExists = !!state.chatAssets.get("pending");
+                            if (pendingExists && updatedCurrentChatAssets) {
+                                // pendingアセットがある場合は、それを優先
+                                nextAiName = updatedCurrentChatAssets.aiName || prev.aiName || 'AI';
+                                nextAiIconBlob = updatedCurrentChatAssets.aiIconBlob || prev.aiIconBlob;
+                                nextBgBlob = updatedCurrentChatAssets.backgroundImageBlob || prev.backgroundImageBlob;
+                            } else if (updatedCurrentChatAssets) {
                                 nextAiName = updatedCurrentChatAssets.aiName || prev.aiName || 'AI';
                                 nextAiIconBlob = updatedCurrentChatAssets.aiIconBlob !== undefined ? 
                                     updatedCurrentChatAssets.aiIconBlob : prev.aiIconBlob;
@@ -6606,20 +6613,28 @@ document.addEventListener('DOMContentLoaded', async () => {
                         };
                     };
                     if (state.currentChatId) {
-                        const getRequest = store.get(state.currentChatId);
-                        getRequest.onsuccess = (event) => {
-                            const existingChat = event.target.result;
-                             if (!existingChat) {
-                                 state.currentChatId = null;
-                                 determineTitleAndSave(null);
-                            } else {
-                                determineTitleAndSave(existingChat);
-                            }
-                        };
-                        getRequest.onerror = (event) => {
+                        // pendingアセットがある場合は新規チャットとして扱う
+                        const hasPendingAssets = state.chatAssets.has("pending");
+                        if (hasPendingAssets) {
+                            // 新規チャットとして処理
                             state.currentChatId = null;
                             determineTitleAndSave(null);
-                        };
+                        } else {
+                            const getRequest = store.get(state.currentChatId);
+                            getRequest.onsuccess = (event) => {
+                                const existingChat = event.target.result;
+                                 if (!existingChat) {
+                                     state.currentChatId = null;
+                                     determineTitleAndSave(null);
+                                } else {
+                                    determineTitleAndSave(existingChat);
+                                }
+                            };
+                            getRequest.onerror = (event) => {
+                                state.currentChatId = null;
+                                determineTitleAndSave(null);
+                            };
+                        }
                     } else {
                         determineTitleAndSave(null);
                     }
@@ -8991,6 +9006,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     elements.historyScreen.style.transform = 'translateX(-200%)';
                     elements.promptSetupScreen.style.transform = 'translateX(0)';
                     elements.settingsScreen.style.transform = 'translateX(100%)';
+                    
+                    // プロンプト設定画面は新規チャット用なので、currentChatIdをクリア
+                    state.currentChatId = null;
+                    
                     // キャラクター選択肢を読み込み
                     await this.loadCharacterOptions();
                     // プロンプト作成画面の入力フィールドをクリア
