@@ -5989,6 +5989,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 xaiActiveApiKeyIndex: -1,
                 llmaggregatorApiKeys: [],
                 llmaggregatorActiveApiKeyIndex: -1,
+                lastUsedChatId: null,
             },
             backgroundImageUrl: null,
             userIconUrl: null,
@@ -10340,9 +10341,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // イベントリスナーを最初に設定
                     this.setupEventListeners();
                     
-                    // 初期画面をホーム画面に設定（最優先で実行）
-                    
-                    // 全画面を非アクティブにしてからホーム画面を表示
+                    // 全画面を非アクティブにする
                     const allScreens = [elements.homeScreen, elements.chatScreen, elements.historyScreen, elements.promptSetupScreen, elements.settingsScreen];
                     allScreens.forEach(screen => {
                         if (screen) {
@@ -10351,16 +10350,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                             screen.style.transform = 'translateX(0) translateY(0)';
                         }
                     });
-                    
-                    // ホーム画面をアクティブにする
-                    if (elements.homeScreen) {
-                        elements.homeScreen.classList.add('active', 'fade-in');
-                        elements.homeScreen.classList.remove('fade-out');
-                    }
-                    
-                    history.replaceState({ screen: 'home' }, '', '#home');
-                    state.currentScreen = 'home';
-                    await uiUtils.showScreen('home');
                     
                     // IndexedDB使用可能性を検出
                     state.env = state.env || {};
@@ -10371,23 +10360,23 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // アセット保存系UIを無効化する場合はここで実装
                     }
                     
-                    console.log('Home screen shown');
-                    
                     uiUtils.applySettingsToUI();
     
-                    // チャット履歴は読み込むが、画面遷移は後で制御
+                    // チャット履歴を読み込む
                     const chats = await dbUtils.getAllChats(state.settings.historySortOrder);
                     
                     // 最後に使用したチャットがある場合はそれを開く
+                    let shouldShowChatScreen = false;
+                    
                     if (state.settings.lastUsedChatId) {
+                        console.log('Last used chat ID found:', state.settings.lastUsedChatId);
                         const lastChat = chats.find(chat => chat.id === state.settings.lastUsedChatId);
                         if (lastChat) {
                             // 最後のチャットを開く
                             await this.loadChat(lastChat.id);
-                            // チャット画面を表示
-                            state.currentScreen = 'chat';
-                            uiUtils.showScreen('chat');
+                            shouldShowChatScreen = true;
                         } else {
+                            console.log('Last used chat not found, loading first chat or creating new');
                             // 最後のチャットが見つからない場合は通常の処理
                             if (chats && chats.length > 0) {
                                 await this.loadChat(chats[0].id);
@@ -10396,6 +10385,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             }
                         }
                     } else {
+                        console.log('No last used chat ID, loading first chat or creating new');
                         // 最後のチャットIDがない場合は通常の処理
                         if (chats && chats.length > 0) {
                             await this.loadChat(chats[0].id);
@@ -10410,20 +10400,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     uiUtils.setSendingState(false);
                     
                     // 最後に使用したチャットがある場合はチャット画面、それ以外はホーム画面を表示
-                    if (state.settings.lastUsedChatId && state.currentChatId === state.settings.lastUsedChatId) {
-                        // チャット画面を確実に表示
-                        setTimeout(() => {
-                            state.currentScreen = 'chat';
-                            uiUtils.showScreen('chat');
-                            console.log('Final chat screen display');
-                        }, 200);
+                    if (shouldShowChatScreen) {
+                        console.log('Showing chat screen for last used chat');
+                        state.currentScreen = 'chat';
+                        await uiUtils.showScreen('chat');
+                        history.replaceState({ screen: 'chat' }, '', '#chat');
                     } else {
-                        // ホーム画面を確実に表示
-                        setTimeout(() => {
-                            state.currentScreen = 'home';
-                            uiUtils.showScreen('home');
-                            console.log('Final home screen display');
-                        }, 200);
+                        console.log('Showing home screen');
+                        state.currentScreen = 'home';
+                        await uiUtils.showScreen('home');
+                        history.replaceState({ screen: 'home' }, '', '#home');
                     }
                     
                     if (state.settings.autoScrollOnNewMessage) {
