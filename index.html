@@ -8103,7 +8103,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (opacityLabel) opacityLabel.style.display = state.settings.showAiNameBubble ? 'block' : 'none';
                 }
             },
-            applyOpacitySettings() {
+            applyOpacitySettings(overrideTheme = null) {
                 document.documentElement.style.setProperty('--message-bubble-opacity', state.settings.messageBubbleOpacity);
                 document.documentElement.style.setProperty('--header-footer-opacity', state.settings.headerFooterOpacity);
                 document.documentElement.style.setProperty('--chat-overlay-alpha', state.settings.chatOverlayOpacity);
@@ -8112,7 +8112,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 let headerColor, secondaryColor, userMessageColor, modelMessageColor, overlayBaseColor, tertiaryColorRgbStr;
 
-                switch (state.settings.theme) {
+                const theme = overrideTheme || state.settings.theme;
+                switch (theme) {
                     case 'dark':
                         headerColor = DARK_THEME_COLOR;
                         secondaryColor = DARK_MODE_SECONDARY_COLOR;
@@ -8172,7 +8173,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         break;
                 }
 
-                if (state.settings.theme !== 'pastel-rainbow') {
+                if (theme !== 'pastel-rainbow') {
                     const headerRgb = this.hexToRgb(headerColor) || this.parseRgbCss(headerColor);
                     if (headerRgb) {
                         document.documentElement.style.setProperty('--bg-header-rgb', `${headerRgb.r}, ${headerRgb.g}, ${headerRgb.b}`);
@@ -8287,7 +8288,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.documentElement.style.setProperty('--current-theme-user-message-rgb', `${currentThemeUserMessageBgRgb.r}, ${currentThemeUserMessageBgRgb.g}, ${currentThemeUserMessageBgRgb.b}`);
                 document.documentElement.style.setProperty('--current-theme-model-message-rgb', `${currentThemeModelMessageBgRgb.r}, ${currentThemeModelMessageBgRgb.g}, ${currentThemeModelMessageBgRgb.b}`);
 
-                this.applyOpacitySettings();
+                this.applyOpacitySettings(overrideTheme);
                 this.applyZoomPreventionSetting();
                 // ヘッダーセリフの吹き出しの色も更新
                 this.updateIconSettingsUI();
