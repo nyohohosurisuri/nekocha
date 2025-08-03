@@ -5989,7 +5989,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 xaiActiveApiKeyIndex: -1,
                 llmaggregatorApiKeys: [],
                 llmaggregatorActiveApiKeyIndex: -1,
-                lastUsedChatId: null,
             },
             backgroundImageUrl: null,
             userIconUrl: null,
@@ -6562,7 +6561,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 chatSystemPrompt: state.chatSystemPrompt || null,
                                 theme: state.currentChatTheme || state.settings.theme || 'light',
                             };
-                            console.log('Saving chat with chatSystemPrompt:', chatData.chatSystemPrompt);
                             
                             
                             if (state.settings.persistMessageCollapseState) {
@@ -9738,8 +9736,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     // チャット専用システムプロンプトとして保存
                     state.chatSystemPrompt = combinedPrompt;
-                    console.log('Chat system prompt set:', combinedPrompt);
-                    console.log('Current screen:', state.currentScreen);
                     
                     // 設定を保存（AI名設定の前に）
                     await appLogic.saveSettings(false);
@@ -9771,7 +9767,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     
                     // 新規チャットを開始（アセットを保持）
-                    await appLogic.startNewChat(true);
+                    appLogic.startNewChat(true);
                     
                     // キャラクター名を一時保存（新しいチャット作成時に使用）
                     if (characterValue) {
@@ -10341,7 +10337,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // イベントリスナーを最初に設定
                     this.setupEventListeners();
                     
-                    // 全画面を非アクティブにする
+                    // 初期画面をホーム画面に設定（最優先で実行）
+                    
+                    // 全画面を非アクティブにしてからホーム画面を表示
                     const allScreens = [elements.homeScreen, elements.chatScreen, elements.historyScreen, elements.promptSetupScreen, elements.settingsScreen];
                     allScreens.forEach(screen => {
                         if (screen) {
@@ -10350,6 +10348,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                             screen.style.transform = 'translateX(0) translateY(0)';
                         }
                     });
+                    
+                    // ホーム画面をアクティブにする
+                    if (elements.homeScreen) {
+                        elements.homeScreen.classList.add('active', 'fade-in');
+                        elements.homeScreen.classList.remove('fade-out');
+                    }
+                    
+                    history.replaceState({ screen: 'home' }, '', '#home');
+                    state.currentScreen = 'home';
+                    await uiUtils.showScreen('home');
                     
                     // IndexedDB使用可能性を検出
                     state.env = state.env || {};
@@ -10360,37 +10368,36 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // アセット保存系UIを無効化する場合はここで実装
                     }
                     
+                    console.log('Home screen shown');
+                    
                     uiUtils.applySettingsToUI();
     
-                    // チャット履歴を読み込む
+                    // チャット履歴は読み込むが、画面遷移は後で制御
                     const chats = await dbUtils.getAllChats(state.settings.historySortOrder);
                     
                     // 最後に使用したチャットがある場合はそれを開く
-                    let shouldShowChatScreen = false;
-                    
                     if (state.settings.lastUsedChatId) {
-                        console.log('Last used chat ID found:', state.settings.lastUsedChatId);
                         const lastChat = chats.find(chat => chat.id === state.settings.lastUsedChatId);
                         if (lastChat) {
                             // 最後のチャットを開く
                             await this.loadChat(lastChat.id);
-                            shouldShowChatScreen = true;
+                            // チャット画面を表示
+                            state.currentScreen = 'chat';
+                            uiUtils.showScreen('chat');
                         } else {
-                            console.log('Last used chat not found, loading first chat or creating new');
                             // 最後のチャットが見つからない場合は通常の処理
                             if (chats && chats.length > 0) {
                                 await this.loadChat(chats[0].id);
                             } else {
-                                await this.startNewChat();
+                                this.startNewChat();
                             }
                         }
                     } else {
-                        console.log('No last used chat ID, loading first chat or creating new');
                         // 最後のチャットIDがない場合は通常の処理
                         if (chats && chats.length > 0) {
                             await this.loadChat(chats[0].id);
                         } else {
-                            await this.startNewChat();
+                            this.startNewChat();
                         }
                     }
                     
@@ -10400,16 +10407,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                     uiUtils.setSendingState(false);
                     
                     // 最後に使用したチャットがある場合はチャット画面、それ以外はホーム画面を表示
-                    if (shouldShowChatScreen) {
-                        console.log('Showing chat screen for last used chat');
-                        state.currentScreen = 'chat';
-                        await uiUtils.showScreen('chat');
-                        history.replaceState({ screen: 'chat' }, '', '#chat');
+                    if (state.settings.lastUsedChatId && state.currentChatId === state.settings.lastUsedChatId) {
+                        // チャット画面を確実に表示
+                        setTimeout(() => {
+                            state.currentScreen = 'chat';
+                            uiUtils.showScreen('chat');
+                            console.log('Final chat screen display');
+                        }, 200);
                     } else {
-                        console.log('Showing home screen');
-                        state.currentScreen = 'home';
-                        await uiUtils.showScreen('home');
-                        history.replaceState({ screen: 'home' }, '', '#home');
+                        // ホーム画面を確実に表示
+                        setTimeout(() => {
+                            state.currentScreen = 'home';
+                            uiUtils.showScreen('home');
+                            console.log('Final home screen display');
+                        }, 200);
                     }
                     
                     if (state.settings.autoScrollOnNewMessage) {
@@ -11523,10 +11534,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (!conf) return;
                 }
             }
-            await this.startNewChat();
+            this.startNewChat();
             uiUtils.showScreen('chat');
         },
-        async startNewChat(preserveAssets = false) {
+        startNewChat(preserveAssets = false) {
             // preserveAssetsがfalseの場合のみURLをクリーンアップ
             if (!preserveAssets) {
                 // 既存のチャットのURLをクリーンアップ
@@ -11559,12 +11570,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             // プロンプト作成画面から来た場合以外は、チャット専用システムプロンプトをクリア
             if (state.currentScreen !== 'prompt-setup') {
-                console.log('Clearing chatSystemPrompt because currentScreen is:', state.currentScreen);
                 state.chatSystemPrompt = null;
                 // dirtyフラグもリセット（新規チャットのため）
                 state.assetDirty = { aiIcon: false, bgImage: false, aiName: false };
-            } else {
-                console.log('Keeping chatSystemPrompt because currentScreen is prompt-setup');
             }
             
             state.pendingCharacterName = null;
@@ -11670,13 +11678,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         } else {
                             state.pendingCharacterName = null;
                         }
-                    }
-                    
-                    // チャット専用システムプロンプトを復元
-                    if (chat.chatSystemPrompt) {
-                        state.chatSystemPrompt = chat.chatSystemPrompt;
-                    } else {
-                        state.chatSystemPrompt = null;
                     }
                     
                     // このチャットのアセット情報を保存（state.settingsは更新しない）
@@ -11858,14 +11859,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 } else {
                     await uiUtils.showCustomAlert("チャット履歴が見つかりませんでした。");
-                    await this.startNewChat();
+                    this.startNewChat();
                     if (state.currentScreen !== 'home') {
                         uiUtils.showScreen('chat');
                     }
                 }
             } catch (error) {
                 await uiUtils.showCustomAlert(`チャットの読み込みエラー: ${error}`);
-                await this.startNewChat();
+                this.startNewChat();
                 if (state.currentScreen !== 'home') {
                     uiUtils.showScreen('chat');
                 }
@@ -11920,14 +11921,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         messages: duplicatedMessages,
                         updatedAt: Date.now(),
                         createdAt: Date.now(),
-                        title: newTitle,
-                        // 元のチャットからアセット情報とシステムプロンプトをコピー
-                        characterName: chat.characterName || null,
-                        aiName: chat.aiName || null,
-                        aiIconBlob: chat.aiIconBlob || null,
-                        backgroundImageBlob: chat.backgroundImageBlob || null,
-                        chatSystemPrompt: chat.chatSystemPrompt || null,
-                        theme: chat.theme || null
+                        title: newTitle
                     };
 
                     if (state.settings.persistMessageCollapseState && chat.collapsedStates) {
@@ -12023,7 +12017,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (state.currentChatId) {
                     await dbUtils.deleteChat(state.currentChatId);
                 }
-                await this.startNewChat();
+                this.startNewChat();
                 await uiUtils.showCustomAlert("チャットを削除しました。");
             } catch (error) {
                 await uiUtils.showCustomAlert(`チャットの削除中にエラーが発生しました: ${error}`);
@@ -12085,14 +12079,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                         await dbUtils.saveSetting('lastUsedChatId', null);
                     }
                     if (isDeletingCurrent) {
-                        await this.startNewChat();
+                        this.startNewChat();
                     }
                     if (currentScreenBeforeDelete === 'history') {
                         await uiUtils.renderHistoryList();
                         const listIsEmpty = elements.historyList.querySelectorAll('.history-item:not(.js-history-item-template)').length === 0;
                         if (listIsEmpty) {
                             if (!isDeletingCurrent) {
-                                await this.startNewChat();
+                                this.startNewChat();
                             }
                         }
                     }
@@ -12186,8 +12180,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else {
                     // 新しいチャットの場合、システムプロンプトとキャラクター情報を追加
                     if (state.currentMessages.length === 0) {
-                        // システムプロンプトを追加（チャット専用 > 共通の優先順位）
-                        const systemPrompt = state.chatSystemPrompt || state.settings.commonSystemPrompt;
+                        // システムプロンプトを追加
+                        const systemPrompt = state.settings.commonSystemPrompt;
                         if (systemPrompt && systemPrompt.trim()) {
                             const systemMessage = {
                                 role: 'system',
@@ -14372,7 +14366,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     document.documentElement.style.setProperty('--chat-background-image', 'none');
                     uiUtils.applySettingsToUI();
                     uiUtils.updateAttachmentBadgeVisibility();
-                    await this.startNewChat();
+                    this.startNewChat();
                     uiUtils.showScreen('chat', true);
                 } catch (error) {
                     await uiUtils.showCustomAlert(`データ削除中にエラーが発生しました: ${error}`);
@@ -14400,7 +14394,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     state.linkedSessionIds = [];
                     uiUtils.updateSessionLinkingUI();
 
-                    await this.startNewChat();
+                    this.startNewChat();
                     await uiUtils.showCustomAlert("すべてのチャット履歴が削除されました。");
 
                     if (state.currentScreen === 'history') {
@@ -14829,7 +14823,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         uiUtils.updateChatTitle(newTitleForSave);
                     }
                     if (state.currentMessages.length === 0 && state.currentChatId) {
-                        await this.startNewChat();
+                        this.startNewChat();
                     }
                 } catch (error) {
                     await uiUtils.showCustomAlert("メッセージ削除後のチャット保存に失敗しました。");
@@ -17382,7 +17376,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // システムプロンプトの取得優先順位：
                     // 1. チャット固有のシステムプロンプト
                     // 2. メッセージからシステムプロンプトを探す
-                    console.log('Chat settings modal - state.chatSystemPrompt:', state.chatSystemPrompt);
                     if (state.chatSystemPrompt) {
                         systemPromptValue = state.chatSystemPrompt;
                     } else if (state.currentMessages && state.currentMessages.length > 0) {
