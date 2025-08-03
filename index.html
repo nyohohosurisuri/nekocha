@@ -3791,7 +3791,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                     
                     <div class="setting-group">
-                        <label for="prompt-theme-select">表示テーマ:</label>
+                        <label for="prompt-theme-select">チャット表示テーマ:</label>
                         <select id="prompt-theme-select" class="setting-select">
                             <option value="">-- デフォルト設定を使用 --</option>
                             <option value="light">ライトモード</option>
@@ -4834,8 +4834,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <summary style="font-size: 16px; color: var(--text-link); border-bottom: 1px solid var(--border-tertiary); padding-bottom: 5px; margin-bottom: 15px; display: list-item; list-style: revert; cursor:pointer; font-weight: bold;">その他設定</summary>
                         <div style="margin-top:10px;">
                            <p style="height:10px"></p>
-                           <label for="theme-select">表示テーマ:</label>
-                           <select id="theme-select" aria-label="表示テーマ">
+                           <label for="theme-select">デフォルト表示テーマ:</label>
+                           <select id="theme-select" aria-label="デフォルト表示テーマ">
                                <option value="light">ライトモード</option>
                                <option value="dark">ダークモード</option>
                                <option value="pastel-pink">パステルモード🩷</option>
@@ -4844,6 +4844,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                <option value="pastel-purple">パステルモード🟣</option>
                                <option value="pastel-rainbow">パステルモード🌈</option>
                            </select>
+                           <p style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">※ホーム画面、履歴画面、設定画面に適用されます。チャット画面のテーマは個別に設定できます。</p>
                            <p style="height:10px"></p>
                             <details id="settings-group-behavior-adjustment" open="">
                                 <summary style="font-size: 14px; color: var(--text-link); padding-bottom: 5px; margin-bottom: 10px; display: list-item; list-style: revert; cursor:pointer; font-weight: normal;">アプリの挙動を調整</summary>
@@ -17887,7 +17888,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
                 
                 <div class="setting-item">
-                    <label for="chat-theme-select">表示テーマ</label>
+                    <label for="chat-theme-select">チャット表示テーマ</label>
                     <select id="chat-theme-select" class="setting-select">
                         <option value="">-- デフォルト設定を使用 --</option>
                         <option value="light">ライトモード</option>
