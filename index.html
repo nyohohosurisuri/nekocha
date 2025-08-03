@@ -10429,9 +10429,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         if (selectedTheme) {
                             // プレビュー用に一時的にテーマを適用
                             uiUtils.applyTheme(selectedTheme);
+                            uiUtils.applySidePanelSettingsToUI();
                         } else {
                             // デフォルトテーマを適用
                             uiUtils.applyTheme(state.settings.theme);
+                            uiUtils.applySidePanelSettingsToUI();
                         }
                     });
                 }
@@ -17455,10 +17457,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                         state.currentChatTheme = selectedTheme;
                         // 即座にテーマを適用
                         uiUtils.applyTheme(selectedTheme);
+                        uiUtils.applySidePanelSettingsToUI();
                     } else {
                         state.currentChatTheme = null;
                         // デフォルトテーマを適用
                         uiUtils.applyTheme(state.settings.theme);
+                        uiUtils.applySidePanelSettingsToUI();
                     }
                     
                     // 現在のチャットのアセット情報を取得
