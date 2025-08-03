@@ -9018,11 +9018,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // プロンプト設定画面は新規チャット用なので、currentChatIdをクリア
                     state.currentChatId = null;
                     
-                    // キャラクター選択肢を読み込み
-                    await this.loadCharacterOptions();
                     // プロンプト作成画面の入力フィールドをクリア
                     if (elements.characterSelect) {
-                        elements.characterSelect.value = '';
+                        elements.characterSelect.innerHTML = '<option value="" disabled selected>キャラクターリスト読み込み中...</option>';
+                        elements.characterSelect.disabled = true;
                     }
                     if (elements.userRelationshipSelect) {
                         elements.userRelationshipSelect.value = 'first-meeting';
@@ -9070,6 +9069,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                         activeScreen.classList.add('fade-in');
                         activeScreen.inert = false;
                         activeScreen.classList.add('active');
+                    }
+                    
+                    // プロンプト設定画面の場合、画面表示後にキャラクター選択肢を非同期で読み込み
+                    if (screenName === 'prompt-setup') {
+                        // 非同期でキャラクター選択肢を読み込み
+                        this.loadCharacterOptions().catch(error => {
+                            console.error('キャラクター選択肢の読み込みエラー:', error);
+                            if (elements.characterSelect) {
+                                elements.characterSelect.innerHTML = '<option value="" disabled selected>キャラクターファイルの読み込みに失敗しました</option>';
+                            }
+                        });
                     }
                 });
                 state.currentScreen = screenName;
@@ -9233,11 +9243,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 try {
                     // キャラクターリスト読み込み中の表示
                     const characterSelect = elements.characterSelect;
-                    if (characterSelect) {
-                        // 読み込み中状態を設定
-                        characterSelect.innerHTML = '<option value="" disabled selected>キャラクターリスト読み込み中...</option>';
-                        characterSelect.disabled = true;
-                    }
 
                     // systempromptフォルダのディレクトリリストを取得
                     let availableCharacters = [];
