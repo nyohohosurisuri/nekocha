@@ -1253,6 +1253,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             transition: transform 0.3s ease-in-out;
             background-color: var(--bg-primary);
             z-index: 0;
+            opacity: 1;
         }
         .screen.active {
             transform: translateX(0);
@@ -3615,6 +3616,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         
         .icon-remove-btn:hover {
             background-color: #cc0000;
+        }
+        
+        /* フェードアニメーション用のクラス */
+        .screen.fade-transition {
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        
+        .screen.fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+        
+        .screen.fade-in {
+            opacity: 1;
+            visibility: visible;
         }
     </style>
     <script src="marked.js"></script>
@@ -8923,25 +8939,61 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 }
 
+                // フェードアニメーションを使う画面かどうかを判定
+                const useFadeForPrevious = state.currentScreen === 'home' || state.currentScreen === 'prompt-setup';
+                const useFadeForNext = screenName === 'home' || screenName === 'prompt-setup';
+                const useFade = useFadeForPrevious || useFadeForNext;
+
                 allScreens.forEach(screen => {
                     screen.classList.remove('active');
                     screen.inert = true;
+                    
+                    // フェードアニメーションを使う場合の準備
+                    if (useFade) {
+                        screen.classList.add('fade-transition');
+                        if (screen.classList.contains('active') || screen === elements[state.currentScreen + 'Screen']) {
+                            screen.classList.add('fade-out');
+                        }
+                    } else {
+                        screen.classList.remove('fade-transition', 'fade-in', 'fade-out');
+                    }
                 });
 
                 if (screenName === 'home') {
                     activeScreen = elements.homeScreen;
-                    elements.homeScreen.style.transform = 'translateX(0)';
-                    elements.chatScreen.style.transform = 'translateX(100%)';
-                    elements.historyScreen.style.transform = 'translateX(-100%)';
-                    elements.promptSetupScreen.style.transform = 'translateY(100%)';
-                    elements.settingsScreen.style.transform = 'translateX(100%)';
+                    if (useFade) {
+                        // フェードアニメーションの場合はtransformをリセット
+                        allScreens.forEach(screen => {
+                            screen.style.transform = 'translateX(0) translateY(0)';
+                        });
+                        elements.homeScreen.classList.remove('fade-out');
+                        elements.homeScreen.classList.add('fade-in');
+                    } else {
+                        elements.homeScreen.style.transform = 'translateX(0)';
+                        elements.chatScreen.style.transform = 'translateX(100%)';
+                        elements.historyScreen.style.transform = 'translateX(-100%)';
+                        elements.promptSetupScreen.style.transform = 'translateY(100%)';
+                        elements.settingsScreen.style.transform = 'translateX(100%)';
+                    }
                 } else if (screenName === 'chat') {
                     activeScreen = elements.chatScreen;
-                    elements.homeScreen.style.transform = 'translateY(-100%)';
-                    elements.chatScreen.style.transform = 'translateY(0)';
-                    elements.historyScreen.style.transform = 'translateX(-100%)';
-                    elements.promptSetupScreen.style.transform = 'translateY(100%)';
-                    elements.settingsScreen.style.transform = 'translateX(100%)';
+                    if (useFade) {
+                        // フェードアニメーションの場合
+                        allScreens.forEach(screen => {
+                            if (screen !== elements.chatScreen) {
+                                screen.style.transform = 'translateX(0) translateY(0)';
+                            }
+                        });
+                        elements.chatScreen.style.transform = 'translateY(0)';
+                        elements.chatScreen.classList.remove('fade-out');
+                        elements.chatScreen.classList.add('fade-in');
+                    } else {
+                        elements.homeScreen.style.transform = 'translateY(-100%)';
+                        elements.chatScreen.style.transform = 'translateY(0)';
+                        elements.historyScreen.style.transform = 'translateX(-100%)';
+                        elements.promptSetupScreen.style.transform = 'translateY(100%)';
+                        elements.settingsScreen.style.transform = 'translateX(100%)';
+                    }
                     requestAnimationFrame(() => {
                         this.adjustTextareaHeight();
                         this.updateChatScreenElementVisibility();
@@ -9005,19 +9057,40 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                 } else if (screenName === 'history') {
                     activeScreen = elements.historyScreen;
-                    elements.homeScreen.style.transform = 'translateX(100%)';
-                    elements.chatScreen.style.transform = 'translateX(100%)';
-                    elements.historyScreen.style.transform = 'translateX(0)';
-                    elements.promptSetupScreen.style.transform = 'translateY(100%)';
-                    elements.settingsScreen.style.transform = 'translateX(200%)';
+                    if (useFade) {
+                        // フェードアニメーションの場合
+                        allScreens.forEach(screen => {
+                            if (screen !== elements.historyScreen) {
+                                screen.style.transform = 'translateX(0) translateY(0)';
+                            }
+                        });
+                        elements.historyScreen.style.transform = 'translateX(0)';
+                        elements.historyScreen.classList.remove('fade-out');
+                        elements.historyScreen.classList.add('fade-in');
+                    } else {
+                        elements.homeScreen.style.transform = 'translateX(100%)';
+                        elements.chatScreen.style.transform = 'translateX(100%)';
+                        elements.historyScreen.style.transform = 'translateX(0)';
+                        elements.promptSetupScreen.style.transform = 'translateY(100%)';
+                        elements.settingsScreen.style.transform = 'translateX(200%)';
+                    }
                     this.renderHistoryList();
                 } else if (screenName === 'prompt-setup') {
                     activeScreen = elements.promptSetupScreen;
-                    elements.homeScreen.style.transform = 'translateY(-100%)';
-                    elements.chatScreen.style.transform = 'translateX(100%)';
-                    elements.historyScreen.style.transform = 'translateX(-200%)';
-                    elements.promptSetupScreen.style.transform = 'translateX(0)';
-                    elements.settingsScreen.style.transform = 'translateX(100%)';
+                    if (useFade) {
+                        // フェードアニメーションの場合はtransformをリセット
+                        allScreens.forEach(screen => {
+                            screen.style.transform = 'translateX(0) translateY(0)';
+                        });
+                        elements.promptSetupScreen.classList.remove('fade-out');
+                        elements.promptSetupScreen.classList.add('fade-in');
+                    } else {
+                        elements.homeScreen.style.transform = 'translateY(-100%)';
+                        elements.chatScreen.style.transform = 'translateX(100%)';
+                        elements.historyScreen.style.transform = 'translateX(-200%)';
+                        elements.promptSetupScreen.style.transform = 'translateX(0)';
+                        elements.settingsScreen.style.transform = 'translateX(100%)';
+                    }
                     
                     // プロンプト設定画面は新規チャット用なので、currentChatIdをクリア
                     state.currentChatId = null;
@@ -9064,18 +9137,46 @@ document.addEventListener('DOMContentLoaded', async () => {
                     this.updatePromptPreview();
                 } else if (screenName === 'settings') {
                     activeScreen = elements.settingsScreen;
-                    elements.homeScreen.style.transform = 'translateX(-100%)';
-                    elements.chatScreen.style.transform = 'translateX(-100%)';
-                    elements.historyScreen.style.transform = 'translateX(-200%)';
-                    elements.promptSetupScreen.style.transform = 'translateY(100%)';
-                    elements.settingsScreen.style.transform = 'translateX(0)';
+                    if (useFade) {
+                        // フェードアニメーションの場合
+                        allScreens.forEach(screen => {
+                            if (screen !== elements.settingsScreen) {
+                                screen.style.transform = 'translateX(0) translateY(0)';
+                            }
+                        });
+                        elements.settingsScreen.style.transform = 'translateX(0)';
+                        elements.settingsScreen.classList.remove('fade-out');
+                        elements.settingsScreen.classList.add('fade-in');
+                    } else {
+                        elements.homeScreen.style.transform = 'translateX(-100%)';
+                        elements.chatScreen.style.transform = 'translateX(-100%)';
+                        elements.historyScreen.style.transform = 'translateX(-200%)';
+                        elements.promptSetupScreen.style.transform = 'translateY(100%)';
+                        elements.settingsScreen.style.transform = 'translateX(0)';
+                    }
                     this.applySettingsToUI();
                 }
 
                 requestAnimationFrame(() => {
-                    allScreens.forEach(screen => {
-                        screen.style.transition = 'transform 0.3s ease-in-out';
-                    });
+                    if (useFade) {
+                        // フェードアニメーションの場合
+                        allScreens.forEach(screen => {
+                            if (screen === activeScreen) {
+                                screen.classList.remove('fade-out');
+                                screen.classList.add('fade-in');
+                            } else {
+                                screen.classList.remove('fade-in');
+                                screen.classList.add('fade-out');
+                            }
+                        });
+                    } else {
+                        // スライドアニメーションの場合
+                        allScreens.forEach(screen => {
+                            screen.style.transition = 'transform 0.3s ease-in-out';
+                            screen.classList.remove('fade-transition', 'fade-in', 'fade-out');
+                        });
+                    }
+                    
                     if (activeScreen) {
                         activeScreen.inert = false;
                         activeScreen.classList.add('active');
