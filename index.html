@@ -3791,6 +3791,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                     
                     <div class="setting-group">
+                        <label for="prompt-theme-select">表示テーマ:</label>
+                        <select id="prompt-theme-select" class="setting-select">
+                            <option value="">-- デフォルト設定を使用 --</option>
+                            <option value="light">ライトモード</option>
+                            <option value="dark">ダークモード</option>
+                            <option value="pastel-pink">パステルモード🩷</option>
+                            <option value="pastel-blue">パステルモード🩵</option>
+                            <option value="pastel-yellow">パステルモード🟡</option>
+                            <option value="pastel-purple">パステルモード🟣</option>
+                            <option value="pastel-rainbow">パステルモード🌈</option>
+                        </select>
+                    </div>
+                    
+                    <div class="setting-group">
                         <label for="user-name-input">ユーザーの名前(呼び名):</label>
                         <input type="text" id="user-name-input" aria-label="ユーザーの名前">
                     </div>
@@ -5570,6 +5584,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             promptUploadBackgroundBtn: document.getElementById('prompt-upload-background-btn'),
             promptBackgroundThumbnail: document.getElementById('prompt-background-thumbnail'),
             promptDeleteBackgroundBtn: document.getElementById('prompt-delete-background-btn'),
+            promptThemeSelect: document.getElementById('prompt-theme-select'),
             promptAiNameInput: document.getElementById('prompt-ai-name-input'),
             showAiIconCheckbox: document.getElementById('show-ai-icon-checkbox'),
             showAiNameCheckbox: document.getElementById('show-ai-name-checkbox'),
@@ -5724,6 +5739,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             chatBackgroundImageInput: document.getElementById('chat-background-image'),
             chatBackgroundPreview: document.getElementById('chat-background-preview'),
             chatBackgroundRemove: document.getElementById('chat-background-remove'),
+            chatThemeSelect: document.getElementById('chat-theme-select'),
             chatSystemPromptTextarea: document.getElementById('chat-system-prompt'),
             chatSettingsSaveBtn: document.getElementById('chat-settings-save'),
             chatSettingsCancelBtn: document.getElementById('chat-settings-cancel'),
@@ -6002,6 +6018,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 timestamp: null,
                 cacheTimeout: 5 * 60 * 1000 // 5分間のキャッシュ
             },
+            // 現在のチャットのテーマ
+            currentChatTheme: null,
         };
 
         const sanitizeText = (text, maxLength = 255) => {
@@ -6536,6 +6554,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 aiIconBlob: finalAiIconBlob,
                                 backgroundImageBlob: finalBgBlob,
                                 chatSystemPrompt: state.chatSystemPrompt || null,
+                                theme: state.currentChatTheme || state.settings.theme || 'light',
                             };
                             
                             
@@ -8209,8 +8228,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 viewportMeta.content = content;
             },
-            applyTheme() {
-                const theme = state.settings.theme;
+            applyTheme(overrideTheme = null) {
+                const theme = overrideTheme || state.settings.theme;
                 document.body.classList.remove('dark-mode', 'light-mode-forced', 'pastel-pink-mode', 'pastel-blue-mode', 'pastel-yellow-mode', 'pastel-purple-mode', 'pastel-rainbow-mode');
                 let themeColorMetaValue;
                 let currentThemeUserMessageBgRgb = this.hexToRgb(LIGHT_MODE_USER_MESSAGE_COLOR) || {r:220,g:248,b:198};
@@ -9035,6 +9054,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (elements.promptSetupSystemPrompt) {
                         elements.promptSetupSystemPrompt.value = '';
                     }
+                    if (elements.promptThemeSelect) {
+                        elements.promptThemeSelect.value = '';
+                        // デフォルトテーマに戻す
+                        uiUtils.applyTheme(state.settings.theme);
+                        state.currentChatTheme = null;
+                    }
                     // 設定から各種項目を読み込み
                     if (elements.userNameInput) {
                         elements.userNameInput.value = state.settings.userName || '';
@@ -9668,6 +9693,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     state.settings.aiName = aiName;
                     state.settings.showAiIcon = elements.showAiIconCheckbox ? elements.showAiIconCheckbox.checked : true;
                     state.settings.showAiName = elements.showAiNameCheckbox ? elements.showAiNameCheckbox.checked : true;
+                    
+                    // テーマ設定を取得
+                    const selectedTheme = elements.promptThemeSelect ? elements.promptThemeSelect.value : '';
+                    if (selectedTheme) {
+                        state.currentChatTheme = selectedTheme;
+                    } else {
+                        state.currentChatTheme = null;
+                    }
                     
                     
                     // 新規チャット用の一時的なアセット情報を作成
@@ -10355,6 +10388,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 if (elements.userRelationshipSelect) {
                     elements.userRelationshipSelect.addEventListener('change', () => uiUtils.updatePromptPreview());
+                }
+                if (elements.promptThemeSelect) {
+                    elements.promptThemeSelect.addEventListener('change', () => {
+                        const selectedTheme = elements.promptThemeSelect.value;
+                        if (selectedTheme) {
+                            // プレビュー用に一時的にテーマを適用
+                            uiUtils.applyTheme(selectedTheme);
+                        } else {
+                            // デフォルトテーマを適用
+                            uiUtils.applyTheme(state.settings.theme);
+                        }
+                    });
                 }
                 if (elements.promptSetupSystemPrompt) {
                     elements.promptSetupSystemPrompt.addEventListener('input', () => uiUtils.updatePromptPreview());
@@ -11433,6 +11478,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             uiUtils.updateToggleAllContentButton();
             state.messageCollapsedStates.clear();
             state.thoughtSummaryOpenStates.clear();
+            
+            // プロンプト画面から来た場合以外は、テーマをリセット
+            if (!state.currentChatTheme) {
+                uiUtils.applyTheme(state.settings.theme);
+            }
+            
             uiUtils.renderChatMessages();
             uiUtils.updateChatTitle();
             elements.userInput.value = '';
@@ -11627,6 +11678,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                         state.chatSystemPrompt = chat.chatSystemPrompt;
                     } else {
                         state.chatSystemPrompt = null;
+                    }
+                    
+                    // チャット専用テーマを復元・適用
+                    if (chat.theme) {
+                        state.currentChatTheme = chat.theme;
+                        uiUtils.applyTheme(chat.theme);
+                    } else {
+                        state.currentChatTheme = null;
+                        uiUtils.applyTheme(state.settings.theme);
                     }
                     
                     state.messageCollapsedStates.clear();
@@ -17286,6 +17346,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 }
                 
+                // テーマ設定を読み込み
+                const chatThemeSelect = document.getElementById('chat-theme-select');
+                if (chatThemeSelect) {
+                    // 現在のチャットのテーマを設定（なければ空文字列）
+                    chatThemeSelect.value = state.currentChatTheme || '';
+                }
+                
                 // モーダルを表示
                 modal.style.display = 'flex';
                 
@@ -17331,6 +17398,21 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const chatAiNameInput = document.getElementById('chat-ai-name');
                     const aiName = chatAiNameInput ? 
                         (chatAiNameInput.value.trim() || 'AI') : 'AI';
+                    
+                    // テーマ設定を取得
+                    const chatThemeSelect = document.getElementById('chat-theme-select');
+                    const selectedTheme = chatThemeSelect ? chatThemeSelect.value : '';
+                    
+                    // テーマを更新
+                    if (selectedTheme) {
+                        state.currentChatTheme = selectedTheme;
+                        // 即座にテーマを適用
+                        uiUtils.applyTheme(selectedTheme);
+                    } else {
+                        state.currentChatTheme = null;
+                        // デフォルトテーマを適用
+                        uiUtils.applyTheme(state.settings.theme);
+                    }
                     
                     // 現在のチャットのアセット情報を取得
                     // 新規チャットの場合は"pending"から取得
@@ -17750,6 +17832,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <img id="chat-background-preview" class="background-preview" style="display: none;">
                         <button type="button" id="chat-background-remove" class="icon-remove-btn" style="display: none;">削除</button>
                     </div>
+                </div>
+                
+                <div class="setting-item">
+                    <label for="chat-theme-select">表示テーマ</label>
+                    <select id="chat-theme-select" class="setting-select">
+                        <option value="">-- デフォルト設定を使用 --</option>
+                        <option value="light">ライトモード</option>
+                        <option value="dark">ダークモード</option>
+                        <option value="pastel-pink">パステルモード🩷</option>
+                        <option value="pastel-blue">パステルモード🩵</option>
+                        <option value="pastel-yellow">パステルモード🟡</option>
+                        <option value="pastel-purple">パステルモード🟣</option>
+                        <option value="pastel-rainbow">パステルモード🌈</option>
+                    </select>
                 </div>
                 
                 <div class="setting-item">
