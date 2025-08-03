@@ -10389,7 +10389,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             if (chats && chats.length > 0) {
                                 await this.loadChat(chats[0].id);
                             } else {
-                                this.startNewChat();
+                                await this.startNewChat();
                             }
                         }
                     } else {
@@ -10397,7 +10397,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         if (chats && chats.length > 0) {
                             await this.loadChat(chats[0].id);
                         } else {
-                            this.startNewChat();
+                            await this.startNewChat();
                         }
                     }
                     
@@ -11534,10 +11534,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (!conf) return;
                 }
             }
-            this.startNewChat();
+            await this.startNewChat();
             uiUtils.showScreen('chat');
         },
-        startNewChat(preserveAssets = false) {
+        async startNewChat(preserveAssets = false) {
             // preserveAssetsがfalseの場合のみURLをクリーンアップ
             if (!preserveAssets) {
                 // 既存のチャットのURLをクリーンアップ
@@ -11859,14 +11859,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 } else {
                     await uiUtils.showCustomAlert("チャット履歴が見つかりませんでした。");
-                    this.startNewChat();
+                    await this.startNewChat();
                     if (state.currentScreen !== 'home') {
                         uiUtils.showScreen('chat');
                     }
                 }
             } catch (error) {
                 await uiUtils.showCustomAlert(`チャットの読み込みエラー: ${error}`);
-                this.startNewChat();
+                await this.startNewChat();
                 if (state.currentScreen !== 'home') {
                     uiUtils.showScreen('chat');
                 }
@@ -12017,7 +12017,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (state.currentChatId) {
                     await dbUtils.deleteChat(state.currentChatId);
                 }
-                this.startNewChat();
+                await this.startNewChat();
                 await uiUtils.showCustomAlert("チャットを削除しました。");
             } catch (error) {
                 await uiUtils.showCustomAlert(`チャットの削除中にエラーが発生しました: ${error}`);
@@ -12079,14 +12079,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                         await dbUtils.saveSetting('lastUsedChatId', null);
                     }
                     if (isDeletingCurrent) {
-                        this.startNewChat();
+                        await this.startNewChat();
                     }
                     if (currentScreenBeforeDelete === 'history') {
                         await uiUtils.renderHistoryList();
                         const listIsEmpty = elements.historyList.querySelectorAll('.history-item:not(.js-history-item-template)').length === 0;
                         if (listIsEmpty) {
                             if (!isDeletingCurrent) {
-                                this.startNewChat();
+                                await this.startNewChat();
                             }
                         }
                     }
@@ -14366,7 +14366,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     document.documentElement.style.setProperty('--chat-background-image', 'none');
                     uiUtils.applySettingsToUI();
                     uiUtils.updateAttachmentBadgeVisibility();
-                    this.startNewChat();
+                    await this.startNewChat();
                     uiUtils.showScreen('chat', true);
                 } catch (error) {
                     await uiUtils.showCustomAlert(`データ削除中にエラーが発生しました: ${error}`);
@@ -14394,7 +14394,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     state.linkedSessionIds = [];
                     uiUtils.updateSessionLinkingUI();
 
-                    this.startNewChat();
+                    await this.startNewChat();
                     await uiUtils.showCustomAlert("すべてのチャット履歴が削除されました。");
 
                     if (state.currentScreen === 'history') {
@@ -14823,7 +14823,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         uiUtils.updateChatTitle(newTitleForSave);
                     }
                     if (state.currentMessages.length === 0 && state.currentChatId) {
-                        this.startNewChat();
+                        await this.startNewChat();
                     }
                 } catch (error) {
                     await uiUtils.showCustomAlert("メッセージ削除後のチャット保存に失敗しました。");
