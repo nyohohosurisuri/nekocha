@@ -5996,6 +5996,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             thoughtSummaryOpenStates: new Map(),
             linkedSessionIds: [],
             isAiToAiChatProcessing: false,
+            // キャラクターリストのキャッシュ
+            characterListCache: {
+                list: [],
+                timestamp: null,
+                cacheTimeout: 5 * 60 * 1000 // 5分間のキャッシュ
+            },
         };
 
         const sanitizeText = (text, maxLength = 255) => {
@@ -9241,8 +9247,32 @@ document.addEventListener('DOMContentLoaded', async () => {
             },
             async loadCharacterOptions() {
                 try {
-                    // キャラクターリスト読み込み中の表示
                     const characterSelect = elements.characterSelect;
+                    
+                    // キャッシュを確認
+                    const cache = state.characterListCache;
+                    const now = Date.now();
+                    
+                    // キャッシュが有効かどうか確認
+                    if (cache.list.length > 0 && cache.timestamp && (now - cache.timestamp) < cache.cacheTimeout) {
+                        console.log('キャッシュからキャラクターリストを読み込み');
+                        
+                        // キャッシュから選択肢を復元
+                        if (characterSelect) {
+                            characterSelect.innerHTML = '<option value="">-- キャラクターを選択してください --</option>';
+                            characterSelect.disabled = false;
+                            
+                            cache.list.forEach(char => {
+                                const option = document.createElement('option');
+                                option.value = char;
+                                option.textContent = char;
+                                characterSelect.appendChild(option);
+                            });
+                        }
+                        return;
+                    }
+                    
+                    console.log('キャッシュが無効または存在しないため、新たに読み込み');
 
                     // systempromptフォルダのディレクトリリストを取得
                     let availableCharacters = [];
@@ -9401,6 +9431,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 }
                             }
                         }
+                    }
+                    
+                    // キャッシュを更新
+                    if (availableCharacters.length > 0) {
+                        state.characterListCache.list = availableCharacters;
+                        state.characterListCache.timestamp = Date.now();
+                        console.log(`キャラクターリストをキャッシュに保存: ${availableCharacters.length}件`);
                     }
                     
                     // 読み込み完了後、選択肢を更新
