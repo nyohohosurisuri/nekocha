@@ -1208,17 +1208,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             border: 1px solid var(--border-secondary);
             border-radius: 6px;
             padding: 15px;
-            min-height: 100px;
+            min-height: 200px;
             width: 100%;
-            font-family: inherit;
+            font-family: monospace;
             font-size: 14px;
             line-height: 1.6;
             resize: vertical;
             white-space: pre-wrap;
-            font-family: monospace;
-            font-size: 14px;
             color: var(--text-secondary);
-            line-height: 1.5;
         }
 
         #prompt-setup-system-prompt {
@@ -3824,8 +3821,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                     
                     <div class="setting-group">
-                        <label for="prompt-setup-system-prompt">共通システムプロンプト:</label>
-                        <textarea id="prompt-setup-system-prompt" placeholder="キャラクターを選択すると自動で読み込まれます..." aria-label="共通システムプロンプト" readonly></textarea>
+                        <label for="prompt-setup-system-prompt">キャラクター設定プロンプト:</label>
+                        <textarea id="prompt-setup-system-prompt" placeholder="キャラクターを選択すると自動で読み込まれます..." aria-label="キャラクター設定プロンプト" readonly></textarea>
                     </div>
                     
                     <div class="setting-group">
@@ -9112,6 +9109,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     this.updatePromptBackgroundDisplay();
                     // プレビューを更新
                     this.updatePromptPreview();
+                    // 初期表示時の高さ調整
+                    this.adjustTextareaHeight(elements.promptPreview, 400);
                 } else if (screenName === 'settings') {
                     activeScreen = elements.settingsScreen;
                     this.applySettingsToUI();
@@ -9583,6 +9582,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 
                 elements.promptPreview.value = combinedPrompt;
+                // プレビューの高さを自動調整
+                this.adjustTextareaHeight(elements.promptPreview, 400);
             },
             updatePromptAiIconDisplay() {
                 const thumbnail = elements.promptAiIconThumbnail;
@@ -10489,6 +10490,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     elements.promptPreview.addEventListener('input', () => {
                         // プレビューが編集されたことを示すフラグを設定
                         state.promptPreviewEdited = true;
+                        // 高さを自動調整
+                        uiUtils.adjustTextareaHeight(elements.promptPreview, 400);
                     });
                 }
                 
