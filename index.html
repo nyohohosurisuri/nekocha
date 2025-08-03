@@ -1202,6 +1202,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             outline: none;
             border-color: var(--bg-button);
         }
+        .setting-input {
+            padding: 10px;
+            border: 1px solid var(--border-primary);
+            border-radius: 5px;
+            font-size: 14px;
+            background-color: var(--bg-input);
+            color: var(--text-primary);
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+        .setting-input:focus {
+            outline: none;
+            border-color: var(--bg-button);
+        }
 
         .prompt-preview {
             background: var(--bg-tertiary);
@@ -3821,6 +3834,34 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                     
                     <div class="setting-group">
+                        <label>マークダウンでチャット内に画像を表示:</label>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px;">特定の状況下であらかじめ指定した画像を表示させます。AIが画像を生成するのではなく、AIに画像URLを発言させ、UI側で表示させます。</p>
+                        
+                        <div style="margin-left: 20px;">
+                            <div style="margin-bottom: 10px;">
+                                <label for="emotion-url-normal" style="display: inline-block; width: 100px; font-size: 14px;">平常時:</label>
+                                <input type="text" id="emotion-url-normal" class="setting-input" placeholder="画像URLを入力" style="width: calc(100% - 110px);">
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <label for="emotion-url-happy" style="display: inline-block; width: 100px; font-size: 14px;">嬉しいとき:</label>
+                                <input type="text" id="emotion-url-happy" class="setting-input" placeholder="画像URLを入力" style="width: calc(100% - 110px);">
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <label for="emotion-url-fun" style="display: inline-block; width: 100px; font-size: 14px;">楽しいとき:</label>
+                                <input type="text" id="emotion-url-fun" class="setting-input" placeholder="画像URLを入力" style="width: calc(100% - 110px);">
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <label for="emotion-url-sad" style="display: inline-block; width: 100px; font-size: 14px;">悲しいとき:</label>
+                                <input type="text" id="emotion-url-sad" class="setting-input" placeholder="画像URLを入力" style="width: calc(100% - 110px);">
+                            </div>
+                            <div style="margin-bottom: 10px;">
+                                <label for="emotion-url-angry" style="display: inline-block; width: 100px; font-size: 14px;">怒ったとき:</label>
+                                <input type="text" id="emotion-url-angry" class="setting-input" placeholder="画像URLを入力" style="width: calc(100% - 110px);">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
                         <label for="prompt-setup-system-prompt">キャラクター設定プロンプト:</label>
                         <textarea id="prompt-setup-system-prompt" placeholder="キャラクターを選択すると自動で読み込まれます..." aria-label="キャラクター設定プロンプト" readonly></textarea>
                     </div>
@@ -5592,6 +5633,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             showAiIconCheckbox: document.getElementById('show-ai-icon-checkbox'),
             showAiNameCheckbox: document.getElementById('show-ai-name-checkbox'),
             userRelationshipSelect: document.getElementById('user-relationship-select'),
+            emotionUrlNormal: document.getElementById('emotion-url-normal'),
+            emotionUrlHappy: document.getElementById('emotion-url-happy'),
+            emotionUrlFun: document.getElementById('emotion-url-fun'),
+            emotionUrlSad: document.getElementById('emotion-url-sad'),
+            emotionUrlAngry: document.getElementById('emotion-url-angry'),
             promptSetupSystemPrompt: document.getElementById('prompt-setup-system-prompt'),
             promptPreview: document.getElementById('prompt-preview'),
             backToHomeFromPromptSetupBtn: document.getElementById('back-to-home-from-prompt-setup'),
@@ -9581,6 +9627,36 @@ document.addEventListener('DOMContentLoaded', async () => {
                     combinedPrompt += `\nあなたの名前は${aiName}です。`;
                 }
                 
+                // 感情画像URLを追加
+                const emotionUrls = {
+                    normal: elements.emotionUrlNormal ? elements.emotionUrlNormal.value.trim() : '',
+                    happy: elements.emotionUrlHappy ? elements.emotionUrlHappy.value.trim() : '',
+                    fun: elements.emotionUrlFun ? elements.emotionUrlFun.value.trim() : '',
+                    sad: elements.emotionUrlSad ? elements.emotionUrlSad.value.trim() : '',
+                    angry: elements.emotionUrlAngry ? elements.emotionUrlAngry.value.trim() : ''
+                };
+                
+                // いずれかの感情画像URLが設定されている場合のみプロンプトに追加
+                const hasEmotionUrls = Object.values(emotionUrls).some(url => url !== '');
+                if (hasEmotionUrls) {
+                    combinedPrompt += '\n\n〇下記の状況で、あなたは対応するURLを貼ってください';
+                    if (emotionUrls.normal) {
+                        combinedPrompt += `\n・平常時、会話の文末に「![](${emotionUrls.normal})」と言う。`;
+                    }
+                    if (emotionUrls.happy) {
+                        combinedPrompt += `\n・嬉しいとき、会話の文末に「![](${emotionUrls.happy})」と言う。`;
+                    }
+                    if (emotionUrls.fun) {
+                        combinedPrompt += `\n・楽しいとき、会話の文末に「![](${emotionUrls.fun})」と言う。`;
+                    }
+                    if (emotionUrls.sad) {
+                        combinedPrompt += `\n・悲しいとき、会話の文末に「![](${emotionUrls.sad})」と言う。`;
+                    }
+                    if (emotionUrls.angry) {
+                        combinedPrompt += `\n・怒ったとき、会話の文末に「![](${emotionUrls.angry})」と言う。`;
+                    }
+                }
+                
                 elements.promptPreview.value = combinedPrompt;
                 // プレビューの高さを自動調整
                 this.adjustTextareaHeight(elements.promptPreview, 400);
@@ -9720,6 +9796,36 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // AI名を追加
                         if (aiName && aiName !== 'AI') {
                             combinedPrompt += `\nあなたの名前は${aiName}です。`;
+                        }
+                        
+                        // 感情画像URLを追加
+                        const emotionUrls = {
+                            normal: elements.emotionUrlNormal ? elements.emotionUrlNormal.value.trim() : '',
+                            happy: elements.emotionUrlHappy ? elements.emotionUrlHappy.value.trim() : '',
+                            fun: elements.emotionUrlFun ? elements.emotionUrlFun.value.trim() : '',
+                            sad: elements.emotionUrlSad ? elements.emotionUrlSad.value.trim() : '',
+                            angry: elements.emotionUrlAngry ? elements.emotionUrlAngry.value.trim() : ''
+                        };
+                        
+                        // いずれかの感情画像URLが設定されている場合のみプロンプトに追加
+                        const hasEmotionUrls = Object.values(emotionUrls).some(url => url !== '');
+                        if (hasEmotionUrls) {
+                            combinedPrompt += '\n\n〇下記の状況で、あなたは対応するURLを貼ってください';
+                            if (emotionUrls.normal) {
+                                combinedPrompt += `\n・平常時、会話の文末に「![](${emotionUrls.normal})」と言う。`;
+                            }
+                            if (emotionUrls.happy) {
+                                combinedPrompt += `\n・嬉しいとき、会話の文末に「![](${emotionUrls.happy})」と言う。`;
+                            }
+                            if (emotionUrls.fun) {
+                                combinedPrompt += `\n・楽しいとき、会話の文末に「![](${emotionUrls.fun})」と言う。`;
+                            }
+                            if (emotionUrls.sad) {
+                                combinedPrompt += `\n・悲しいとき、会話の文末に「![](${emotionUrls.sad})」と言う。`;
+                            }
+                            if (emotionUrls.angry) {
+                                combinedPrompt += `\n・怒ったとき、会話の文末に「![](${emotionUrls.angry})」と言う。`;
+                            }
                         }
                     }
                     
@@ -10441,6 +10547,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (elements.userRelationshipSelect) {
                     elements.userRelationshipSelect.addEventListener('change', () => uiUtils.updatePromptPreview());
                 }
+                
+                // 感情画像URL入力フィールドのイベントリスナー
+                if (elements.emotionUrlNormal) {
+                    elements.emotionUrlNormal.addEventListener('input', () => uiUtils.updatePromptPreview());
+                }
+                if (elements.emotionUrlHappy) {
+                    elements.emotionUrlHappy.addEventListener('input', () => uiUtils.updatePromptPreview());
+                }
+                if (elements.emotionUrlFun) {
+                    elements.emotionUrlFun.addEventListener('input', () => uiUtils.updatePromptPreview());
+                }
+                if (elements.emotionUrlSad) {
+                    elements.emotionUrlSad.addEventListener('input', () => uiUtils.updatePromptPreview());
+                }
+                if (elements.emotionUrlAngry) {
+                    elements.emotionUrlAngry.addEventListener('input', () => uiUtils.updatePromptPreview());
+                }
+                
                 if (elements.promptThemeSelect) {
                     elements.promptThemeSelect.addEventListener('change', () => {
                         const selectedTheme = elements.promptThemeSelect.value;
