@@ -9061,6 +9061,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     // プロンプト設定画面は新規チャット用なので、currentChatIdをクリア
                     state.currentChatId = null;
+                    // 最後に使用したチャットIDもクリア
+                    if (state.settings) {
+                        state.settings.lastUsedChatId = null;
+                        await dbUtils.saveSetting('lastUsedChatId', null);
+                    }
                     
                     // プロンプト作成画面の入力フィールドをクリア
                     if (elements.characterSelect) {
@@ -10369,10 +10374,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     
                     // チャット履歴は読み込むが、画面遷移は後で制御
                     const chats = await dbUtils.getAllChats(state.settings.historySortOrder);
-                    if (chats && chats.length > 0) {
-                        await this.loadChat(chats[0].id);
+                    
+                    // 最後に使用したチャットがある場合はそれを開く
+                    if (state.settings.lastUsedChatId) {
+                        const lastChat = chats.find(chat => chat.id === state.settings.lastUsedChatId);
+                        if (lastChat) {
+                            // 最後のチャットを開く
+                            await this.loadChat(lastChat.id);
+                            // チャット画面を表示
+                            state.currentScreen = 'chat';
+                            uiUtils.showScreen('chat');
+                        } else {
+                            // 最後のチャットが見つからない場合は通常の処理
+                            if (chats && chats.length > 0) {
+                                await this.loadChat(chats[0].id);
+                            } else {
+                                this.startNewChat();
+                            }
+                        }
                     } else {
-                        this.startNewChat();
+                        // 最後のチャットIDがない場合は通常の処理
+                        if (chats && chats.length > 0) {
+                            await this.loadChat(chats[0].id);
+                        } else {
+                            this.startNewChat();
+                        }
                     }
                     
                     updateMessageMaxWidthVar();
@@ -10380,13 +10406,22 @@ document.addEventListener('DOMContentLoaded', async () => {
                     uiUtils.adjustTextareaHeight();
                     uiUtils.setSendingState(false);
                     
-                    // 最後に再度ホーム画面を確実に表示
-                    setTimeout(() => {
-                        // 状態を強制的にホーム画面に設定
-                        state.currentScreen = 'home';
-                        uiUtils.showScreen('home');
-                        console.log('Final home screen display');
-                    }, 200);
+                    // 最後に使用したチャットがある場合はチャット画面、それ以外はホーム画面を表示
+                    if (state.settings.lastUsedChatId && state.currentChatId === state.settings.lastUsedChatId) {
+                        // チャット画面を確実に表示
+                        setTimeout(() => {
+                            state.currentScreen = 'chat';
+                            uiUtils.showScreen('chat');
+                            console.log('Final chat screen display');
+                        }, 200);
+                    } else {
+                        // ホーム画面を確実に表示
+                        setTimeout(() => {
+                            state.currentScreen = 'home';
+                            uiUtils.showScreen('home');
+                            console.log('Final home screen display');
+                        }, 200);
+                    }
                     
                     if (state.settings.autoScrollOnNewMessage) {
                         uiUtils.scrollToBottom();
@@ -11522,6 +11557,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             state.currentChatId = null;
             state.currentMessages = [];
+            // 新規チャット開始時は最後に使用したチャットIDをクリア
+            if (state.settings) {
+                state.settings.lastUsedChatId = null;
+                await dbUtils.saveSetting('lastUsedChatId', null);
+            }
             
             if (state.settings.commonSystemPrompt && state.settings.commonSystemPrompt.trim() !== '') {
             }
@@ -11591,6 +11631,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const chat = await dbUtils.getChat(id);
                 if (chat) {
                     state.currentChatId = chat.id;
+                    // 最後に使用したチャットIDを保存
+                    if (state.settings) {
+                        state.settings.lastUsedChatId = chat.id;
+                        await dbUtils.saveSetting('lastUsedChatId', chat.id);
+                    }
                     state.currentMessages = chat.messages?.map(msg => ({
                         ...msg,
                         attachments: msg.attachments || [],
@@ -12028,6 +12073,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const currentScreenBeforeDelete = state.currentScreen;
                 try {
                     await dbUtils.deleteChat(id);
+                    // 削除されたチャットが最後に使用したチャットだった場合はクリア
+                    if (state.settings && state.settings.lastUsedChatId === id) {
+                        state.settings.lastUsedChatId = null;
+                        await dbUtils.saveSetting('lastUsedChatId', null);
+                    }
                     if (isDeletingCurrent) {
                         this.startNewChat();
                     }
@@ -12597,6 +12647,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 if (!isBackgroundProcess && !state.currentChatId && savedId) {
                     state.currentChatId = savedId;
+                    // 新規チャット作成時も最後に使用したチャットIDを保存
+                    if (state.settings) {
+                        state.settings.lastUsedChatId = savedId;
+                        await dbUtils.saveSetting('lastUsedChatId', savedId);
+                    }
                     uiUtils.updateChatTitle(chatToSave.title);
                     
                     // pendingアセットがある場合は、保存したチャットIDにコピーして削除
