@@ -1209,6 +1209,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             border-radius: 6px;
             padding: 15px;
             min-height: 100px;
+            width: 100%;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
             white-space: pre-wrap;
             font-family: monospace;
             font-size: 14px;
@@ -3759,6 +3764,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                     
                     <div class="setting-group">
+                        <label for="prompt-ai-name-input">AI名:</label>
+                        <input type="text" id="prompt-ai-name-input" class="setting-input" placeholder="AI名を入力" maxlength="20" style="width: 200px;">
+                        <label class="checkbox-label" style="margin-left: 10px;">
+                            <input type="checkbox" id="show-ai-name-checkbox" checked>
+                            AI名を表示する
+                        </label>
+                    </div>
+                    
+                    <div class="setting-group">
                         <label class="checkbox-label">
                             <input type="checkbox" id="show-ai-icon-checkbox" checked>
                             AIアイコンを表示する
@@ -3769,15 +3783,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <img id="prompt-ai-icon-thumbnail" src="" alt="AIアイコンプレビュー" class="icon-thumbnail hidden">
                             <button id="prompt-delete-ai-icon-btn" class="settings-delete-button hidden" type="button">削除</button>
                         </div>
-                    </div>
-                    
-                    <div class="setting-group">
-                        <label for="prompt-ai-name-input">AI名:</label>
-                        <input type="text" id="prompt-ai-name-input" class="setting-input" placeholder="AI名を入力" maxlength="20" style="width: 200px;">
-                        <label class="checkbox-label" style="margin-left: 10px;">
-                            <input type="checkbox" id="show-ai-name-checkbox" checked>
-                            AI名を表示する
-                        </label>
                     </div>
                     
                     <div class="setting-group">
@@ -3824,8 +3829,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     </div>
                     
                     <div class="setting-group">
-                        <label>設定されるプロンプト (プレビュー):</label>
-                        <div id="prompt-preview" class="prompt-preview"></div>
+                        <label for="prompt-preview">設定されるプロンプト (プレビュー):</label>
+                        <textarea id="prompt-preview" class="prompt-preview" placeholder="プロンプトがここに表示されます..." aria-label="設定されるプロンプト"></textarea>
                     </div>
                 </div>
             </main>
@@ -9077,6 +9082,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         state.promptTempTheme = null;
                         state.currentChatTheme = null;
                     }
+                    // プロンプトプレビュー編集フラグをリセット
+                    state.promptPreviewEdited = false;
                     // 設定から各種項目を読み込み
                     if (elements.userNameInput) {
                         elements.userNameInput.value = state.settings.userName || '';
@@ -9549,6 +9556,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             },
             updatePromptPreview() {
+                // プロンプトが自動更新される場合は編集フラグをリセット
+                state.promptPreviewEdited = false;
+                
                 const relationship = elements.userRelationshipSelect.value;
                 const systemPrompt = elements.promptSetupSystemPrompt.value;
                 const aiName = elements.promptAiNameInput ? elements.promptAiNameInput.value.trim() || 'AI' : 'AI';
@@ -9572,7 +9582,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     combinedPrompt += `\nあなたの名前は${aiName}です。`;
                 }
                 
-                elements.promptPreview.textContent = combinedPrompt;
+                elements.promptPreview.value = combinedPrompt;
             },
             updatePromptAiIconDisplay() {
                 const thumbnail = elements.promptAiIconThumbnail;
@@ -9686,24 +9696,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                         'lover': '恋人'
                     }[relationship] || '初対面';
                     
-                    // システムプロンプトが空の場合は関係性のみ設定
                     let combinedPrompt = '';
-                    if (systemPrompt.trim()) {
-                        combinedPrompt = systemPrompt + '\n\n' + `ユーザーとの関係は${relationshipText}です。`;
-                    } else {
-                        combinedPrompt = `ユーザーとの関係は${relationshipText}です。`;
-                    }
-                    
-                    // ユーザー名を追加
-                    const userName = state.settings.userName;
-                    if (userName && userName.trim() !== '') {
-                        combinedPrompt += `\nユーザーの名前は${userName}です。`;
-                    }
-                    
-                    // AI名を追加
                     const aiName = elements.promptAiNameInput ? elements.promptAiNameInput.value.trim() || 'AI' : 'AI';
-                    if (aiName && aiName !== 'AI') {
-                        combinedPrompt += `\nあなたの名前は${aiName}です。`;
+                    
+                    // プレビューが編集されている場合は編集された値を使用
+                    if (state.promptPreviewEdited && elements.promptPreview) {
+                        combinedPrompt = elements.promptPreview.value;
+                    } else {
+                        // システムプロンプトが空の場合は関係性のみ設定
+                        if (systemPrompt.trim()) {
+                            combinedPrompt = systemPrompt + '\n\n' + `ユーザーとの関係は${relationshipText}です。`;
+                        } else {
+                            combinedPrompt = `ユーザーとの関係は${relationshipText}です。`;
+                        }
+                        
+                        // ユーザー名を追加
+                        const userName = state.settings.userName;
+                        if (userName && userName.trim() !== '') {
+                            combinedPrompt += `\nユーザーの名前は${userName}です。`;
+                        }
+                        
+                        // AI名を追加
+                        if (aiName && aiName !== 'AI') {
+                            combinedPrompt += `\nあなたの名前は${aiName}です。`;
+                        }
                     }
                     
                     // 設定に反映
@@ -10465,6 +10481,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (elements.showAiNameCheckbox) {
                     elements.showAiNameCheckbox.addEventListener('change', () => {
                         uiUtils.updatePromptPreview();
+                    });
+                }
+                
+                // プロンプトプレビューの編集イベント
+                if (elements.promptPreview) {
+                    elements.promptPreview.addEventListener('input', () => {
+                        // プレビューが編集されたことを示すフラグを設定
+                        state.promptPreviewEdited = true;
                     });
                 }
                 
