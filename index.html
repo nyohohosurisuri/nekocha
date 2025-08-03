@@ -6020,6 +6020,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             },
             // 現在のチャットのテーマ
             currentChatTheme: null,
+            // プロンプト設定画面での一時的なテーマ
+            promptTempTheme: null,
         };
 
         const sanitizeText = (text, maxLength = 255) => {
@@ -8553,7 +8555,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 this.updateLlmAggregatorUserModelOptions();
                 this.updateBackgroundSettingsUI();
                 this.updateIconSettingsUI();
-                this.applyTheme();
+                // プロンプト設定画面の場合は一時テーマを適用、それ以外は通常のテーマ適用
+                if (state.currentScreen === 'prompt-setup' && state.promptTempTheme) {
+                    this.applyTheme(state.promptTempTheme);
+                } else if (state.currentChatTheme) {
+                    this.applyTheme(state.currentChatTheme);
+                } else {
+                    this.applyTheme();
+                }
                 this.applyFontFamily();
                 this.applySidePanelSettingsToUI();
                 this.updateSessionLinkingUI();
@@ -8968,6 +8977,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // transformをリセット（フェードアニメーションのみ使用）
                     screen.style.transform = 'translateX(0) translateY(0)';
                 });
+                
+                // プロンプト設定画面から離れる場合、一時テーマをクリア
+                if (state.currentScreen === 'prompt-setup' && screenName !== 'prompt-setup') {
+                    state.promptTempTheme = null;
+                }
 
                 if (screenName === 'home') {
                     activeScreen = elements.homeScreen;
@@ -9056,8 +9070,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                     if (elements.promptThemeSelect) {
                         elements.promptThemeSelect.value = '';
-                        // デフォルトテーマに戻す
-                        uiUtils.applyTheme(state.settings.theme);
+                        // プロンプト設定画面用の一時テーマをクリア
+                        state.promptTempTheme = null;
                         state.currentChatTheme = null;
                     }
                     // 設定から各種項目を読み込み
@@ -9100,6 +9114,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                         activeScreen.classList.add('fade-in');
                         activeScreen.inert = false;
                         activeScreen.classList.add('active');
+                    }
+                    
+                    // 画面遷移後のテーマ適用
+                    if (screenName === 'prompt-setup' && state.promptTempTheme) {
+                        // プロンプト設定画面で一時テーマがある場合
+                        this.applyTheme(state.promptTempTheme);
+                    } else if (screenName === 'chat' && state.currentChatTheme) {
+                        // チャット画面で現在のチャットテーマがある場合
+                        this.applyTheme(state.currentChatTheme);
+                    } else if (screenName !== 'prompt-setup') {
+                        // その他の画面ではデフォルトテーマ
+                        this.applyTheme(state.settings.theme);
                     }
                     
                     // プロンプト設定画面の場合、画面表示後にキャラクター選択肢を非同期で読み込み
@@ -9694,10 +9720,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     state.settings.showAiIcon = elements.showAiIconCheckbox ? elements.showAiIconCheckbox.checked : true;
                     state.settings.showAiName = elements.showAiNameCheckbox ? elements.showAiNameCheckbox.checked : true;
                     
-                    // テーマ設定を取得
-                    const selectedTheme = elements.promptThemeSelect ? elements.promptThemeSelect.value : '';
-                    if (selectedTheme) {
-                        state.currentChatTheme = selectedTheme;
+                    // テーマ設定を取得（一時テーマから）
+                    if (state.promptTempTheme) {
+                        state.currentChatTheme = state.promptTempTheme;
                     } else {
                         state.currentChatTheme = null;
                     }
@@ -9730,7 +9755,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         uiUtils.updateChatTitle('新しいチャット');
                     }
                     
-                    // チャット画面に移行
+                    // チャット画面に移行（テーマは既にcurrentChatThemeに設定されている）
                     await this.showScreen('chat');
                 } catch (error) {
                     console.error('プロンプト設定エラー:', error);
@@ -10232,7 +10257,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     await dbUtils.openDB();
                     await dbUtils.loadSettings();
                     
-                    uiUtils.applyTheme();
+                    // 初期ロード時も画面の状態に応じたテーマを適用
+                    if (state.currentScreen === 'prompt-setup' && state.promptTempTheme) {
+                        uiUtils.applyTheme(state.promptTempTheme);
+                    } else if (state.currentChatTheme) {
+                        uiUtils.applyTheme(state.currentChatTheme);
+                    } else {
+                        uiUtils.applyTheme();
+                    }
                     uiUtils.applyFontFamily();
                     uiUtils.applySidePanelSettingsToUI();
     
@@ -10392,6 +10424,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (elements.promptThemeSelect) {
                     elements.promptThemeSelect.addEventListener('change', () => {
                         const selectedTheme = elements.promptThemeSelect.value;
+                        state.promptTempTheme = selectedTheme || null;
                         if (selectedTheme) {
                             // プレビュー用に一時的にテーマを適用
                             uiUtils.applyTheme(selectedTheme);
@@ -10555,7 +10588,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (elements.themeSelect) {
                     elements.themeSelect.addEventListener('change', () => {
                         state.settings.theme = elements.themeSelect.value;
-                        uiUtils.applyTheme();
+                        // 設定画面でテーマを変更した場合、プロンプト設定画面の一時テーマでない限り適用
+                        if (state.currentScreen !== 'prompt-setup' || !state.promptTempTheme) {
+                            uiUtils.applyTheme();
+                        }
                     });
                 }
                 if (elements.apiProviderSelect) {
@@ -11483,6 +11519,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (!state.currentChatTheme) {
                 uiUtils.applyTheme(state.settings.theme);
             }
+            
+            // プロンプト設定画面の一時テーマもクリア（新規チャット開始時）
+            state.promptTempTheme = null;
             
             uiUtils.renderChatMessages();
             uiUtils.updateChatTitle();
@@ -14016,7 +14055,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     uiUtils.applySettingsToUI();
                     uiUtils.renderChatMessages(true);
                 } else {
-                    uiUtils.applyTheme();
+                    // 送信中の設定保存でも現在の画面に応じたテーマを維持
+                    if (state.currentScreen === 'prompt-setup' && state.promptTempTheme) {
+                        uiUtils.applyTheme(state.promptTempTheme);
+                    } else if (state.currentChatTheme) {
+                        uiUtils.applyTheme(state.currentChatTheme);
+                    } else {
+                        uiUtils.applyTheme();
+                    }
                     uiUtils.applyFontFamily();
                     uiUtils.applySidePanelSettingsToUI();
                     uiUtils.updateChatScreenElementVisibility();
