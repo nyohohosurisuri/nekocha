@@ -6305,7 +6305,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             characterListCache: {
                 list: [],
                 timestamp: null,
-                cacheTimeout: 5 * 60 * 1000 // 5分間のキャッシュ
+                cacheTimeout: 60 * 1000 // 1分間のキャッシュ
             },
             // 現在のチャットのテーマ
             currentChatTheme: null,
@@ -9537,100 +9537,64 @@ document.addEventListener('DOMContentLoaded', async () => {
             async loadCharacterOptions() {
                 try {
                     const characterSelect = elements.characterSelect;
-                    
-                    // キャッシュを確認
+                    if (!characterSelect) return;
+
+                    // キャッシュチェック
                     const cache = state.characterListCache;
-                    const now = Date.now();
-                    
-                    // キャッシュが有効かどうか確認
-                    if (cache.list.length > 0 && cache.timestamp && (now - cache.timestamp) < cache.cacheTimeout) {
-                        console.log('キャッシュからキャラクターリストを読み込み');
-                        
-                        // キャッシュから選択肢を復元
-                        if (characterSelect) {
-                            characterSelect.innerHTML = '<option value="">-- キャラクターを選択してください --</option>';
-                            characterSelect.disabled = false;
-                            
-                            cache.list.forEach(char => {
-                                const option = document.createElement('option');
-                                option.value = char;
-                                option.textContent = char;
-                                characterSelect.appendChild(option);
-                            });
-                        }
+                    if (cache.list.length > 0 && cache.timestamp && (Date.now() - cache.timestamp) < cache.cacheTimeout) {
+                        this.updateCharacterSelect(cache.list);
                         return;
                     }
-                    
-                    console.log('キャッシュが無効または存在しないため、新たに読み込み');
 
-                    // characterlist.txtからキャラクターリストを取得
-                    let availableCharacters = [];
-                    
+                    // characterlist.txtから読み込み
+                    let characters = [];
                     try {
                         const res = await fetch('./systemprompt/characterlist.txt');
                         if (res.ok) {
                             const text = await res.text();
-                            console.log('characterlist.txt読み込み成功');
-                            
-                            // 各行をキャラクター名として処理（空行は除外）
-                            availableCharacters = text
-                                .split('\n')
-                                .map(line => line.trim())
-                                .filter(line => line.length > 0);
-                            
-                            console.log(`characterlist.txtから${availableCharacters.length}件のキャラクターを読み込み:`, availableCharacters);
-                        } else {
-                            console.warn('characterlist.txtの読み込みに失敗:', res.status);
+                            characters = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
                         }
-                    } catch (listError) {
-                        console.warn('characterlist.txtの読み込みエラー:', listError);
+                    } catch (error) {
+                        console.warn('characterlist.txt読み込みエラー:', error);
                     }
-                    
-                    // characterlist.txtの読み込みに失敗した場合のフォールバック
-                    if (availableCharacters.length === 0) {
-                        console.log('characterlist.txtからキャラクターが読み込めませんでした。フォールバック処理を実行します。');
-                        
-                        // 既知のキャラクターリスト（フォールバック用）
-                        const fallbackCharacters = [
-                            'アイシャ', 'オスクロル', 'コリン', 'シエラ', 'セーラ', 'ツキミ', 'ノクタリカ', 'リーチェ', 'ルウシェ',
-                            'アリーゼ', 'キアラ', 'コルネ', 'シエル', 'セツナ', 'ディアイゼ', 'ハルジオン', 'リスティ', 'ルカ',
-                            'イクシア', 'キュア', 'サテラ', 'シャルロット', 'セルピナ', 'ライヤ', 'フェイ', 'リリー', 'ルナ',
-                            'エプリル', 'クロカ', 'サヤ', 'シルファ', 'ソアラ', 'トワ', 'マール', 'リルテット'
+
+                    // フォールバック
+                    if (characters.length === 0) {
+                        characters = [
+                            'アイシャ', 'アリーゼ', 'イクシア', 'エプリル', 'キアラ', 'キュア', 'サヤ', 'シェリル',
+                            'シャルロット', 'セツナ', 'セルピナ', 'セーラ', 'ティナ', 'トワ', 'ノクタリカ', 'フェイ',
+                            'マール', 'リスティ', 'リリー', 'リルテット', 'リーチェ', 'ルウシェ', 'ルカ', 'ルナ'
                         ];
-                        
-                        console.log('フォールバックキャラクターリストを使用します');
-                        availableCharacters = [...fallbackCharacters];
                     }
-                    
-                    // キャッシュを更新
-                    if (availableCharacters.length > 0) {
-                        state.characterListCache.list = availableCharacters;
-                        state.characterListCache.timestamp = Date.now();
-                        console.log(`キャラクターリストをキャッシュに保存: ${availableCharacters.length}件`);
-                    }
-                    
-                    // 読み込み完了後、選択肢を更新
-                    if (characterSelect) {
-                        // 読み込み完了後、選択肢を再構築
-                        characterSelect.innerHTML = '<option value="">-- キャラクターを選択してください --</option>';
-                        characterSelect.disabled = false;
-                        
-                        // 見つかったファイルから選択肢を生成
-                        availableCharacters.forEach(char => {
-                            const option = document.createElement('option');
-                            option.value = char;
-                            option.textContent = char;
-                            characterSelect.appendChild(option);
-                        });
-                        
-                        if (availableCharacters.length === 0) {
-                            console.warn('使用可能なキャラクターファイルが見つかりません');
-                            // キャラクターが見つからない場合のメッセージ
-                            characterSelect.innerHTML = '<option value="" disabled selected>キャラクターファイルが見つかりません</option>';
-                        }
-                    }
+
+                    // キャッシュ更新
+                    state.characterListCache.list = characters;
+                    state.characterListCache.timestamp = Date.now();
+
+                    this.updateCharacterSelect(characters);
                 } catch (error) {
                     console.error('キャラクター選択肢の読み込みエラー:', error);
+                }
+            },
+            updateCharacterSelect(characters) {
+                const characterSelect = elements.characterSelect;
+                if (!characterSelect) return;
+
+                characterSelect.innerHTML = '<option value="">-- キャラクターを選択してください --</option>';
+                characterSelect.disabled = false;
+
+                // 五十音順でソート
+                const sortedCharacters = characters.slice().sort((a, b) => a.localeCompare(b, 'ja'));
+
+                sortedCharacters.forEach(char => {
+                    const option = document.createElement('option');
+                    option.value = char;
+                    option.textContent = char;
+                    characterSelect.appendChild(option);
+                });
+
+                if (characters.length === 0) {
+                    characterSelect.innerHTML = '<option value="" disabled selected>キャラクターファイルが見つかりません</option>';
                 }
             },
             async loadCharacterPrompt(characterValue) {
@@ -9640,18 +9604,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         return;
                     }
                     
-                    // URLエンコードを使用して日本語ファイル名に対応
                     const encodedCharacterValue = encodeURIComponent(characterValue);
-                    const filename = `systemprompt/${encodedCharacterValue}.txt`;
-                    console.log(`Loading character file: ${characterValue} -> ${filename}`);
-                    const res = await fetch(`./${filename}`);
+                    const res = await fetch(`./systemprompt/${encodedCharacterValue}.txt`);
                     if (!res.ok) throw new Error(`HTTP ${res.status}`);
                     const prompt = (await res.text()).trim();
-                    console.log(`Successfully loaded character: ${characterValue}`);
                     
                     elements.promptSetupSystemPrompt.value = prompt;
                     
-                    // キャラクター名をAI名に自動入力
                     if (elements.promptAiNameInput) {
                         elements.promptAiNameInput.value = characterValue;
                     }
