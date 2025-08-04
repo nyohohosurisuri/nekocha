@@ -3759,7 +3759,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         <div id="prompt-setup-screen" class="screen">
             <header class="app-header">
                 <button id="back-to-home-from-prompt-setup" class="header-button" aria-label="ホームへ戻る">＜</button>
-                <h1>プロンプト作成</h1>
+                <h1>チャット設定</h1>
                 <button id="start-chat-with-prompt-btn" class="header-save-button" title="このプロンプトで会話を開始">開始</button>
             </header>
             <main class="main-content">
@@ -3977,16 +3977,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                             </div>
                             
                             <div class="setting-group">
-                                <label class="checkbox-label">
-                                    <input type="checkbox" id="show-ai-icon-checkbox" checked>
-                                    AIアイコンを表示する
-                                </label>
+                                <label>AIアイコン：</label>
                                 <div class="image-upload-controls" style="margin-top: 5px;">
                                     <input type="file" id="prompt-ai-icon-input" accept="image/jpeg, image/png, image/gif, image/webp" class="hidden">
                                     <button id="prompt-upload-ai-icon-btn" class="settings-action-button" type="button">AIアイコン選択...</button>
                                     <img id="prompt-ai-icon-thumbnail" src="" alt="AIアイコンプレビュー" class="icon-thumbnail hidden">
                                     <button id="prompt-delete-ai-icon-btn" class="settings-delete-button hidden" type="button">削除</button>
                                 </div>
+                                <label class="checkbox-label" style="margin-top: 10px;">
+                                    <input type="checkbox" id="show-ai-icon-checkbox" checked>
+                                    AIアイコンを表示する
+                                </label>
                             </div>
                             
                             <div class="setting-group">
@@ -4021,6 +4022,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <div class="setting-group">
                                 <label for="user-relationship-select">ユーザーとの関係:</label>
                                 <select id="user-relationship-select" class="setting-select">
+                                    <option value="none">なし</option>
                                     <option value="first-meeting">初対面</option>
                                     <option value="friend">友達</option>
                                     <option value="lover">恋人</option>
@@ -9911,10 +9913,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     elements.promptSetupSystemPrompt.value = prompt;
                     
-                    // キャラクター名をAI名に自動入力
-                    if (elements.promptAiNameInput) {
-                        elements.promptAiNameInput.value = characterValue;
-                    }
+                    // キャラクター名をAI名に自動入力（無効化）
+                    // if (elements.promptAiNameInput) {
+                    //     elements.promptAiNameInput.value = characterValue;
+                    // }
                     
                     this.updatePromptPreview();
                 } catch (error) {
@@ -9932,12 +9934,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const aiName = elements.promptAiNameInput ? elements.promptAiNameInput.value.trim() || 'AI' : 'AI';
                 
                 const relationshipText = {
+                    'none': 'なし',
                     'first-meeting': '初対面',
                     'friend': '友達',
                     'lover': '恋人'
-                }[relationship] || '初対面';
+                }[relationship] || 'なし';
                 
-                let combinedPrompt = systemPrompt + (systemPrompt ? '\n\n' : '') + `ユーザーとの関係は${relationshipText}です。`;
+                let combinedPrompt = systemPrompt;
+                
+                // 関係が「なし」以外の場合のみ関係を追加
+                if (relationship !== 'none') {
+                    combinedPrompt += (systemPrompt ? '\n\n' : '') + `ユーザーとの関係は${relationshipText}です。`;
+                }
                 
                 // ユーザー名を追加
                 const userName = state.settings.userName;
@@ -10091,10 +10099,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const systemPrompt = elements.promptSetupSystemPrompt.value;
                     
                     const relationshipText = {
+                        'none': 'なし',
                         'first-meeting': '初対面',
                         'friend': '友達',
                         'lover': '恋人'
-                    }[relationship] || '初対面';
+                    }[relationship] || 'なし';
                     
                     let combinedPrompt = '';
                     const aiName = elements.promptAiNameInput ? elements.promptAiNameInput.value.trim() || 'AI' : 'AI';
@@ -10103,11 +10112,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (state.promptPreviewEdited && elements.promptPreview) {
                         combinedPrompt = elements.promptPreview.value;
                     } else {
-                        // システムプロンプトが空の場合は関係性のみ設定
-                        if (systemPrompt.trim()) {
-                            combinedPrompt = systemPrompt + '\n\n' + `ユーザーとの関係は${relationshipText}です。`;
-                        } else {
-                            combinedPrompt = `ユーザーとの関係は${relationshipText}です。`;
+                        // システムプロンプトから開始
+                        combinedPrompt = systemPrompt.trim();
+                        
+                        // 関係が「なし」以外の場合のみ関係を追加
+                        if (relationship !== 'none') {
+                            if (combinedPrompt) {
+                                combinedPrompt += '\n\n' + `ユーザーとの関係は${relationshipText}です。`;
+                            } else {
+                                combinedPrompt = `ユーザーとの関係は${relationshipText}です。`;
+                            }
                         }
                         
                         // ユーザー名を追加
