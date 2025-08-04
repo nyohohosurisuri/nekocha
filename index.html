@@ -3764,6 +3764,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             </header>
             <main class="main-content">
                 <div class="prompt-setup-container">
+                    <p style="color: var(--text-error); font-weight: bold; margin-bottom: 10px;">※初回利用時はまずAPI設定をしてください。</p>
+                    
                     <!-- API設定 -->
                     <details id="prompt-api-settings-group" class="setting-group">
                         <summary style="font-size: 16px; color: var(--text-link); border-bottom: 1px solid var(--border-tertiary); padding-bottom: 5px; margin-bottom: 15px; display: list-item; list-style: revert; cursor:pointer; font-weight: bold;">API設定</summary>
@@ -3771,7 +3773,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <div class="setting-group">
                                 <label for="prompt-api-provider-select">使用するAPIプロバイダー:</label>
                                 <select id="prompt-api-provider-select" aria-label="APIプロバイダー選択">
-                                    <option value="gemini">Gemini (Google)</option>
+                                    <option value="gemini">Gemini (Google)※推奨</option>
                                     <option value="deepseek">DeepSeek</option>
                                     <option value="claude">Claude (Anthropic API)</option>
                                     <option value="openai">ChatGPT (OpenAI API)</option>
@@ -3779,6 +3781,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                                     <option value="llmaggregator">LLM Aggregator</option>
                                     <option value="dummy">Dummy AI</option>
                                 </select>
+                                <p id="gemini-api-key-link" style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">
+                                    Gemini APIキーを取得：<a href="https://ai.google.dev/gemini-api/docs/api-key" target="_blank" rel="noopener noreferrer" style="color: var(--text-link);">https://ai.google.dev/gemini-api/docs/api-key</a>
+                                </p>
                             </div>
                             
                             <!-- Gemini API設定 -->
@@ -3833,112 +3838,124 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                     </details>
                     
-                    <div class="setting-group">
-                        <label for="character-select">キャラクター選択:</label>
-                        <div style="display: flex; gap: 8px; align-items: center;">
-                            <select id="character-select" class="setting-select" style="flex: 1;">
-                                <option value="">-- キャラクターを選択してください --</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="setting-group">
-                        <label for="prompt-ai-name-input">AI名:</label>
-                        <input type="text" id="prompt-ai-name-input" class="setting-input" placeholder="AI名を入力" maxlength="20" style="width: 200px;">
-                        <label class="checkbox-label" style="margin-left: 10px;">
-                            <input type="checkbox" id="show-ai-name-checkbox" checked>
-                            AI名を表示する
-                        </label>
-                    </div>
-                    
-                    <div class="setting-group">
-                        <label class="checkbox-label">
-                            <input type="checkbox" id="show-ai-icon-checkbox" checked>
-                            AIアイコンを表示する
-                        </label>
-                        <div class="image-upload-controls" style="margin-top: 5px;">
-                            <input type="file" id="prompt-ai-icon-input" accept="image/jpeg, image/png, image/gif, image/webp" class="hidden">
-                            <button id="prompt-upload-ai-icon-btn" class="settings-action-button" type="button">AIアイコン選択...</button>
-                            <img id="prompt-ai-icon-thumbnail" src="" alt="AIアイコンプレビュー" class="icon-thumbnail hidden">
-                            <button id="prompt-delete-ai-icon-btn" class="settings-delete-button hidden" type="button">削除</button>
-                        </div>
-                    </div>
-                    
-                    <div class="setting-group">
-                        <label>チャット画面の背景画像:</label>
-                        <div class="image-upload-controls">
-                            <input type="file" id="prompt-background-image-input" accept="image/jpeg, image/png, image/gif, image/webp" class="hidden">
-                            <button id="prompt-upload-background-btn" class="settings-action-button" type="button">背景画像選択...</button>
-                            <img id="prompt-background-thumbnail" src="" alt="背景画像プレビュー" class="background-thumbnail hidden">
-                            <button id="prompt-delete-background-btn" class="settings-delete-button hidden" type="button">削除</button>
-                        </div>
-                    </div>
-                    
-                    <div class="setting-group">
-                        <label for="prompt-theme-select">チャット表示テーマ:</label>
-                        <select id="prompt-theme-select" class="setting-select">
-                            <option value="">-- デフォルト設定を使用 --</option>
-                            <option value="light">ライトモード</option>
-                            <option value="dark">ダークモード</option>
-                            <option value="pastel-pink">パステルモード🩷</option>
-                            <option value="pastel-blue">パステルモード🩵</option>
-                            <option value="pastel-yellow">パステルモード🟡</option>
-                            <option value="pastel-purple">パステルモード🟣</option>
-                            <option value="pastel-rainbow">パステルモード🌈</option>
-                        </select>
-                    </div>
-                    
-                    <div class="setting-group">
-                        <label for="user-name-input">ユーザーの名前(呼び名):</label>
-                        <input type="text" id="user-name-input" aria-label="ユーザーの名前">
-                    </div>
-                    
-                    <div class="setting-group">
-                        <label for="user-relationship-select">ユーザーとの関係:</label>
-                        <select id="user-relationship-select" class="setting-select">
-                            <option value="first-meeting">初対面</option>
-                            <option value="friend">友達</option>
-                            <option value="lover">恋人</option>
-                        </select>
-                    </div>
-                    
-                    <div class="setting-group">
-                        <label>マークダウンでチャット内に画像を表示:</label>
-                        <p style="font-size: 12px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px;">特定の状況下であらかじめ指定した画像を表示させます。AIが画像を生成するのではなく、AIに画像URLを発言させ、UI側で表示させます。</p>
-                        
-                        <div style="margin-left: 20px;">
-                            <div style="margin-bottom: 10px;">
-                                <label for="emotion-url-normal" style="display: inline-block; width: 100px; font-size: 14px;">平常時:</label>
-                                <input type="text" id="emotion-url-normal" class="setting-input" placeholder="画像URLを入力" style="width: calc(100% - 110px);">
+                    <!-- 基本設定 -->
+                    <details id="prompt-basic-settings-group" class="setting-group" open>
+                        <summary style="font-size: 16px; color: var(--text-link); border-bottom: 1px solid var(--border-tertiary); padding-bottom: 5px; margin-bottom: 15px; display: list-item; list-style: revert; cursor:pointer; font-weight: bold;">基本設定</summary>
+                        <div style="margin-top:15px;">
+                            <div class="setting-group">
+                                <label for="character-select">キャラクター選択:</label>
+                                <div style="display: flex; gap: 8px; align-items: center;">
+                                    <select id="character-select" class="setting-select" style="flex: 1;">
+                                        <option value="">-- キャラクターを選択してください --</option>
+                                    </select>
+                                </div>
                             </div>
-                            <div style="margin-bottom: 10px;">
-                                <label for="emotion-url-happy" style="display: inline-block; width: 100px; font-size: 14px;">嬉しいとき:</label>
-                                <input type="text" id="emotion-url-happy" class="setting-input" placeholder="画像URLを入力" style="width: calc(100% - 110px);">
+                            
+                            <div class="setting-group">
+                                <label for="prompt-ai-name-input">AI名:</label>
+                                <input type="text" id="prompt-ai-name-input" class="setting-input" placeholder="AI名を入力" maxlength="20" style="width: 200px;">
+                                <label class="checkbox-label" style="margin-left: 10px;">
+                                    <input type="checkbox" id="show-ai-name-checkbox" checked>
+                                    AI名を表示する
+                                </label>
                             </div>
-                            <div style="margin-bottom: 10px;">
-                                <label for="emotion-url-fun" style="display: inline-block; width: 100px; font-size: 14px;">楽しいとき:</label>
-                                <input type="text" id="emotion-url-fun" class="setting-input" placeholder="画像URLを入力" style="width: calc(100% - 110px);">
+                            
+                            <div class="setting-group">
+                                <label class="checkbox-label">
+                                    <input type="checkbox" id="show-ai-icon-checkbox" checked>
+                                    AIアイコンを表示する
+                                </label>
+                                <div class="image-upload-controls" style="margin-top: 5px;">
+                                    <input type="file" id="prompt-ai-icon-input" accept="image/jpeg, image/png, image/gif, image/webp" class="hidden">
+                                    <button id="prompt-upload-ai-icon-btn" class="settings-action-button" type="button">AIアイコン選択...</button>
+                                    <img id="prompt-ai-icon-thumbnail" src="" alt="AIアイコンプレビュー" class="icon-thumbnail hidden">
+                                    <button id="prompt-delete-ai-icon-btn" class="settings-delete-button hidden" type="button">削除</button>
+                                </div>
                             </div>
-                            <div style="margin-bottom: 10px;">
-                                <label for="emotion-url-sad" style="display: inline-block; width: 100px; font-size: 14px;">悲しいとき:</label>
-                                <input type="text" id="emotion-url-sad" class="setting-input" placeholder="画像URLを入力" style="width: calc(100% - 110px);">
+                            
+                            <div class="setting-group">
+                                <label>チャット画面の背景画像:</label>
+                                <div class="image-upload-controls">
+                                    <input type="file" id="prompt-background-image-input" accept="image/jpeg, image/png, image/gif, image/webp" class="hidden">
+                                    <button id="prompt-upload-background-btn" class="settings-action-button" type="button">背景画像選択...</button>
+                                    <img id="prompt-background-thumbnail" src="" alt="背景画像プレビュー" class="background-thumbnail hidden">
+                                    <button id="prompt-delete-background-btn" class="settings-delete-button hidden" type="button">削除</button>
+                                </div>
                             </div>
-                            <div style="margin-bottom: 10px;">
-                                <label for="emotion-url-angry" style="display: inline-block; width: 100px; font-size: 14px;">怒ったとき:</label>
-                                <input type="text" id="emotion-url-angry" class="setting-input" placeholder="画像URLを入力" style="width: calc(100% - 110px);">
+                            
+                            <div class="setting-group">
+                                <label for="prompt-theme-select">チャット表示テーマ:</label>
+                                <select id="prompt-theme-select" class="setting-select">
+                                    <option value="">-- デフォルト設定を使用 --</option>
+                                    <option value="light">ライトモード</option>
+                                    <option value="dark">ダークモード</option>
+                                    <option value="pastel-pink">パステルモード🩷</option>
+                                    <option value="pastel-blue">パステルモード🩵</option>
+                                    <option value="pastel-yellow">パステルモード🟡</option>
+                                    <option value="pastel-purple">パステルモード🟣</option>
+                                    <option value="pastel-rainbow">パステルモード🌈</option>
+                                </select>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="user-name-input">ユーザーの名前(呼び名):</label>
+                                <input type="text" id="user-name-input" aria-label="ユーザーの名前">
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="user-relationship-select">ユーザーとの関係:</label>
+                                <select id="user-relationship-select" class="setting-select">
+                                    <option value="first-meeting">初対面</option>
+                                    <option value="friend">友達</option>
+                                    <option value="lover">恋人</option>
+                                </select>
                             </div>
                         </div>
-                    </div>
+                    </details>
                     
-                    <div class="setting-group">
-                        <label for="prompt-setup-system-prompt">キャラクター設定プロンプト:</label>
-                        <textarea id="prompt-setup-system-prompt" placeholder="キャラクターを選択すると自動で読み込まれます..." aria-label="キャラクター設定プロンプト" readonly></textarea>
-                    </div>
-                    
-                    <div class="setting-group">
-                        <label for="prompt-preview">設定されるプロンプト (プレビュー):</label>
-                        <textarea id="prompt-preview" class="prompt-preview" placeholder="プロンプトがここに表示されます..." aria-label="設定されるプロンプト"></textarea>
-                    </div>
+                    <!-- 詳細設定 -->
+                    <details id="prompt-advanced-settings-group" class="setting-group">
+                        <summary style="font-size: 16px; color: var(--text-link); border-bottom: 1px solid var(--border-tertiary); padding-bottom: 5px; margin-bottom: 15px; display: list-item; list-style: revert; cursor:pointer; font-weight: bold;">詳細設定</summary>
+                        <div style="margin-top:15px;">
+                            <div class="setting-group">
+                                <label>マークダウンでチャット内に画像を表示:</label>
+                                <p style="font-size: 12px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px;">特定の状況下であらかじめ指定した画像を表示させます。AIが画像を生成するのではなく、AIに画像URLを発言させ、UI側で表示させます。</p>
+                                
+                                <div style="margin-left: 20px;">
+                                    <div style="margin-bottom: 10px;">
+                                        <label for="emotion-url-normal" style="display: inline-block; width: 100px; font-size: 14px;">平常時:</label>
+                                        <input type="text" id="emotion-url-normal" class="setting-input" placeholder="画像URLを入力" style="width: calc(100% - 110px);">
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <label for="emotion-url-happy" style="display: inline-block; width: 100px; font-size: 14px;">嬉しいとき:</label>
+                                        <input type="text" id="emotion-url-happy" class="setting-input" placeholder="画像URLを入力" style="width: calc(100% - 110px);">
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <label for="emotion-url-fun" style="display: inline-block; width: 100px; font-size: 14px;">楽しいとき:</label>
+                                        <input type="text" id="emotion-url-fun" class="setting-input" placeholder="画像URLを入力" style="width: calc(100% - 110px);">
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <label for="emotion-url-sad" style="display: inline-block; width: 100px; font-size: 14px;">悲しいとき:</label>
+                                        <input type="text" id="emotion-url-sad" class="setting-input" placeholder="画像URLを入力" style="width: calc(100% - 110px);">
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <label for="emotion-url-angry" style="display: inline-block; width: 100px; font-size: 14px;">怒ったとき:</label>
+                                        <input type="text" id="emotion-url-angry" class="setting-input" placeholder="画像URLを入力" style="width: calc(100% - 110px);">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="prompt-setup-system-prompt">キャラクター設定プロンプト:</label>
+                                <textarea id="prompt-setup-system-prompt" placeholder="キャラクターを選択すると自動で読み込まれます..." aria-label="キャラクター設定プロンプト" readonly></textarea>
+                            </div>
+                            
+                            <div class="setting-group">
+                                <label for="prompt-preview">設定されるプロンプト (プレビュー):</label>
+                                <textarea id="prompt-preview" class="prompt-preview" placeholder="プロンプトがここに表示されます..." aria-label="設定されるプロンプト"></textarea>
+                            </div>
+                        </div>
+                    </details>
                 </div>
             </main>
         </div>
@@ -3956,7 +3973,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div style="margin-top:10px;">
                         <label for="api-provider-select">使用するAPIプロバイダー:</label>
                         <select id="api-provider-select" aria-label="APIプロバイダー選択">
-                            <option value="gemini">Gemini (Google)</option>
+                            <option value="gemini">Gemini (Google)※推奨</option>
                             <option value="deepseek">DeepSeek</option>
                             <option value="claude">Claude (Anthropic API)</option>
                             <option value="openai">ChatGPT (OpenAI API)</option>
@@ -3982,7 +3999,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 5px;">使用するAPIプロバイダーの候補およびAPI切替ボタンで巡回させるAPIプロバイダーを選択:</p>
                             <label class="checkbox-label" style="font-size: 12px;">
                                 <input type="checkbox" id="api-provider-cycle-gemini">
-                                Gemini (Google)
+                                Gemini (Google)※推奨
                             </label>
                             <label class="checkbox-label" style="font-size: 12px;">
                                 <input type="checkbox" id="api-provider-cycle-deepseek">
@@ -9291,6 +9308,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 promptProviderSettings[provider].classList.toggle('hidden', provider !== currentProvider);
                             }
                         });
+                        
+                        // Gemini APIキー取得リンクの初期表示制御
+                        const geminiApiKeyLink = document.getElementById('gemini-api-key-link');
+                        if (geminiApiKeyLink) {
+                            geminiApiKeyLink.style.display = currentProvider === 'gemini' ? 'block' : 'none';
+                        }
                     }
                     
                     // 設定が未定義の場合にデフォルト値を設定
@@ -10736,6 +10759,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 promptProviderSettings[provider].classList.toggle('hidden', provider !== selectedProvider);
                             }
                         });
+                        
+                        // Gemini APIキー取得リンクの表示制御
+                        const geminiApiKeyLink = document.getElementById('gemini-api-key-link');
+                        if (geminiApiKeyLink) {
+                            geminiApiKeyLink.style.display = selectedProvider === 'gemini' ? 'block' : 'none';
+                        }
                         
                         // 設定画面のAPIプロバイダーも同期
                         if (elements.apiProviderSelect) {
