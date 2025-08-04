@@ -9175,9 +9175,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (screenName === 'prompt-setup' && state.promptTempTheme) {
                         // プロンプト設定画面で一時テーマがある場合
                         this.applyTheme(state.promptTempTheme);
-                    } else if (screenName === 'chat' && state.currentChatTheme) {
-                        // チャット画面で現在のチャットテーマがある場合
-                        this.applyTheme(state.currentChatTheme);
+                    } else if (screenName === 'chat') {
+                        // チャット画面の場合
+                        if (state.beforePromptScreenTheme) {
+                            // プロンプト設定画面から戻ってきた場合は保存しておいたテーマを適用
+                            this.applyTheme(state.beforePromptScreenTheme);
+                            state.beforePromptScreenTheme = null; // 使用後はクリア
+                        } else if (state.currentChatTheme) {
+                            // 現在のチャットテーマがある場合
+                            this.applyTheme(state.currentChatTheme);
+                        } else {
+                            // デフォルトテーマ
+                            this.applyTheme(state.settings.theme);
+                        }
                     } else if (screenName !== 'prompt-setup') {
                         // その他の画面ではデフォルトテーマ
                         this.applyTheme(state.settings.theme);
@@ -10539,8 +10549,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // プロンプト設定画面から戻る時は、一時テーマをクリアしてから戻る
                     if (state.promptTempTheme) {
                         state.promptTempTheme = null;
-                        // 元のテーマに戻す
-                        if (state.currentChatTheme) {
+                        // 保存しておいた元のテーマに戻す
+                        if (state.beforePromptScreenTheme) {
+                            uiUtils.applyTheme(state.beforePromptScreenTheme);
+                        } else if (state.currentChatTheme) {
                             uiUtils.applyTheme(state.currentChatTheme);
                         } else {
                             uiUtils.applyTheme(state.settings.theme);
@@ -10691,6 +10703,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 elements.newChatBtn.addEventListener('click', async () => {
                     // 現在のチャットを保存してからプロンプト作成画面に移行
                     await dbUtils.saveChat();
+                    // 現在のテーマを保存（プロンプト設定画面から戻った時に復元するため）
+                    state.beforePromptScreenTheme = state.currentChatTheme || state.settings.theme;
                     await uiUtils.showScreen('prompt-setup');
                 });
                 elements.deleteSessionBtn.addEventListener('click', () => this.confirmDeleteCurrentSession());
