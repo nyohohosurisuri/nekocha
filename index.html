@@ -9913,10 +9913,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     elements.promptSetupSystemPrompt.value = prompt;
                     
-                    // キャラクター名をAI名に自動入力（無効化）
-                    // if (elements.promptAiNameInput) {
-                    //     elements.promptAiNameInput.value = characterValue;
-                    // }
+                    // キャラクター名をAI名に自動入力
+                    if (elements.promptAiNameInput) {
+                        elements.promptAiNameInput.value = characterValue;
+                    }
                     
                     this.updatePromptPreview();
                 } catch (error) {
@@ -9953,10 +9953,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                     combinedPrompt += `\nユーザーの名前は${userName}です。`;
                 }
                 
-                // AI名を追加
-                if (aiName && aiName !== 'AI') {
-                    combinedPrompt += `\nあなたの名前は${aiName}です。`;
-                }
+                // AI名を追加（無効化）
+                // if (aiName && aiName !== 'AI') {
+                //     combinedPrompt += `\nあなたの名前は${aiName}です。`;
+                // }
                 
                 // 感情画像URLを追加
                 const emotionUrls = {
@@ -10130,10 +10130,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                             combinedPrompt += `\nユーザーの名前は${userName}です。`;
                         }
                         
-                        // AI名を追加
-                        if (aiName && aiName !== 'AI') {
-                            combinedPrompt += `\nあなたの名前は${aiName}です。`;
-                        }
+                        // AI名を追加（無効化）
+                        // if (aiName && aiName !== 'AI') {
+                        //     combinedPrompt += `\nあなたの名前は${aiName}です。`;
+                        // }
                         
                         // 感情画像URLを追加
                         const emotionUrls = {
