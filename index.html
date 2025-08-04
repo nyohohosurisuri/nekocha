@@ -10535,7 +10535,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 elements.backToChatFromHistoryBtn.addEventListener('click', () => history.back());
                 elements.backToChatFromSettingsBtn.addEventListener('click', () => history.back());
-                elements.backToHomeFromPromptSetupBtn.addEventListener('click', () => history.back());
+                elements.backToHomeFromPromptSetupBtn.addEventListener('click', () => {
+                    // プロンプト設定画面から戻る時は、一時テーマをクリアしてから戻る
+                    if (state.promptTempTheme) {
+                        state.promptTempTheme = null;
+                        // 元のテーマに戻す
+                        if (state.currentChatTheme) {
+                            uiUtils.applyTheme(state.currentChatTheme);
+                        } else {
+                            uiUtils.applyTheme(state.settings.theme);
+                        }
+                        uiUtils.applySidePanelSettingsToUI();
+                    }
+                    history.back();
+                });
                 elements.startChatWithPromptBtn.addEventListener('click', () => uiUtils.startChatWithPrompt());
                 if (elements.characterSelect) {
                     elements.characterSelect.addEventListener('change', async () => {
