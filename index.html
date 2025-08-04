@@ -3773,6 +3773,64 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                     </div>
                     
+                    <!-- APIプロバイダー設定 -->
+                    <div class="setting-group">
+                        <label for="prompt-api-provider-select">使用するAPIプロバイダー:</label>
+                        <select id="prompt-api-provider-select" aria-label="APIプロバイダー選択">
+                            <option value="gemini">Gemini (Google)</option>
+                            <option value="deepseek">DeepSeek</option>
+                            <option value="claude">Claude (Anthropic API)</option>
+                            <option value="openai">ChatGPT (OpenAI API)</option>
+                            <option value="xai">Grok (xAI API)</option>
+                            <option value="llmaggregator">LLM Aggregator</option>
+                            <option value="dummy">Dummy AI</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Gemini API設定 -->
+                    <div id="prompt-gemini-settings" class="setting-group">
+                        <label for="prompt-gemini-api-key">Gemini APIキー:</label>
+                        <input type="password" id="prompt-gemini-api-key" placeholder="APIキーを入力" aria-label="Gemini APIキー" readonly>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">※APIキーは設定画面で管理されます</p>
+                    </div>
+                    
+                    <!-- DeepSeek API設定 -->
+                    <div id="prompt-deepseek-settings" class="setting-group hidden">
+                        <label for="prompt-deepseek-api-key">DeepSeek APIキー:</label>
+                        <input type="password" id="prompt-deepseek-api-key" placeholder="DeepSeek APIキーを入力" aria-label="DeepSeek APIキー" readonly>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">※APIキーは設定画面で管理されます</p>
+                    </div>
+                    
+                    <!-- Claude API設定 -->
+                    <div id="prompt-claude-settings" class="setting-group hidden">
+                        <label for="prompt-claude-api-key">Claude APIキー:</label>
+                        <input type="password" id="prompt-claude-api-key" placeholder="APIキーを入力" aria-label="Claude APIキー" readonly>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">※APIキーは設定画面で管理されます</p>
+                    </div>
+                    
+                    <!-- OpenAI API設定 -->
+                    <div id="prompt-openai-settings" class="setting-group hidden">
+                        <label for="prompt-openai-api-key">ChatGPT APIキー:</label>
+                        <input type="password" id="prompt-openai-api-key" placeholder="sk-..." aria-label="ChatGPT APIキー" readonly>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">※APIキーは設定画面で管理されます</p>
+                    </div>
+                    
+                    <!-- xAI API設定 -->
+                    <div id="prompt-xai-settings" class="setting-group hidden">
+                        <label for="prompt-xai-api-key">xAI APIキー:</label>
+                        <input type="password" id="prompt-xai-api-key" placeholder="xai-..." aria-label="xAI APIキー" readonly>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">※APIキーは設定画面で管理されます</p>
+                    </div>
+                    
+                    <!-- LLM Aggregator API設定 -->
+                    <div id="prompt-llmaggregator-settings" class="setting-group hidden">
+                        <label for="prompt-llmaggregator-api-backend">API バックエンド URL:</label>
+                        <input type="text" id="prompt-llmaggregator-api-backend" placeholder="例: https://api.openrouter.ai/v1" aria-label="LLM Aggregator API バックエンド URL" readonly>
+                        <label for="prompt-llmaggregator-api-key">APIキー:</label>
+                        <input type="password" id="prompt-llmaggregator-api-key" placeholder="APIキーを入力" aria-label="LLM Aggregator APIキー" readonly>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">※APIキーは設定画面で管理されます</p>
+                    </div>
+                    
                     <div class="setting-group">
                         <label for="prompt-ai-name-input">AI名:</label>
                         <input type="text" id="prompt-ai-name-input" class="setting-input" placeholder="AI名を入力" maxlength="20" style="width: 200px;">
@@ -5620,6 +5678,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             startChatBtn: document.getElementById('start-chat-btn'),
             selectHistoryBtn: document.getElementById('select-history-btn'),
             characterSelect: document.getElementById('character-select'),
+            promptApiProviderSelect: document.getElementById('prompt-api-provider-select'),
+            promptGeminiSettings: document.getElementById('prompt-gemini-settings'),
+            promptGeminiApiKeyInput: document.getElementById('prompt-gemini-api-key'),
+            promptDeepseekSettings: document.getElementById('prompt-deepseek-settings'),
+            promptDeepseekApiKeyInput: document.getElementById('prompt-deepseek-api-key'),
+            promptClaudeSettings: document.getElementById('prompt-claude-settings'),
+            promptClaudeApiKeyInput: document.getElementById('prompt-claude-api-key'),
+            promptOpenaiSettings: document.getElementById('prompt-openai-settings'),
+            promptOpenaiApiKeyInput: document.getElementById('prompt-openai-api-key'),
+            promptXaiSettings: document.getElementById('prompt-xai-settings'),
+            promptXaiApiKeyInput: document.getElementById('prompt-xai-api-key'),
+            promptLlmaggregatorSettings: document.getElementById('prompt-llmaggregator-settings'),
+            promptLlmaggregatorApiBackendInput: document.getElementById('prompt-llmaggregator-api-backend'),
+            promptLlmaggregatorApiKeyInput: document.getElementById('prompt-llmaggregator-api-key'),
             promptAiIconInput: document.getElementById('prompt-ai-icon-input'),
             promptUploadAiIconBtn: document.getElementById('prompt-upload-ai-icon-btn'),
             promptAiIconThumbnail: document.getElementById('prompt-ai-icon-thumbnail'),
@@ -9141,6 +9213,51 @@ document.addEventListener('DOMContentLoaded', async () => {
                         elements.showAiNameCheckbox.checked = state.settings.showAiName !== false;
                     }
                     
+                    // APIプロバイダー設定をプロンプト画面に反映
+                    if (elements.promptApiProviderSelect) {
+                        elements.promptApiProviderSelect.value = state.settings.apiProvider || 'gemini';
+                        
+                        // APIキーを表示（読み取り専用）
+                        if (elements.promptGeminiApiKeyInput) {
+                            elements.promptGeminiApiKeyInput.value = state.settings.apiKey || '';
+                        }
+                        if (elements.promptDeepseekApiKeyInput) {
+                            elements.promptDeepseekApiKeyInput.value = state.settings.deepSeekApiKey || '';
+                        }
+                        if (elements.promptClaudeApiKeyInput) {
+                            elements.promptClaudeApiKeyInput.value = state.settings.claudeApiKey || '';
+                        }
+                        if (elements.promptOpenaiApiKeyInput) {
+                            elements.promptOpenaiApiKeyInput.value = state.settings.openaiApiKey || '';
+                        }
+                        if (elements.promptXaiApiKeyInput) {
+                            elements.promptXaiApiKeyInput.value = state.settings.xaiApiKey || '';
+                        }
+                        if (elements.promptLlmaggregatorApiBackendInput) {
+                            elements.promptLlmaggregatorApiBackendInput.value = state.settings.llmAggregatorApiBackend || '';
+                        }
+                        if (elements.promptLlmaggregatorApiKeyInput) {
+                            elements.promptLlmaggregatorApiKeyInput.value = state.settings.llmAggregatorApiKey || '';
+                        }
+                        
+                        // プロバイダー設定の表示/非表示を切り替え
+                        const promptProviderSettings = {
+                            'gemini': elements.promptGeminiSettings,
+                            'deepseek': elements.promptDeepseekSettings,
+                            'claude': elements.promptClaudeSettings,
+                            'openai': elements.promptOpenaiSettings,
+                            'xai': elements.promptXaiSettings,
+                            'llmaggregator': elements.promptLlmaggregatorSettings
+                        };
+                        
+                        const currentProvider = state.settings.apiProvider || 'gemini';
+                        Object.keys(promptProviderSettings).forEach(provider => {
+                            if (promptProviderSettings[provider]) {
+                                promptProviderSettings[provider].classList.toggle('hidden', provider !== currentProvider);
+                            }
+                        });
+                    }
+                    
                     // 設定が未定義の場合にデフォルト値を設定
                     if (state.settings.showAiIcon === undefined) {
                         state.settings.showAiIcon = true;
@@ -10560,6 +10677,36 @@ document.addEventListener('DOMContentLoaded', async () => {
                     elements.characterSelect.addEventListener('change', async () => {
                         const selectedValue = elements.characterSelect.value;
                         await uiUtils.loadCharacterPrompt(selectedValue);
+                    });
+                }
+                
+                // プロンプト画面のAPIプロバイダー設定
+                if (elements.promptApiProviderSelect) {
+                    elements.promptApiProviderSelect.addEventListener('change', (event) => {
+                        const selectedProvider = event.target.value;
+                        state.settings.apiProvider = selectedProvider;
+                        
+                        // プロンプト画面用のAPIプロバイダー表示切り替え
+                        const promptProviderSettings = {
+                            'gemini': elements.promptGeminiSettings,
+                            'deepseek': elements.promptDeepseekSettings,
+                            'claude': elements.promptClaudeSettings,
+                            'openai': elements.promptOpenaiSettings,
+                            'xai': elements.promptXaiSettings,
+                            'llmaggregator': elements.promptLlmaggregatorSettings
+                        };
+                        
+                        Object.keys(promptProviderSettings).forEach(provider => {
+                            if (promptProviderSettings[provider]) {
+                                promptProviderSettings[provider].classList.toggle('hidden', provider !== selectedProvider);
+                            }
+                        });
+                        
+                        // 設定画面のAPIプロバイダーも同期
+                        if (elements.apiProviderSelect) {
+                            elements.apiProviderSelect.value = selectedProvider;
+                        }
+                        uiUtils.toggleApiSettingsVisibility(selectedProvider);
                     });
                 }
                 
