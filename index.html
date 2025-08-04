@@ -9105,8 +9105,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else if (screenName === 'prompt-setup') {
                     activeScreen = elements.promptSetupScreen;
                     
-                    // プロンプト設定画面は新規チャット用なので、currentChatIdをクリア
-                    state.currentChatId = null;
+                    // プロンプト設定画面は新規チャット用だが、戻る時のためにcurrentChatIdは保持する
+                    // （実際に新規チャットを作成するのは「開始」ボタンを押した時）
                     
                     // プロンプト作成画面の入力フィールドをクリア
                     if (elements.characterSelect) {
@@ -10546,19 +10546,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                 elements.backToChatFromHistoryBtn.addEventListener('click', () => history.back());
                 elements.backToChatFromSettingsBtn.addEventListener('click', () => history.back());
                 elements.backToHomeFromPromptSetupBtn.addEventListener('click', () => {
-                    // プロンプト設定画面から戻る時は、一時テーマをクリアしてから戻る
+                    // プロンプト設定画面から戻る時は、元のチャットIDとテーマを復元
+                    if (state.beforePromptScreenChatId !== undefined) {
+                        state.currentChatId = state.beforePromptScreenChatId;
+                        state.beforePromptScreenChatId = undefined;
+                    }
+                    
+                    // 一時テーマをクリアして元のテーマに戻す
                     if (state.promptTempTheme) {
                         state.promptTempTheme = null;
-                        // 保存しておいた元のテーマに戻す
-                        if (state.beforePromptScreenTheme) {
-                            uiUtils.applyTheme(state.beforePromptScreenTheme);
-                        } else if (state.currentChatTheme) {
-                            uiUtils.applyTheme(state.currentChatTheme);
-                        } else {
-                            uiUtils.applyTheme(state.settings.theme);
-                        }
-                        uiUtils.applySidePanelSettingsToUI();
                     }
+                    
+                    if (state.beforePromptScreenTheme) {
+                        uiUtils.applyTheme(state.beforePromptScreenTheme);
+                        state.beforePromptScreenTheme = null;
+                    } else if (state.currentChatTheme) {
+                        uiUtils.applyTheme(state.currentChatTheme);
+                    } else {
+                        uiUtils.applyTheme(state.settings.theme);
+                    }
+                    uiUtils.applySidePanelSettingsToUI();
+                    
                     history.back();
                 });
                 elements.startChatWithPromptBtn.addEventListener('click', () => uiUtils.startChatWithPrompt());
@@ -10701,9 +10709,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 elements.rollDiceBtn.addEventListener('click', () => this.rollDiceAndInput());
 
                 elements.newChatBtn.addEventListener('click', async () => {
-                    // 現在のチャットを保存してからプロンプト作成画面に移行
-                    await dbUtils.saveChat();
-                    // 現在のテーマを保存（プロンプト設定画面から戻った時に復元するため）
+                    // 現在のチャットIDとテーマを保存（プロンプト設定画面から戻った時に復元するため）
+                    state.beforePromptScreenChatId = state.currentChatId;
                     state.beforePromptScreenTheme = state.currentChatTheme || state.settings.theme;
                     await uiUtils.showScreen('prompt-setup');
                 });
