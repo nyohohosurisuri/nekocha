@@ -3790,45 +3790,170 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <!-- Gemini API設定 -->
                     <div id="prompt-gemini-settings" class="setting-group">
                         <label for="prompt-gemini-api-key">Gemini APIキー:</label>
-                        <input type="password" id="prompt-gemini-api-key" placeholder="APIキーを入力" aria-label="Gemini APIキー" readonly>
-                        <p style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">※APIキーは設定画面で管理されます</p>
+                        <input type="password" id="prompt-gemini-api-key" placeholder="APIキーを入力" aria-label="Gemini APIキー">
+                        <label for="prompt-gemini-model-name">モデル名:</label>
+                        <select id="prompt-gemini-model-name" aria-label="モデル名">
+                            <optgroup label="無料">
+                                <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+                                <option value="gemini-2.5-flash-preview-04-17">gemini-2.5-flash-preview-04-17</option>
+                                <option value="gemini-2.5-flash-preview-05-20">gemini-2.5-flash-preview-05-20</option>
+                                <option value="gemini-2.5-flash-lite-preview-06-17">gemini-2.5-flash-lite-preview-06-17</option>
+                                <option value="gemini-2.5-flash">gemini-2.5-flash</option>        
+                            </optgroup>
+                            <optgroup label="有料">
+                                <option value="gemini-2.5-pro-preview-03-25">gemini-2.5-pro-preview-03-25</option>
+                                <option value="gemini-2.5-pro-preview-05-06">gemini-2.5-pro-preview-05-06</option>
+                                <option value="gemini-2.5-pro-preview-06-05">gemini-2.5-pro-preview-06-05</option>
+                                <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+                            </optgroup>
+                            <optgroup label="ユーザー指定" id="prompt-gemini-user-defined-models-group">
+                            </optgroup>
+                            <optgroup label="提供終了・使用不可（削除候補）">
+                                <option value="gemini-2.5-pro-exp-03-25">gemini-2.5-pro-exp-03-25</option>
+                            </optgroup>
+                        </select>
+                        <label for="prompt-gemini-additional-models" style="margin-top:10px;">追加モデル (カンマ区切り):</label>
+                        <textarea id="prompt-gemini-additional-models" placeholder="例: gemini-2.0-pro,gemini-2.0-flash-lite" aria-label="追加モデル"></textarea>
                     </div>
                     
                     <!-- DeepSeek API設定 -->
                     <div id="prompt-deepseek-settings" class="setting-group hidden">
                         <label for="prompt-deepseek-api-key">DeepSeek APIキー:</label>
-                        <input type="password" id="prompt-deepseek-api-key" placeholder="DeepSeek APIキーを入力" aria-label="DeepSeek APIキー" readonly>
-                        <p style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">※APIキーは設定画面で管理されます</p>
+                        <input type="password" id="prompt-deepseek-api-key" placeholder="DeepSeek APIキーを入力" aria-label="DeepSeek APIキー">
+                        <label for="prompt-deepseek-model-name">DeepSeek モデル名:</label>
+                        <select id="prompt-deepseek-model-name" aria-label="DeepSeek モデル名">
+                            <optgroup label="基本モデル (DeepSeek)">
+                                <option value="deepseek-chat">deepseek-chat</option>
+                                <option value="deepseek-coder">deepseek-coder</option>
+                                <option value="deepseek-reasoner">deepseek-reasoner</option>
+                            </optgroup>
+                             <optgroup label="ユーザー指定 (DeepSeek)" id="prompt-deepseek-user-defined-models-group">
+                            </optgroup>
+                        </select>
+                        <label for="prompt-deepseek-additional-models" style="margin-top:10px;">DeepSeek 追加モデル (カンマ区切り):</label>
+                        <textarea id="prompt-deepseek-additional-models" placeholder="例: custom-model-1,custom-model-2" aria-label="DeepSeek 追加モデル"></textarea>
+                        <label for="prompt-deepseek-api-endpoint" style="margin-top:10px;">DeepSeek APIエンドポイント (オプション):</label>
+                        <input type="text" id="prompt-deepseek-api-endpoint" placeholder="例: https://api.deepseek.com" aria-label="DeepSeek APIエンドポイント">
+                         <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px;">
+                           ※ 空欄の場合はデフォルト (https://api.deepseek.com) を使用し、パスは `/chat/completions` です。 形式的な実装であり、デバッグされておりません。
+                         </p>
                     </div>
                     
                     <!-- Claude API設定 -->
                     <div id="prompt-claude-settings" class="setting-group hidden">
                         <label for="prompt-claude-api-key">Claude APIキー:</label>
-                        <input type="password" id="prompt-claude-api-key" placeholder="APIキーを入力" aria-label="Claude APIキー" readonly>
-                        <p style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">※APIキーは設定画面で管理されます</p>
+                        <input type="password" id="prompt-claude-api-key" placeholder="APIキーを入力" aria-label="Claude APIキー">
+                        <label for="prompt-claude-model-name">モデル名:</label>
+                        <select id="prompt-claude-model-name" aria-label="Claudeモデル名">
+                            <optgroup label="Claude 4">
+                                <option value="claude-opus-4-20250514">Claude 4 Opus</option>
+                                <option value="claude-sonnet-4-20250514">Claude 4 Sonnet</option>
+                            </optgroup>
+                            <optgroup label="Claude 3.7 & 3.5">
+                                <option value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet</option>
+                                <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet v2</option>
+                                <option value="claude-3-5-sonnet-20240620">Claude 3.5 Sonnet v1</option>
+                                <option value="claude-3-5-haiku-20241022">Claude 3.5 Haiku</option>
+                            </optgroup>
+                            <optgroup label="Claude 3">
+                                <option value="claude-3-opus-20240229">Claude 3 Opus</option>
+                                <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
+                                <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
+                            </optgroup>
+                            <optgroup label="旧モデル (v2以前)">
+                                <option value="claude-2.1">Claude 2.1</option>
+                                <option value="claude-2.0">Claude 2.0</option>
+                            </optgroup>
+                            <optgroup label="エイリアス (最新版を指す)">
+                                <option value="claude-opus-4-0">claude-opus-4-0</option>
+                                <option value="claude-sonnet-4-0">claude-sonnet-4-0</option>
+                                <option value="claude-3-7-sonnet-latest">claude-3-7-sonnet-latest</option>
+                                <option value="claude-3-5-sonnet-latest">claude-3-5-sonnet-latest</option>
+                                <option value="claude-3-opus-latest">claude-3-opus-latest</option>
+                            </optgroup>
+                            <optgroup label="ユーザー指定" id="prompt-claude-user-defined-models-group">
+                            </optgroup>
+                        </select>
+                        <label for="prompt-claude-additional-models" style="margin-top:10px;">追加モデル (カンマ区切り):</label>
+                        <textarea id="prompt-claude-additional-models" placeholder="例: my-custom-claude-model" aria-label="Claude 追加モデル"></textarea>
                     </div>
                     
                     <!-- OpenAI API設定 -->
                     <div id="prompt-openai-settings" class="setting-group hidden">
                         <label for="prompt-openai-api-key">ChatGPT APIキー:</label>
-                        <input type="password" id="prompt-openai-api-key" placeholder="sk-..." aria-label="ChatGPT APIキー" readonly>
-                        <p style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">※APIキーは設定画面で管理されます</p>
+                        <input type="password" id="prompt-openai-api-key" placeholder="sk-..." aria-label="ChatGPT APIキー">
+                        <label for="prompt-openai-model-name">モデル名:</label>
+                        <select id="prompt-openai-model-name" aria-label="OpenAI モデル名">
+                            <optgroup label="GPT-4.1">
+                                <option value="gpt-4.1">gpt-4.1</option>
+                                <option value="gpt-4.1-mini">gpt-4.1-mini</option>
+                            </optgroup>
+                            <optgroup label="GPT-4o & Mini">
+                                <option value="gpt-4o">gpt-4o (2024-05-13)</option>
+                                <option value="gpt-4o-2024-08-06">gpt-4o-2024-08-06</option>
+                                <option value="gpt-4o-mini">gpt-4o-mini</option>
+                                <option value="gpt-4o-mini-2024-07-18">gpt-4o-mini-2024-07-18</option>
+                            </optgroup>
+                            <optgroup label="o1">
+                                <option value="o1">o1</option>
+                                <option value="o1-2024-12-17">o1-2024-12-17</option>
+                                <option value="o1-mini">o1-mini</option>
+                                <option value="o1-mini-2024-09-12">o1-mini-2024-09-12</option>
+                                <option value="o3-mini-2025-01-31">o3-mini-2025-01-31</option>
+                            </optgroup>
+                            <optgroup label="GPT-4 Turbo">
+                                <option value="gpt-4-turbo">gpt-4-turbo (2024-04-09)</option>
+                                <option value="gpt-3.5-turbo">gpt-3.5-turbo</option>
+                            </optgroup>
+                            <optgroup label="Preview & エイリアス (最新版を指す)">
+                                <option value="gpt-4.5-preview">gpt-4.5-preview</option>
+                                <option value="chatgpt-4o-latest">chatgpt-4o-latest</option>
+                                <option value="o1-preview">o1-preview</option>
+                            </optgroup>
+                        </select>
+                        <label for="prompt-openai-additional-models" style="margin-top:10px;">追加モデル (カンマ区切り):</label>
+                        <textarea id="prompt-openai-additional-models" placeholder="例: gpt-4,my-finetuned-model" aria-label="OpenAI 追加モデル"></textarea>
                     </div>
                     
                     <!-- xAI API設定 -->
                     <div id="prompt-xai-settings" class="setting-group hidden">
                         <label for="prompt-xai-api-key">xAI APIキー:</label>
-                        <input type="password" id="prompt-xai-api-key" placeholder="xai-..." aria-label="xAI APIキー" readonly>
-                        <p style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">※APIキーは設定画面で管理されます</p>
+                        <input type="password" id="prompt-xai-api-key" placeholder="xai-..." aria-label="xAI APIキー">
+                        <label for="prompt-xai-model-name">モデル名:</label>
+                        <select id="prompt-xai-model-name" aria-label="xAI モデル名">
+                            <optgroup label="Grok">
+                                <option value="grok-3-mini">grok-3-mini</option>
+                                <option value="grok-3-mini-fast">grok-3-mini-fast</option>
+                                <option value="grok-3">grok-3</option>
+                                <option value="grok-3-fast">grok-3-fast</option>
+                                <option value="grok-2-vision-1212">grok-2-vision-1212</option>
+                                <option value="grok-2-1212">grok-2-1212</option>
+                            </optgroup>
+                            <optgroup label="ユーザー指定" id="prompt-xai-user-defined-models-group">
+                            </optgroup>
+                        </select>
+                        <label for="prompt-xai-additional-models" style="margin-top:10px;">追加モデル (カンマ区切り):</label>
+                        <textarea id="prompt-xai-additional-models" placeholder="例: custom-grok-model" aria-label="xAI 追加モデル"></textarea>
                     </div>
                     
                     <!-- LLM Aggregator API設定 -->
                     <div id="prompt-llmaggregator-settings" class="setting-group hidden">
                         <label for="prompt-llmaggregator-api-backend">API バックエンド URL:</label>
-                        <input type="text" id="prompt-llmaggregator-api-backend" placeholder="例: https://api.openrouter.ai/v1" aria-label="LLM Aggregator API バックエンド URL" readonly>
+                        <input type="text" id="prompt-llmaggregator-api-backend" placeholder="例: https://api.openrouter.ai/v1" aria-label="LLM Aggregator API バックエンド URL">
                         <label for="prompt-llmaggregator-api-key">APIキー:</label>
-                        <input type="password" id="prompt-llmaggregator-api-key" placeholder="APIキーを入力" aria-label="LLM Aggregator APIキー" readonly>
-                        <p style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">※APIキーは設定画面で管理されます</p>
+                        <input type="password" id="prompt-llmaggregator-api-key" placeholder="APIキーを入力" aria-label="LLM Aggregator APIキー">
+                        <label for="prompt-llmaggregator-model-name">モデル名:</label>
+                        <select id="prompt-llmaggregator-model-name" aria-label="LLM Aggregator モデル名">
+                            <optgroup label="デフォルト">
+                                <option value="meta-llama/llama-4-maverick-17b-128e-instruct:free">meta-llama/llama-4-maverick-17b-128e-instruct:free</option>
+                                <option value="qwen/qwen2.5-vl-32b-instruct:free">qwen/qwen2.5-vl-32b-instruct:free</option>
+                                <option value="deepseek/deepseek-chat-v3-0324:free">deepseek/deepseek-chat-v3-0324:free</option>
+                            </optgroup>
+                            <optgroup label="ユーザー指定" id="prompt-llmaggregator-user-defined-models-group">
+                            </optgroup>
+                        </select>
+                        <label for="prompt-llmaggregator-additional-models" style="margin-top:10px;">追加モデル (カンマ区切り):</label>
+                        <textarea id="prompt-llmaggregator-additional-models" placeholder="例: mistralai/Mixtral-8x7B-Instruct-v0.1,another/model" aria-label="LLM Aggregator 追加モデル"></textarea>
                     </div>
                     
                     <div class="setting-group">
@@ -5692,6 +5817,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             promptLlmaggregatorSettings: document.getElementById('prompt-llmaggregator-settings'),
             promptLlmaggregatorApiBackendInput: document.getElementById('prompt-llmaggregator-api-backend'),
             promptLlmaggregatorApiKeyInput: document.getElementById('prompt-llmaggregator-api-key'),
+            promptGeminiModelNameSelect: document.getElementById('prompt-gemini-model-name'),
+            promptGeminiAdditionalModelsTextarea: document.getElementById('prompt-gemini-additional-models'),
+            promptDeepseekModelNameSelect: document.getElementById('prompt-deepseek-model-name'),
+            promptDeepseekAdditionalModelsTextarea: document.getElementById('prompt-deepseek-additional-models'),
+            promptDeepseekApiEndpointInput: document.getElementById('prompt-deepseek-api-endpoint'),
+            promptClaudeModelNameSelect: document.getElementById('prompt-claude-model-name'),
+            promptClaudeAdditionalModelsTextarea: document.getElementById('prompt-claude-additional-models'),
+            promptOpenaiModelNameSelect: document.getElementById('prompt-openai-model-name'),
+            promptOpenaiAdditionalModelsTextarea: document.getElementById('prompt-openai-additional-models'),
+            promptXaiModelNameSelect: document.getElementById('prompt-xai-model-name'),
+            promptXaiAdditionalModelsTextarea: document.getElementById('prompt-xai-additional-models'),
+            promptLlmaggregatorModelNameSelect: document.getElementById('prompt-llmaggregator-model-name'),
+            promptLlmaggregatorAdditionalModelsTextarea: document.getElementById('prompt-llmaggregator-additional-models'),
             promptAiIconInput: document.getElementById('prompt-ai-icon-input'),
             promptUploadAiIconBtn: document.getElementById('prompt-upload-ai-icon-btn'),
             promptAiIconThumbnail: document.getElementById('prompt-ai-icon-thumbnail'),
@@ -9217,27 +9355,66 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (elements.promptApiProviderSelect) {
                         elements.promptApiProviderSelect.value = state.settings.apiProvider || 'gemini';
                         
-                        // APIキーを表示（読み取り専用）
+                        // APIキーと設定値を表示
                         if (elements.promptGeminiApiKeyInput) {
                             elements.promptGeminiApiKeyInput.value = state.settings.apiKey || '';
+                        }
+                        if (elements.promptGeminiModelNameSelect) {
+                            elements.promptGeminiModelNameSelect.value = state.settings.modelName || 'gemini-2.0-flash';
+                        }
+                        if (elements.promptGeminiAdditionalModelsTextarea) {
+                            elements.promptGeminiAdditionalModelsTextarea.value = state.settings.additionalModels || '';
                         }
                         if (elements.promptDeepseekApiKeyInput) {
                             elements.promptDeepseekApiKeyInput.value = state.settings.deepSeekApiKey || '';
                         }
+                        if (elements.promptDeepseekModelNameSelect) {
+                            elements.promptDeepseekModelNameSelect.value = state.settings.deepSeekModelName || 'deepseek-chat';
+                        }
+                        if (elements.promptDeepseekAdditionalModelsTextarea) {
+                            elements.promptDeepseekAdditionalModelsTextarea.value = state.settings.deepSeekAdditionalModels || '';
+                        }
+                        if (elements.promptDeepseekApiEndpointInput) {
+                            elements.promptDeepseekApiEndpointInput.value = state.settings.deepSeekApiEndpoint || '';
+                        }
                         if (elements.promptClaudeApiKeyInput) {
                             elements.promptClaudeApiKeyInput.value = state.settings.claudeApiKey || '';
+                        }
+                        if (elements.promptClaudeModelNameSelect) {
+                            elements.promptClaudeModelNameSelect.value = state.settings.claudeModelName || 'claude-3-5-sonnet-20241022';
+                        }
+                        if (elements.promptClaudeAdditionalModelsTextarea) {
+                            elements.promptClaudeAdditionalModelsTextarea.value = state.settings.claudeAdditionalModels || '';
                         }
                         if (elements.promptOpenaiApiKeyInput) {
                             elements.promptOpenaiApiKeyInput.value = state.settings.openaiApiKey || '';
                         }
+                        if (elements.promptOpenaiModelNameSelect) {
+                            elements.promptOpenaiModelNameSelect.value = state.settings.openaiModelName || 'gpt-4o';
+                        }
+                        if (elements.promptOpenaiAdditionalModelsTextarea) {
+                            elements.promptOpenaiAdditionalModelsTextarea.value = state.settings.openaiAdditionalModels || '';
+                        }
                         if (elements.promptXaiApiKeyInput) {
                             elements.promptXaiApiKeyInput.value = state.settings.xaiApiKey || '';
+                        }
+                        if (elements.promptXaiModelNameSelect) {
+                            elements.promptXaiModelNameSelect.value = state.settings.xaiModelName || 'grok-3-mini';
+                        }
+                        if (elements.promptXaiAdditionalModelsTextarea) {
+                            elements.promptXaiAdditionalModelsTextarea.value = state.settings.xaiAdditionalModels || '';
                         }
                         if (elements.promptLlmaggregatorApiBackendInput) {
                             elements.promptLlmaggregatorApiBackendInput.value = state.settings.llmAggregatorApiBackend || '';
                         }
                         if (elements.promptLlmaggregatorApiKeyInput) {
                             elements.promptLlmaggregatorApiKeyInput.value = state.settings.llmAggregatorApiKey || '';
+                        }
+                        if (elements.promptLlmaggregatorModelNameSelect) {
+                            elements.promptLlmaggregatorModelNameSelect.value = state.settings.llmAggregatorModelName || 'meta-llama/llama-4-maverick-17b-128e-instruct:free';
+                        }
+                        if (elements.promptLlmaggregatorAdditionalModelsTextarea) {
+                            elements.promptLlmaggregatorAdditionalModelsTextarea.value = state.settings.llmAggregatorAdditionalModels || '';
                         }
                         
                         // プロバイダー設定の表示/非表示を切り替え
@@ -10707,6 +10884,152 @@ document.addEventListener('DOMContentLoaded', async () => {
                             elements.apiProviderSelect.value = selectedProvider;
                         }
                         uiUtils.toggleApiSettingsVisibility(selectedProvider);
+                    });
+                }
+                
+                // プロンプト画面のAPIキー入力イベントリスナー
+                if (elements.promptGeminiApiKeyInput) {
+                    elements.promptGeminiApiKeyInput.addEventListener('input', async () => {
+                        state.settings.apiKey = elements.promptGeminiApiKeyInput.value;
+                        elements.geminiApiKeyInput.value = elements.promptGeminiApiKeyInput.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptDeepseekApiKeyInput) {
+                    elements.promptDeepseekApiKeyInput.addEventListener('input', async () => {
+                        state.settings.deepSeekApiKey = elements.promptDeepseekApiKeyInput.value;
+                        elements.deepSeekApiKeyInput.value = elements.promptDeepseekApiKeyInput.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptClaudeApiKeyInput) {
+                    elements.promptClaudeApiKeyInput.addEventListener('input', async () => {
+                        state.settings.claudeApiKey = elements.promptClaudeApiKeyInput.value;
+                        elements.claudeApiKeyInput.value = elements.promptClaudeApiKeyInput.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptOpenaiApiKeyInput) {
+                    elements.promptOpenaiApiKeyInput.addEventListener('input', async () => {
+                        state.settings.openaiApiKey = elements.promptOpenaiApiKeyInput.value;
+                        elements.openaiApiKeyInput.value = elements.promptOpenaiApiKeyInput.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptXaiApiKeyInput) {
+                    elements.promptXaiApiKeyInput.addEventListener('input', async () => {
+                        state.settings.xaiApiKey = elements.promptXaiApiKeyInput.value;
+                        elements.xaiApiKeyInput.value = elements.promptXaiApiKeyInput.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptLlmaggregatorApiKeyInput) {
+                    elements.promptLlmaggregatorApiKeyInput.addEventListener('input', async () => {
+                        state.settings.llmAggregatorApiKey = elements.promptLlmaggregatorApiKeyInput.value;
+                        elements.llmAggregatorApiKeyInput.value = elements.promptLlmaggregatorApiKeyInput.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptLlmaggregatorApiBackendInput) {
+                    elements.promptLlmaggregatorApiBackendInput.addEventListener('input', async () => {
+                        state.settings.llmAggregatorApiBackend = elements.promptLlmaggregatorApiBackendInput.value;
+                        elements.llmAggregatorApiBackendInput.value = elements.promptLlmaggregatorApiBackendInput.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                
+                // プロンプト画面のモデル名選択イベントリスナー
+                if (elements.promptGeminiModelNameSelect) {
+                    elements.promptGeminiModelNameSelect.addEventListener('change', async () => {
+                        state.settings.modelName = elements.promptGeminiModelNameSelect.value;
+                        elements.geminiModelNameSelect.value = elements.promptGeminiModelNameSelect.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptDeepseekModelNameSelect) {
+                    elements.promptDeepseekModelNameSelect.addEventListener('change', async () => {
+                        state.settings.deepSeekModelName = elements.promptDeepseekModelNameSelect.value;
+                        elements.deepSeekModelNameSelect.value = elements.promptDeepseekModelNameSelect.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptClaudeModelNameSelect) {
+                    elements.promptClaudeModelNameSelect.addEventListener('change', async () => {
+                        state.settings.claudeModelName = elements.promptClaudeModelNameSelect.value;
+                        elements.claudeModelNameSelect.value = elements.promptClaudeModelNameSelect.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptOpenaiModelNameSelect) {
+                    elements.promptOpenaiModelNameSelect.addEventListener('change', async () => {
+                        state.settings.openaiModelName = elements.promptOpenaiModelNameSelect.value;
+                        elements.openaiModelNameSelect.value = elements.promptOpenaiModelNameSelect.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptXaiModelNameSelect) {
+                    elements.promptXaiModelNameSelect.addEventListener('change', async () => {
+                        state.settings.xaiModelName = elements.promptXaiModelNameSelect.value;
+                        elements.xaiModelNameSelect.value = elements.promptXaiModelNameSelect.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptLlmaggregatorModelNameSelect) {
+                    elements.promptLlmaggregatorModelNameSelect.addEventListener('change', async () => {
+                        state.settings.llmAggregatorModelName = elements.promptLlmaggregatorModelNameSelect.value;
+                        elements.llmAggregatorModelNameSelect.value = elements.promptLlmaggregatorModelNameSelect.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                
+                // プロンプト画面の追加モデルイベントリスナー
+                if (elements.promptGeminiAdditionalModelsTextarea) {
+                    elements.promptGeminiAdditionalModelsTextarea.addEventListener('input', async () => {
+                        state.settings.additionalModels = elements.promptGeminiAdditionalModelsTextarea.value;
+                        elements.geminiAdditionalModelsTextarea.value = elements.promptGeminiAdditionalModelsTextarea.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptDeepseekAdditionalModelsTextarea) {
+                    elements.promptDeepseekAdditionalModelsTextarea.addEventListener('input', async () => {
+                        state.settings.deepSeekAdditionalModels = elements.promptDeepseekAdditionalModelsTextarea.value;
+                        elements.deepSeekAdditionalModelsTextarea.value = elements.promptDeepseekAdditionalModelsTextarea.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptClaudeAdditionalModelsTextarea) {
+                    elements.promptClaudeAdditionalModelsTextarea.addEventListener('input', async () => {
+                        state.settings.claudeAdditionalModels = elements.promptClaudeAdditionalModelsTextarea.value;
+                        elements.claudeAdditionalModelsTextarea.value = elements.promptClaudeAdditionalModelsTextarea.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptOpenaiAdditionalModelsTextarea) {
+                    elements.promptOpenaiAdditionalModelsTextarea.addEventListener('input', async () => {
+                        state.settings.openaiAdditionalModels = elements.promptOpenaiAdditionalModelsTextarea.value;
+                        elements.openaiAdditionalModelsTextarea.value = elements.promptOpenaiAdditionalModelsTextarea.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptXaiAdditionalModelsTextarea) {
+                    elements.promptXaiAdditionalModelsTextarea.addEventListener('input', async () => {
+                        state.settings.xaiAdditionalModels = elements.promptXaiAdditionalModelsTextarea.value;
+                        elements.xaiAdditionalModelsTextarea.value = elements.promptXaiAdditionalModelsTextarea.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptLlmaggregatorAdditionalModelsTextarea) {
+                    elements.promptLlmaggregatorAdditionalModelsTextarea.addEventListener('input', async () => {
+                        state.settings.llmAggregatorAdditionalModels = elements.promptLlmaggregatorAdditionalModelsTextarea.value;
+                        elements.llmAggregatorAdditionalModelsTextarea.value = elements.promptLlmaggregatorAdditionalModelsTextarea.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptDeepseekApiEndpointInput) {
+                    elements.promptDeepseekApiEndpointInput.addEventListener('input', async () => {
+                        state.settings.deepSeekApiEndpoint = elements.promptDeepseekApiEndpointInput.value;
+                        elements.deepSeekApiEndpointInput.value = elements.promptDeepseekApiEndpointInput.value;
+                        await appLogic.saveSettings(false);
                     });
                 }
                 
