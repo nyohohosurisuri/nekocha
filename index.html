@@ -9534,161 +9534,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
                 state.currentScreen = screenName;
             },
-            async detectLocalCharacters() {
-                // ローカル環境でのキャラクターファイル動的検出
-                const characters = [];
-                
-                // より実用的な検出方法: 文字の組み合わせパターンを生成
-                const candidateNames = [];
-                
-                // 1. 既知のキャラクター名
-                const knownNames = [
-                    'アイシャ', 'イクシア', 'エプリル', 'キアラ', 'キュア', 'サヤ', 'シェリル', 'シャルロット', 
-                    'セツナ', 'セルピナ', 'セーラ', 'ティナ', 'テスト', 'トワ', 'ノクタリカ', 'フェイ', 
-                    'リスティ', 'リリー', 'リルテット', 'リーチェ', 'ルウシェ', 'ルカ', 'ルナ', '新キャラ'
-                ];
-                candidateNames.push(...knownNames);
-                
-                // 2. 数字付きバリエーション
-                for (let i = 1; i <= 200; i++) {
-                    candidateNames.push(
-                        `キャラ${i}`, `テスト${i}`, `新キャラ${i}`, `character${i}`, `test${i}`,
-                        `キャラクター${i}`, `プレイヤー${i}`, `ユーザー${i}`, `AI${i}`, `Bot${i}`
-                    );
-                }
-                
-                // 3. よくある日本語名前
-                const commonJapaneseNames = [
-                    'あい', 'あかり', 'あき', 'あきら', 'あさみ', 'あやか', 'あゆみ', 'えみ', 'えり', 'かな', 'かなこ',
-                    'きょうこ', 'さき', 'さくら', 'さとみ', 'しおり', 'たかこ', 'ちか', 'なお', 'なおみ', 'なつみ',
-                    'はるか', 'ひろみ', 'まい', 'まき', 'まゆ', 'まり', 'みか', 'みき', 'みさき', 'みゆき',
-                    'ゆい', 'ゆか', 'ゆき', 'ゆみ', 'りえ', 'りか', 'りさ', 'りな', 'れいな', 'わかな',
-                    'アイ', 'アカリ', 'アキ', 'アキラ', 'アサミ', 'アヤカ', 'アユミ', 'エミ', 'エリ', 'カナ',
-                    'キョウコ', 'サキ', 'サクラ', 'サトミ', 'シオリ', 'タカコ', 'チカ', 'ナオ', 'ナオミ', 'ナツミ',
-                    'ハルカ', 'ヒロミ', 'マイ', 'マキ', 'マユ', 'マリ', 'ミカ', 'ミキ', 'ミサキ', 'ミユキ',
-                    'ユイ', 'ユカ', 'ユキ', 'ユミ', 'リエ', 'リカ', 'リサ', 'リナ', 'レイナ', 'ワカナ'
-                ];
-                candidateNames.push(...commonJapaneseNames);
-                
-                // 4. 英語名前
-                const commonEnglishNames = [
-                    'Alice', 'Anna', 'Amy', 'Emma', 'Eva', 'Grace', 'Jane', 'Kate', 'Lisa', 'Mary', 'Nina', 'Rose', 'Sara',
-                    'Alex', 'Bob', 'Dave', 'Jack', 'John', 'Mike', 'Nick', 'Paul', 'Tom', 'User', 'Assistant', 'AI', 'Bot'
-                ];
-                candidateNames.push(...commonEnglishNames);
-                
-                // 5. 特殊パターン（一文字、記号付き等）
-                const specialPatterns = [];
-                const singleChars = 'あいうえおかきくけこさしすせそたちつてとなにぬねのはひふへほまみむめもやゆよらりるれろわをんアイウエオカキクケコサシスセソタチツテトナニヌネノハヒフヘホマミムメモヤユヨラリルレロワヲンABCDEFGHIJKLMNOPQRSTUVWXYZ';
-                for (const char of singleChars) {
-                    specialPatterns.push(char, `${char}ちゃん`, `${char}さん`, `${char}くん`);
-                }
-                candidateNames.push(...specialPatterns.slice(0, 200)); // 制限をかける
-                
-                // 重複除去
-                const uniqueCandidates = [...new Set(candidateNames)];
-                console.log(`Generated ${uniqueCandidates.length} unique candidate names for detection`);
-                
-                // バッチ処理で並列チェック
-                const batchSize = 20;
-                for (let i = 0; i < uniqueCandidates.length; i += batchSize) {
-                    const batch = uniqueCandidates.slice(i, i + batchSize);
-                    const promises = batch.map(async (name) => {
-                        try {
-                            const encodedName = encodeURIComponent(name);
-                            const url = `./systemprompt/${encodedName}.txt`;
-                            const res = await fetch(url, { method: 'HEAD' });
-                            if (res.ok) {
-                                console.log(`Found character file: ${name}`);
-                                return name;
-                            }
-                        } catch (error) {
-                            // エラーは無視
-                        }
-                        return null;
-                    });
-                    
-                    const results = await Promise.all(promises);
-                    results.forEach(name => {
-                        if (name && !characters.includes(name)) {
-                            characters.push(name);
-                        }
-                    });
-                    
-                    // 進行状況表示
-                    if (i % 100 === 0) {
-                        console.log(`Checked ${Math.min(i + batchSize, uniqueCandidates.length)}/${uniqueCandidates.length} candidates, found ${characters.length} characters`);
-                    }
-                }
-                
-                console.log(`Local dynamic detection completed. Found ${characters.length} characters:`, characters);
-                return characters;
-            },
-            async detectWebCharacters() {
-                // Web環境でのキャラクターファイル動的検出
-                const characters = [];
-                
-                // 既知のキャラクター名＋拡張パターン
-                const knownNames = [
-                    'アイシャ', 'イクシア', 'エプリル', 'キアラ', 'キュア', 'サヤ', 'シェリル', 'シャルロット', 
-                    'セツナ', 'セルピナ', 'セーラ', 'ティナ', 'テスト', 'トワ', 'ノクタリカ', 'フェイ', 
-                    'リスティ', 'リリー', 'リルテット', 'リーチェ', 'ルウシェ', 'ルカ', 'ルナ', '新キャラ'
-                ];
-                
-                // 数字・文字バリエーション生成
-                const variations = [];
-                
-                // 数字付きバリエーション
-                for (let i = 1; i <= 50; i++) {
-                    variations.push(`キャラ${i}`, `テスト${i}`, `新キャラ${i}`, `character${i}`, `test${i}`);
-                }
-                
-                // 一般的な名前パターン
-                const commonNames = [
-                    'アリス', 'ボブ', 'キャロル', 'デイブ', 'イブ', 'フランク', 'グレース', 'ハンク',
-                    'さくら', 'ゆい', 'あい', 'みか', 'りん', 'えみ', 'かな', 'まな',
-                    'リナ', 'マリ', 'ナナ', 'サラ', 'エマ', 'アナ', 'ミア', 'ソフィア',
-                    'User', 'Assistant', 'AI', 'Bot', 'Helper', 'Guide', 'Test', 'Demo'
-                ];
-                
-                const allCandidates = [...knownNames, ...variations, ...commonNames];
-                const batchSize = 20; // Web環境では大きめのバッチサイズ
-                
-                console.log(`Web detection: Checking ${allCandidates.length} potential character files...`);
-                
-                for (let i = 0; i < allCandidates.length; i += batchSize) {
-                    const batch = allCandidates.slice(i, i + batchSize);
-                    const promises = batch.map(async (name) => {
-                        try {
-                            const encodedName = encodeURIComponent(name);
-                            const url = `./systemprompt/${encodedName}.txt`;
-                            const res = await fetch(url, { method: 'HEAD' });
-                            if (res.ok) {
-                                console.log(`Found character file: ${name}`);
-                                return name;
-                            }
-                        } catch (error) {
-                            // エラーは無視
-                        }
-                        return null;
-                    });
-                    
-                    const results = await Promise.all(promises);
-                    results.forEach(name => {
-                        if (name && !characters.includes(name)) {
-                            characters.push(name);
-                        }
-                    });
-                    
-                    // 進行状況表示（少し間隔を空ける）
-                    if (i % 100 === 0) {
-                        console.log(`Web detection: Checked ${Math.min(i + batchSize, allCandidates.length)}/${allCandidates.length} files, found ${characters.length} characters`);
-                    }
-                }
-                
-                console.log(`Web dynamic detection completed. Found ${characters.length} characters:`, characters);
-                return characters;
-            },
             async loadCharacterOptions() {
                 try {
                     const characterSelect = elements.characterSelect;
@@ -9718,163 +9563,43 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     console.log('キャッシュが無効または存在しないため、新たに読み込み');
 
-                    // systempromptフォルダのディレクトリリストを取得
+                    // characterlist.txtからキャラクターリストを取得
                     let availableCharacters = [];
                     
                     try {
-                        const res = await fetch('./systemprompt/');
+                        const res = await fetch('./systemprompt/characterlist.txt');
                         if (res.ok) {
-                            const html = await res.text();
-                            console.log('Directory HTML response received');
-                            const parser = new DOMParser();
-                            const doc = parser.parseFromString(html, 'text/html');
+                            const text = await res.text();
+                            console.log('characterlist.txt読み込み成功');
                             
-                            // 複数のパターンでリンクを検索
-                            const txtSelectors = [
-                                'a[href$=".txt"]',
-                                'a[href*=".txt"]',
-                                'a:contains(".txt")',
-                                'td a', // テーブル形式の場合
-                                'pre a' // プレーンテキスト形式の場合
-                            ];
+                            // 各行をキャラクター名として処理（空行は除外）
+                            availableCharacters = text
+                                .split('\n')
+                                .map(line => line.trim())
+                                .filter(line => line.length > 0);
                             
-                            let links = [];
-                            for (const selector of txtSelectors) {
-                                try {
-                                    const foundLinks = doc.querySelectorAll(selector);
-                                    foundLinks.forEach(link => {
-                                        const href = link.getAttribute('href');
-                                        const text = link.textContent || '';
-                                        if ((href && href.includes('.txt')) || text.includes('.txt')) {
-                                            links.push(link);
-                                        }
-                                    });
-                                } catch (e) {
-                                    // セレクタがサポートされない場合は無視
-                                }
-                            }
-                            
-                            console.log(`Found ${links.length} potential .txt links`);
-                            
-                            // リンクから文字情報を抽出
-                            const foundNames = new Set();
-                            links.forEach(link => {
-                                const href = link.getAttribute('href');
-                                const text = link.textContent || '';
-                                
-                                // href から抽出
-                                if (href && href.includes('.txt')) {
-                                    const filename = href.split('/').pop();
-                                    if (filename && filename.endsWith('.txt')) {
-                                        const decodedFilename = decodeURIComponent(filename);
-                                        const characterName = decodedFilename.replace('.txt', '');
-                                        foundNames.add(characterName);
-                                    }
-                                }
-                                
-                                // テキストから抽出
-                                if (text.includes('.txt')) {
-                                    const filename = text.trim();
-                                    if (filename.endsWith('.txt')) {
-                                        const characterName = filename.replace('.txt', '');
-                                        foundNames.add(characterName);
-                                    }
-                                }
-                            });
-                            
-                            availableCharacters = Array.from(foundNames);
-                            console.log(`Extracted characters from directory:`, availableCharacters);
+                            console.log(`characterlist.txtから${availableCharacters.length}件のキャラクターを読み込み:`, availableCharacters);
                         } else {
-                            console.warn('Directory fetch failed with status:', res.status);
+                            console.warn('characterlist.txtの読み込みに失敗:', res.status);
                         }
-                    } catch (dirError) {
-                        console.warn('ディレクトリリストの取得に失敗:', dirError);
+                    } catch (listError) {
+                        console.warn('characterlist.txtの読み込みエラー:', listError);
                     }
                     
-                    // ディレクトリリストが取得できない場合のフォールバック
+                    // characterlist.txtの読み込みに失敗した場合のフォールバック
                     if (availableCharacters.length === 0) {
-                        const knownCharacters = [
-                            'アイシャ', 'イクシア', 'エプリル', 'キアラ', 'キュア', 'サヤ', 'シェリル', 'シャルロット', 
-                            'セツナ', 'セルピナ', 'セーラ', 'ティナ', 'テスト', 'トワ', 'ノクタリカ', 'フェイ', 
-                            'リスティ', 'リリー', 'リルテット', 'リーチェ', 'ルウシェ', 'ルカ', 'ルナ', '新キャラ'
+                        console.log('characterlist.txtからキャラクターが読み込めませんでした。フォールバック処理を実行します。');
+                        
+                        // 既知のキャラクターリスト（フォールバック用）
+                        const fallbackCharacters = [
+                            'アイシャ', 'オスクロル', 'コリン', 'シエラ', 'セーラ', 'ツキミ', 'ノクタリカ', 'リーチェ', 'ルウシェ',
+                            'アリーゼ', 'キアラ', 'コルネ', 'シエル', 'セツナ', 'ディアイゼ', 'ハルジオン', 'リスティ', 'ルカ',
+                            'イクシア', 'キュア', 'サテラ', 'シャルロット', 'セルピナ', 'ライヤ', 'フェイ', 'リリー', 'ルナ',
+                            'エプリル', 'クロカ', 'サヤ', 'シルファ', 'ソアラ', 'トワ', 'マール', 'リルテット'
                         ];
                         
-                        // ローカル環境では動的検出を試行し、フォールバックも用意
-                        console.log('Using fallback character detection');
-                        if (window.location.protocol === 'file:') {
-                            // ローカルファイル環境では複数のアプローチを試行
-                            console.log('Local file protocol detected - attempting multiple detection methods');
-                            try {
-                                // 方法1: 動的検出
-                                availableCharacters = await this.detectLocalCharacters();
-                                
-                                // 方法2: フォールバック - 既知のリストでも確認
-                                if (availableCharacters.length === 0) {
-                                    console.log('Dynamic detection found no files, trying known characters...');
-                                    for (const char of knownCharacters) {
-                                        try {
-                                            const encodedChar = encodeURIComponent(char);
-                                            const url = `./systemprompt/${encodedChar}.txt`;
-                                            const res = await fetch(url, { method: 'HEAD' });
-                                            if (res.ok) {
-                                                availableCharacters.push(char);
-                                            }
-                                        } catch (error) {
-                                            // 無視
-                                        }
-                                    }
-                                }
-                                
-                                // 方法3: 最終フォールバック - 既知のリストをそのまま表示
-                                if (availableCharacters.length === 0) {
-                                    console.log('All detection methods failed, showing known characters list');
-                                    availableCharacters = [...knownCharacters];
-                                }
-                            } catch (error) {
-                                console.warn('All detection failed, using known list:', error);
-                                availableCharacters = [...knownCharacters];
-                            }
-                        } else {
-                            // Web環境では動的検出を試行
-                            console.log('Web environment detected - attempting dynamic detection');
-                            try {
-                                const dynamicChars = await this.detectWebCharacters();
-                                if (dynamicChars.length > 0) {
-                                    availableCharacters = dynamicChars;
-                                } else {
-                                    // 動的検出が失敗した場合は既知リストで存在確認
-                                    for (const char of knownCharacters) {
-                                        try {
-                                            const encodedChar = encodeURIComponent(char);
-                                            const url = `./systemprompt/${encodedChar}.txt`;
-                                            console.log(`Checking file: ${char} -> ${url}`);
-                                            const res = await fetch(url, { method: 'HEAD' });
-                                            if (res.ok) {
-                                                console.log(`File found: ${char}`);
-                                                availableCharacters.push(char);
-                                            }
-                                        } catch (error) {
-                                            console.log(`Error checking file: ${char}`, error);
-                                        }
-                                    }
-                                }
-                            } catch (error) {
-                                console.warn('Web dynamic detection failed:', error);
-                                // 最終フォールバック: 既知リストで存在確認
-                                for (const char of knownCharacters) {
-                                    try {
-                                        const encodedChar = encodeURIComponent(char);
-                                        const url = `./systemprompt/${encodedChar}.txt`;
-                                        const res = await fetch(url, { method: 'HEAD' });
-                                        if (res.ok) {
-                                            availableCharacters.push(char);
-                                        }
-                                    } catch (error) {
-                                        // 無視
-                                    }
-                                }
-                            }
-                        }
+                        console.log('フォールバックキャラクターリストを使用します');
+                        availableCharacters = [...fallbackCharacters];
                     }
                     
                     // キャッシュを更新
