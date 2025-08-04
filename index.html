@@ -9123,7 +9123,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         elements.promptThemeSelect.value = '';
                         // プロンプト設定画面用の一時テーマをクリア
                         state.promptTempTheme = null;
-                        state.currentChatTheme = null;
+                        // currentChatThemeは保持する（戻る時に必要）
                     }
                     // プロンプトプレビュー編集フラグをリセット
                     state.promptPreviewEdited = false;
@@ -9177,11 +9177,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         this.applyTheme(state.promptTempTheme);
                     } else if (screenName === 'chat') {
                         // チャット画面の場合
-                        if (state.beforePromptScreenTheme) {
-                            // プロンプト設定画面から戻ってきた場合は保存しておいたテーマを適用
-                            this.applyTheme(state.beforePromptScreenTheme);
-                            state.beforePromptScreenTheme = null; // 使用後はクリア
-                        } else if (state.currentChatTheme) {
+                        if (state.currentChatTheme) {
                             // 現在のチャットテーマがある場合
                             this.applyTheme(state.currentChatTheme);
                         } else {
@@ -10546,26 +10542,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 elements.backToChatFromHistoryBtn.addEventListener('click', () => history.back());
                 elements.backToChatFromSettingsBtn.addEventListener('click', () => history.back());
                 elements.backToHomeFromPromptSetupBtn.addEventListener('click', () => {
-                    // プロンプト設定画面から戻る時は、元のチャットIDとテーマを復元
+                    // プロンプト設定画面から戻る時は、元のチャットIDを復元
                     if (state.beforePromptScreenChatId !== undefined) {
                         state.currentChatId = state.beforePromptScreenChatId;
                         state.beforePromptScreenChatId = undefined;
                     }
                     
-                    // 一時テーマをクリアして元のテーマに戻す
+                    // 一時テーマをクリア
                     if (state.promptTempTheme) {
                         state.promptTempTheme = null;
                     }
-                    
-                    if (state.beforePromptScreenTheme) {
-                        uiUtils.applyTheme(state.beforePromptScreenTheme);
-                        state.beforePromptScreenTheme = null;
-                    } else if (state.currentChatTheme) {
-                        uiUtils.applyTheme(state.currentChatTheme);
-                    } else {
-                        uiUtils.applyTheme(state.settings.theme);
-                    }
-                    uiUtils.applySidePanelSettingsToUI();
                     
                     history.back();
                 });
@@ -10709,9 +10695,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 elements.rollDiceBtn.addEventListener('click', () => this.rollDiceAndInput());
 
                 elements.newChatBtn.addEventListener('click', async () => {
-                    // 現在のチャットIDとテーマを保存（プロンプト設定画面から戻った時に復元するため）
+                    // 現在のチャットIDを保存（プロンプト設定画面から戻った時に復元するため）
                     state.beforePromptScreenChatId = state.currentChatId;
-                    state.beforePromptScreenTheme = state.currentChatTheme || state.settings.theme;
                     await uiUtils.showScreen('prompt-setup');
                 });
                 elements.deleteSessionBtn.addEventListener('click', () => this.confirmDeleteCurrentSession());
