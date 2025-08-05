@@ -71,41 +71,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             --bg-header: #4a90e2;
             --overlay-base-rgb: 255, 255, 255;
             --chat-overlay-alpha: 0.65;
-            /* Consolidated variables - same across all themes */
             --bg-cascade-button: var(--bg-button-action);
             --bg-cascade-button-hover: var(--bg-button-action-hover);
             --bg-cascade-delete-button: var(--bg-button-delete);
             --bg-cascade-delete-button-hover: var(--bg-button-delete-hover);
             --text-cascade-indicator: var(--text-secondary);
-            --bg-button-header-delete: var(--bg-button-delete);
-            --bg-button-header-delete-hover: var(--bg-button-delete-hover);
-            --bg-button-header-copy: var(--bg-button-copy);
-            --bg-button-header-copy-hover: var(--bg-button-copy-hover);
+            --bg-button-header-delete: #e53935;
+            --bg-button-header-delete-hover: #c62828;
+            --bg-button-header-copy: #e91e63;
+            --bg-button-header-copy-hover: #c2185b;
             --bg-code-copy-button: var(--bg-button-action);
             --bg-code-copy-button-hover: var(--bg-button-action-hover);
             --text-code-copy-button: var(--text-light);
-            
-            /* Dialog variables */
-            --bg-dialog-file-item: var(--bg-tertiary);
-            --border-dialog-file-item: var(--border-secondary);
-            --text-dialog-file-name: var(--text-primary);
-            --text-dialog-file-size: var(--text-secondary);
-            --bg-dialog-button-select: var(--bg-button-action);
-            --bg-dialog-button-select-hover: var(--bg-button-action-hover);
-            --bg-dialog-button-confirm: var(--bg-button-save);
-            --bg-dialog-button-confirm-hover: var(--bg-button-save-hover);
-            --bg-dialog-button-cancel: var(--bg-button-cancel);
-            --bg-dialog-button-cancel-hover: var(--bg-button-cancel-hover);
-            
-            /* Toggle button variables */
-            --bg-toggle-button: var(--bg-button-action);
-            --bg-toggle-button-hover: var(--bg-button-action-hover);
-            --text-toggle-button: var(--text-light);
-            
-            /* Attachment variables */
-            --border-attachment-details: var(--border-tertiary);
-            --text-attachment-summary: var(--text-secondary);
-            --text-attachment-filename: var(--text-primary);
 
             --text-primary: #333333;
             --text-secondary: #777777;
@@ -133,6 +110,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             --code-block-font-size: 13px;
             --chat-background-image: none;
 
+            --bg-dialog-file-item: var(--bg-tertiary);
+            --border-dialog-file-item: var(--border-secondary);
+            --text-dialog-file-name: var(--text-primary);
+            --text-dialog-file-size: var(--text-secondary);
+            --bg-dialog-button-select: var(--bg-button-action);
+            --bg-dialog-button-select-hover: var(--bg-button-action-hover);
+            --bg-dialog-button-confirm: var(--bg-button-save);
+            --bg-dialog-button-confirm-hover: var(--bg-button-save-hover);
+            --bg-dialog-button-cancel: var(--bg-button-cancel);
+            --bg-dialog-button-cancel-hover: var(--bg-button-cancel-hover);
+
             --bg-attachment-details: rgba(0, 0, 0, 0.03);
             --border-attachment-details: var(--border-tertiary);
             --text-attachment-summary: var(--text-secondary);
@@ -147,6 +135,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             --message-icon-offset-y: -10px;
             --icon-name-font-size: 10px;
             --icon-name-offset-y: -10px;
+
+            --bg-toggle-button: var(--bg-button-action);
+            --bg-toggle-button-hover: var(--bg-button-action-hover);
+            --text-toggle-button: var(--text-light);
 
             --message-bubble-opacity: 1;
             --header-footer-opacity: 1;
@@ -226,6 +218,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             --bg-header: #007aff;
             --overlay-base-rgb: 30, 30, 30;
             --bg-memo: #2c2c2e;
+            --bg-cascade-button: var(--bg-button-action);
+            --bg-cascade-button-hover: var(--bg-button-action-hover);
+            --bg-cascade-delete-button: var(--bg-button-delete);
+            --bg-cascade-delete-button-hover: var(--bg-button-delete-hover);
+            --text-cascade-indicator: var(--text-secondary);
+            --bg-button-header-delete: var(--bg-button-delete);
+            --bg-button-header-delete-hover: var(--bg-button-delete-hover);
+            --bg-button-header-copy: var(--bg-button-copy);
+            --bg-button-header-copy-hover: var(--bg-button-copy-hover);
+            --bg-code-copy-button: var(--bg-button-action);
+            --bg-code-copy-button-hover: var(--bg-button-action-hover);
+            --text-code-copy-button: var(--text-light);
 
             --text-primary: #e0e0e0;
             --text-secondary: #aaaaaa;
@@ -333,7 +337,25 @@ document.addEventListener('DOMContentLoaded', async () => {
             --shadow-primary: rgba(200, 150, 160, 0.1);
             --shadow-secondary: rgba(200, 150, 160, 0.1);
 
+            --bg-dialog-file-item: var(--bg-tertiary);
+            --border-dialog-file-item: var(--border-secondary);
+            --text-dialog-file-name: var(--text-primary);
+            --text-dialog-file-size: var(--text-secondary);
+            --bg-dialog-button-select: var(--bg-button-action);
+            --bg-dialog-button-select-hover: var(--bg-button-action-hover);
+            --bg-dialog-button-confirm: var(--bg-button-save);
+            --bg-dialog-button-confirm-hover: var(--bg-button-save-hover);
+            --bg-dialog-button-cancel: var(--bg-button-cancel);
+            --bg-dialog-button-cancel-hover: var(--bg-button-cancel-hover);
+
             --bg-attachment-details: rgba(255, 230, 234, 0.5);
+            --border-attachment-details: var(--border-tertiary);
+            --text-attachment-summary: var(--text-secondary);
+            --text-attachment-filename: var(--text-primary);
+
+            --bg-toggle-button: var(--bg-button-action);
+            --bg-toggle-button-hover: var(--bg-button-action-hover);
+            --text-toggle-button: var(--text-light);
 
             --bg-button-gold: #ffdd77;
             --bg-button-gold-hover: #ffcc55;
@@ -5994,14 +6016,24 @@ document.addEventListener('DOMContentLoaded', async () => {
             addXaiApiKeyBtn: document.getElementById('add-xai-api-key-btn'),
             llmaggregatorApiKeysList: document.getElementById('llmaggregator-api-keys-list'),
             addLlmaggregatorApiKeyBtn: document.getElementById('add-llmaggregator-api-key-btn'),
+            
+            // チャット設定モーダル
+            chatSettingsModal: document.getElementById('chat-settings-modal'),
+            chatSettingsBtn: document.getElementById('chat-settings-btn'),
+            chatAiNameInput: document.getElementById('chat-ai-name'),
+            chatAiIconInput: document.getElementById('chat-ai-icon'),
+            chatAiIconPreview: document.getElementById('chat-ai-icon-preview'),
+            chatAiIconRemove: document.getElementById('chat-ai-icon-remove'),
+            chatBackgroundImageInput: document.getElementById('chat-background-image'),
+            chatBackgroundPreview: document.getElementById('chat-background-preview'),
+            chatBackgroundRemove: document.getElementById('chat-background-remove'),
+            chatThemeSelect: document.getElementById('chat-theme-select'),
+            chatSystemPromptTextarea: document.getElementById('chat-system-prompt'),
+            chatSettingsSaveBtn: document.getElementById('chat-settings-save'),
+            chatSettingsCancelBtn: document.getElementById('chat-settings-cancel'),
         };
 
         const state = {
-            // Debug configuration
-            debug: {
-                enabled: false, // Set to false for production
-                logLevel: 'info' // 'error', 'warn', 'info', 'debug'
-            },
             db: null,
             currentChatId: null,
             currentMessages: [],
@@ -6279,86 +6311,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentChatTheme: null,
             // プロンプト設定画面での一時的なテーマ
             promptTempTheme: null,
-        };
-
-        // Debug logging utility
-        const debugLog = {
-            error: (message, ...args) => {
-                if (state.debug.enabled) console.error(message, ...args);
-            },
-            warn: (message, ...args) => {
-                if (state.debug.enabled && ['warn', 'info', 'debug'].includes(state.debug.logLevel)) {
-                    console.warn(message, ...args);
-                }
-            },
-            info: (message, ...args) => {
-                if (state.debug.enabled && ['info', 'debug'].includes(state.debug.logLevel)) {
-                    console.log(message, ...args);
-                }
-            },
-            debug: (message, ...args) => {
-                if (state.debug.enabled && state.debug.logLevel === 'debug') {
-                    console.log('[DEBUG]', message, ...args);
-                }
-            }
-        };
-
-        // 統一エラーハンドリングシステム
-        const errorHandler = {
-            // エラーログのみ（開発・デバッグ用）
-            logOnly: (error, context = '') => {
-                debugLog.error(`${context}:`, error);
-            },
-            
-            // ユーザー通知のみ（重要だがログ不要）
-            notifyOnly: async (message) => {
-                await uiUtils.showCustomAlert(message);
-            },
-            
-            // ログとユーザー通知の両方（重要なエラー）
-            logAndNotify: async (error, userMessage, context = '') => {
-                debugLog.error(`${context}:`, error);
-                await uiUtils.showCustomAlert(userMessage);
-            },
-            
-            // サイレントエラー（ログのみ、警告レベル）
-            silent: (error, context = '') => {
-                debugLog.warn(`${context}:`, error);
-            },
-            
-            // 自動エラー処理（エラーの重要度を判定して適切な処理を選択）
-            handle: async (error, context = '', options = {}) => {
-                const {
-                    showToUser = false,
-                    userMessage = null,
-                    logLevel = 'error',
-                    fallbackAction = null
-                } = options;
-                
-                // ログ出力
-                if (logLevel === 'error') {
-                    debugLog.error(`${context}:`, error);
-                } else if (logLevel === 'warn') {
-                    debugLog.warn(`${context}:`, error);
-                } else {
-                    debugLog.info(`${context}:`, error);
-                }
-                
-                // ユーザー通知
-                if (showToUser) {
-                    const message = userMessage || `エラーが発生しました: ${error.message || error}`;
-                    await uiUtils.showCustomAlert(message);
-                }
-                
-                // フォールバック処理
-                if (fallbackAction && typeof fallbackAction === 'function') {
-                    try {
-                        await fallbackAction(error);
-                    } catch (fallbackError) {
-                        debugLog.error('Fallback action failed:', fallbackError);
-                    }
-                }
-            }
         };
 
         const sanitizeText = (text, maxLength = 255) => {
@@ -6697,7 +6649,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             },
             async saveChat(optionalTitle = null) {
-                debugLog.info('saveChat called:', { 
+                console.log('saveChat called:', { 
                     currentChatId: state.currentChatId, 
                     messageCount: state.currentMessages?.length || 0,
                     hasPendingAssets: state.chatAssets.has("pending"),
@@ -6911,7 +6863,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             const savedId = event.target.result;
                             const savedChatId = chatIdForOperation || savedId;
                             
-                            debugLog.info('saveChat result:', { 
+                            console.log('saveChat result:', { 
                                 savedId, 
                                 savedChatId,
                                 isNewChat: !existingChatData, 
@@ -7148,27 +7100,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         };
 
         const uiUtils = {
-            // プロバイダー設定の切り替えを統合
-            switchProviderSettings(selectedProvider, screenType = 'settings') {
-                const providers = ['gemini', 'deepseek', 'claude', 'openai', 'xai', 'llmaggregator'];
-                const prefix = screenType === 'prompt' ? 'prompt-' : '';
-                
-                providers.forEach(provider => {
-                    const settingsGroup = document.getElementById(`${prefix}${provider}-settings${screenType === 'settings' ? '-group' : ''}`);
-                    if (settingsGroup) {
-                        settingsGroup.classList.toggle('hidden', provider !== selectedProvider);
-                    }
-                });
-            },
-            
-            // プロバイダー固有の設定値を取得する統合関数
-            getProviderSetting(settingName, provider = null) {
-                const currentProvider = provider || state.settings.apiProvider;
-                const providerPrefix = currentProvider === 'deepseek' ? 'deepSeek' : currentProvider;
-                const key = `${providerPrefix}${settingName.charAt(0).toUpperCase()}${settingName.slice(1)}`;
-                return state.settings[key];
-            },
-            
             // iOS Safari判定関数
             isIOSSafari() {
                 const ua = navigator.userAgent;
@@ -7994,15 +7925,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 let accumulatedContentForDisplay;
 
                 const selectedApiProvider = state.settings.apiProvider;
-                const streamSpeed = uiUtils.getProviderSetting('streamingSpeed') || 
-                                  (selectedApiProvider === 'openai' ? state.settings.openaiStreamingSpeed : 50);
+                const streamSpeed = selectedApiProvider === 'gemini' ? state.settings.geminiStreamingSpeed : 
+                                  selectedApiProvider === 'deepseek' ? state.settings.deepSeekStreamingSpeed :
+                                  selectedApiProvider === 'claude' ? state.settings.claudeStreamingSpeed :
+                                  selectedApiProvider === 'xai' ? state.settings.xaiStreamingSpeed :
+                                  selectedApiProvider === 'llmaggregator' ? state.settings.llmAggregatorStreamingSpeed :
+                                  state.settings.openaiStreamingSpeed;
 
                 if (isThoughtSummary) {
-                    const includeThoughts = selectedApiProvider === 'deepseek' ? 
-                        state.settings.deepSeekIncludeDeepSeekThoughts : 
-                        uiUtils.getProviderSetting('includeThoughts');
-                    
-                    if (includeThoughts) {
+                    if ((selectedApiProvider === 'gemini' && state.settings.geminiIncludeThoughts) ||
+                        (selectedApiProvider === 'deepseek' && state.settings.deepSeekIncludeDeepSeekThoughts) ||
+                        (selectedApiProvider === 'claude' && state.settings.claudeIncludeThoughts) ||
+                        (selectedApiProvider === 'xai' && state.settings.xaiIncludeThoughts) ||
+                        (selectedApiProvider === 'llmaggregator' && state.settings.llmAggregatorIncludeThoughts)) {
                         targetContentDiv = messageDiv.querySelector(`#streaming-thought-summary-${index}`);
                         accumulatedContentForDisplay = state.partialThoughtStreamContent;
                     } else {
@@ -8257,7 +8192,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                         aiIconEl.style.display = 'none';
                                     }
                                 } catch (error) {
-                                    debugLog.error('Error displaying AI icon:', error);
+                                    console.error('Error displaying AI icon:', error);
                                     aiIconEl.style.display = 'none';
                                 }
                             } else {
@@ -9363,7 +9298,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                             currentAssets.aiIconUrl = URL.createObjectURL(restoredBlob);
                                             state.aiIconUrl = currentAssets.aiIconUrl;
                                         } catch (e) {
-                                            debugLog.warn('Failed to restore icon URL:', e);
+                                            console.warn('Failed to restore icon URL:', e);
                                         }
                                     }
                                 } else if (currentAssets.aiIconUrl) {
@@ -9379,7 +9314,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                             state.backgroundImageUrl = currentAssets.backgroundImageUrl;
                                             document.documentElement.style.setProperty('--chat-background-image', `url(${state.backgroundImageUrl})`);
                                         } catch (e) {
-                                            debugLog.warn('Failed to restore background URL:', e);
+                                            console.warn('Failed to restore background URL:', e);
                                         }
                                     }
                                 } else if (currentAssets.backgroundImageUrl) {
@@ -9590,7 +9525,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (screenName === 'prompt-setup') {
                         // 非同期でキャラクター選択肢を読み込み
                         this.loadCharacterOptions().catch(error => {
-                            debugLog.error('キャラクター選択肢の読み込みエラー:', error);
+                            console.error('キャラクター選択肢の読み込みエラー:', error);
                             if (elements.characterSelect) {
                                 elements.characterSelect.innerHTML = '<option value="" disabled selected>キャラクターファイルの読み込みに失敗しました</option>';
                             }
@@ -9620,7 +9555,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             characters = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
                         }
                     } catch (error) {
-                        debugLog.warn('characterlist.txt読み込みエラー:', error);
+                        console.warn('characterlist.txt読み込みエラー:', error);
                     }
 
                     // フォールバック
@@ -9638,7 +9573,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                     this.updateCharacterSelect(characters);
                 } catch (error) {
-                    debugLog.error('キャラクター選択肢の読み込みエラー:', error);
+                    console.error('キャラクター選択肢の読み込みエラー:', error);
                 }
             },
             updateCharacterSelect(characters) {
@@ -9682,7 +9617,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     
                     this.updatePromptPreview();
                 } catch (error) {
-                    debugLog.error('キャラクタープロンプト読み込みエラー:', error);
+                    console.error('キャラクタープロンプト読み込みエラー:', error);
                     elements.promptSetupSystemPrompt.value = '';
                     await this.showCustomAlert(`キャラクタープロンプト(systemprompt/${characterValue}.txt)の読み込みに失敗しました。`);
                 }
@@ -9844,7 +9779,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     this.updatePromptAiIconDisplay();
                     this.updateIconSettingsUI();
                 } catch (error) {
-                    await errorHandler.logAndNotify(error, `AIアイコンの処理エラー: ${error}`, 'AIアイコンアップロード');
+                    console.error('AIアイコンアップロードエラー:', error);
+                    await this.showCustomAlert(`AIアイコンの処理エラー: ${error}`);
                 }
                 
                 // ファイル選択をクリア
@@ -9863,7 +9799,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         this.updatePromptAiIconDisplay();
                         this.updateIconSettingsUI();
                     } catch (error) {
-                        await errorHandler.notifyOnly(`AIアイコンの削除エラー: ${error}`);
+                        await this.showCustomAlert(`AIアイコンの削除エラー: ${error}`);
                     }
                 }
             },
@@ -9999,7 +9935,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // キャラクター名を一時保存（新しいチャット作成時に使用）
                     if (characterValue) {
                         state.pendingCharacterName = characterValue;
-                        debugLog.info('Pending character name set to:', characterValue);
+                        console.log('Pending character name set to:', characterValue);
                         // チャットタイトルを更新
                         uiUtils.updateChatTitle(`新しいチャット (${characterValue})`);
                     } else {
@@ -10010,7 +9946,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // チャット画面に移行（テーマは既にcurrentChatThemeに設定されている）
                     await this.showScreen('chat');
                 } catch (error) {
-                    errorHandler.logOnly(error, 'プロンプト設定');
+                    console.error('プロンプト設定エラー:', error);
                     await this.showCustomAlert('プロンプト設定中にエラーが発生しました。');
                 }
             },
@@ -10529,12 +10465,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 document.documentElement.style.setProperty('--chat-background-image', `url(${state.backgroundImageUrl})`);
                             } else {
                                 if (blob && blob.size === 0) {
-                                    debugLog.warn('Background image blob is empty');
+                                    console.warn('Background image blob is empty');
                                 }
                                 document.documentElement.style.setProperty('--chat-background-image', 'none');
                             }
                         } catch (e) {
-                             debugLog.error('Failed to create background image URL:', e);
+                             console.error('Failed to create background image URL:', e);
                              document.documentElement.style.setProperty('--chat-background-image', 'none');
                         }
                     } else {
@@ -10547,7 +10483,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 state.userIconUrl = URL.createObjectURL(blob);
                             }
                         } catch (e) {
-                            debugLog.error('Failed to create user icon URL:', e);
+                            console.error('Failed to create user icon URL:', e);
                         }
                     }
                     if (state.settings.aiIconBlob) {
@@ -10557,7 +10493,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 state.aiIconUrl = URL.createObjectURL(blob);
                             }
                         } catch (e) {
-                            debugLog.error('Failed to create AI icon URL:', e);
+                            console.error('Failed to create AI icon URL:', e);
                         }
                     }
     
@@ -10590,12 +10526,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     state.env = state.env || {};
                     state.env.idbUsable = await detectIndexedDbAvailable();
                     if (!state.env.idbUsable) {
-                        debugLog.warn('IndexedDB is not available. Asset saving will be disabled.');
+                        console.warn('IndexedDB is not available. Asset saving will be disabled.');
                         await uiUtils.showCustomAlert('プライベートブラウズモードまたはIndexedDBが使用できない環境です。\n画像アセットの保存が無効化されます。');
                         // アセット保存系UIを無効化する場合はここで実装
                     }
                     
-                    debugLog.info('Home screen shown');
+                    console.log('Home screen shown');
                     
                     uiUtils.applySettingsToUI();
     
@@ -10617,7 +10553,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // 状態を強制的にホーム画面に設定
                         state.currentScreen = 'home';
                         uiUtils.showScreen('home');
-                        debugLog.info('Final home screen display');
+                        console.log('Final home screen display');
                     }, 200);
                     
                     if (state.settings.autoScrollOnNewMessage) {
@@ -10625,7 +10561,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
 
                 } catch (error) {
-                    await errorHandler.logAndNotify(error, `アプリの初期化に失敗しました: ${error}`, 'アプリ初期化');
+                    await uiUtils.showCustomAlert(`アプリの初期化に失敗しました: ${error}`);
                     elements.appContainer.innerHTML = `<p style="padding: 20px; text-align: center; color: red;">アプリの起動に失敗しました。</p>`;
                 } 
             },
@@ -10637,27 +10573,27 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
                 if (elements.gotoHomeBtn) {
                     elements.gotoHomeBtn.addEventListener('click', async () => {
-                        debugLog.info('Home button clicked');
+                        console.log('Home button clicked');
                         await uiUtils.showScreen('home');
                     });
                 } else {
-                    errorHandler.logOnly(new Error('gotoHomeBtn element not found'), '要素取得');
+                    console.error('gotoHomeBtn element not found');
                 }
                 if (elements.startChatBtn) {
                     elements.startChatBtn.addEventListener('click', async () => {
-                        debugLog.info('Start chat button clicked');
+                        console.log('Start chat button clicked');
                         await uiUtils.showScreen('prompt-setup');
                     });
                 } else {
-                    errorHandler.logOnly(new Error('startChatBtn element not found'), '要素取得');
+                    console.error('startChatBtn element not found');
                 }
                 if (elements.selectHistoryBtn) {
                     elements.selectHistoryBtn.addEventListener('click', async () => {
-                        debugLog.info('Select history button clicked');
+                        console.log('Select history button clicked');
                         await uiUtils.showScreen('history');
                     });
                 } else {
-                    errorHandler.logOnly(new Error('selectHistoryBtn element not found'), '要素取得');
+                    console.error('selectHistoryBtn element not found');
                 }
                 elements.backToChatFromHistoryBtn.addEventListener('click', () => history.back());
                 elements.backToChatFromSettingsBtn.addEventListener('click', () => history.back());
@@ -10690,7 +10626,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                         state.settings.apiProvider = selectedProvider;
                         
                         // プロンプト画面用のAPIプロバイダー表示切り替え
-                        uiUtils.switchProviderSettings(selectedProvider, 'prompt');
+                        const promptProviderSettings = {
+                            'gemini': elements.promptGeminiSettings,
+                            'deepseek': elements.promptDeepseekSettings,
+                            'claude': elements.promptClaudeSettings,
+                            'openai': elements.promptOpenaiSettings,
+                            'xai': elements.promptXaiSettings,
+                            'llmaggregator': elements.promptLlmaggregatorSettings
+                        };
+                        
+                        Object.keys(promptProviderSettings).forEach(provider => {
+                            if (promptProviderSettings[provider]) {
+                                promptProviderSettings[provider].classList.toggle('hidden', provider !== selectedProvider);
+                            }
+                        });
                         
                         // Gemini APIキー取得リンクの表示制御
                         const geminiApiKeyLink = document.getElementById('gemini-api-key-link');
@@ -10706,27 +10655,49 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                 }
                 
-                // プロンプト画面のAPIキー入力イベントリスナー（統合版）
-                const apiKeyMappings = [
-                    { prompt: 'promptGeminiApiKeyInput', settings: 'apiKey', main: 'geminiApiKeyInput' },
-                    { prompt: 'promptDeepseekApiKeyInput', settings: 'deepSeekApiKey', main: 'deepSeekApiKeyInput' },
-                    { prompt: 'promptClaudeApiKeyInput', settings: 'claudeApiKey', main: 'claudeApiKeyInput' },
-                    { prompt: 'promptOpenaiApiKeyInput', settings: 'openaiApiKey', main: 'openaiApiKeyInput' },
-                    { prompt: 'promptXaiApiKeyInput', settings: 'xaiApiKey', main: 'xaiApiKeyInput' },
-                    { prompt: 'promptLlmaggregatorApiKeyInput', settings: 'llmAggregatorApiKey', main: 'llmAggregatorApiKeyInput' }
-                ];
-                
-                apiKeyMappings.forEach(mapping => {
-                    if (elements[mapping.prompt]) {
-                        elements[mapping.prompt].addEventListener('input', async () => {
-                            state.settings[mapping.settings] = elements[mapping.prompt].value;
-                            if (elements[mapping.main]) {
-                                elements[mapping.main].value = elements[mapping.prompt].value;
-                            }
-                            await appLogic.saveSettings(false);
-                        });
-                    }
-                });
+                // プロンプト画面のAPIキー入力イベントリスナー
+                if (elements.promptGeminiApiKeyInput) {
+                    elements.promptGeminiApiKeyInput.addEventListener('input', async () => {
+                        state.settings.apiKey = elements.promptGeminiApiKeyInput.value;
+                        elements.geminiApiKeyInput.value = elements.promptGeminiApiKeyInput.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptDeepseekApiKeyInput) {
+                    elements.promptDeepseekApiKeyInput.addEventListener('input', async () => {
+                        state.settings.deepSeekApiKey = elements.promptDeepseekApiKeyInput.value;
+                        elements.deepSeekApiKeyInput.value = elements.promptDeepseekApiKeyInput.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptClaudeApiKeyInput) {
+                    elements.promptClaudeApiKeyInput.addEventListener('input', async () => {
+                        state.settings.claudeApiKey = elements.promptClaudeApiKeyInput.value;
+                        elements.claudeApiKeyInput.value = elements.promptClaudeApiKeyInput.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptOpenaiApiKeyInput) {
+                    elements.promptOpenaiApiKeyInput.addEventListener('input', async () => {
+                        state.settings.openaiApiKey = elements.promptOpenaiApiKeyInput.value;
+                        elements.openaiApiKeyInput.value = elements.promptOpenaiApiKeyInput.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptXaiApiKeyInput) {
+                    elements.promptXaiApiKeyInput.addEventListener('input', async () => {
+                        state.settings.xaiApiKey = elements.promptXaiApiKeyInput.value;
+                        elements.xaiApiKeyInput.value = elements.promptXaiApiKeyInput.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptLlmaggregatorApiKeyInput) {
+                    elements.promptLlmaggregatorApiKeyInput.addEventListener('input', async () => {
+                        state.settings.llmAggregatorApiKey = elements.promptLlmaggregatorApiKeyInput.value;
+                        elements.llmAggregatorApiKeyInput.value = elements.promptLlmaggregatorApiKeyInput.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
                 if (elements.promptLlmaggregatorApiBackendInput) {
                     elements.promptLlmaggregatorApiBackendInput.addEventListener('input', async () => {
                         state.settings.llmAggregatorApiBackend = elements.promptLlmaggregatorApiBackendInput.value;
@@ -10735,49 +10706,93 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                 }
                 
-                // プロンプト画面のモデル名イベントリスナー（統合版）
-                const modelMappings = [
-                    { prompt: 'promptGeminiModelNameSelect', settings: 'modelName', main: 'geminiModelNameSelect' },
-                    { prompt: 'promptDeepseekModelNameSelect', settings: 'deepSeekModelName', main: 'deepSeekModelNameSelect' },
-                    { prompt: 'promptClaudeModelNameSelect', settings: 'claudeModelName', main: 'claudeModelNameSelect' },
-                    { prompt: 'promptOpenaiModelNameSelect', settings: 'openaiModelName', main: 'openaiModelNameSelect' },
-                    { prompt: 'promptXaiModelNameSelect', settings: 'xaiModelName', main: 'xaiModelNameSelect' },
-                    { prompt: 'promptLlmaggregatorModelNameSelect', settings: 'llmAggregatorModelName', main: 'llmAggregatorModelNameSelect' }
-                ];
+                // プロンプト画面のモデル名イベントリスナー
+                if (elements.promptGeminiModelNameSelect) {
+                    elements.promptGeminiModelNameSelect.addEventListener('change', async () => {
+                        state.settings.modelName = elements.promptGeminiModelNameSelect.value;
+                        elements.geminiModelNameSelect.value = elements.promptGeminiModelNameSelect.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptDeepseekModelNameSelect) {
+                    elements.promptDeepseekModelNameSelect.addEventListener('change', async () => {
+                        state.settings.deepSeekModelName = elements.promptDeepseekModelNameSelect.value;
+                        elements.deepSeekModelNameSelect.value = elements.promptDeepseekModelNameSelect.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptClaudeModelNameSelect) {
+                    elements.promptClaudeModelNameSelect.addEventListener('change', async () => {
+                        state.settings.claudeModelName = elements.promptClaudeModelNameSelect.value;
+                        elements.claudeModelNameSelect.value = elements.promptClaudeModelNameSelect.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptOpenaiModelNameSelect) {
+                    elements.promptOpenaiModelNameSelect.addEventListener('change', async () => {
+                        state.settings.openaiModelName = elements.promptOpenaiModelNameSelect.value;
+                        elements.openaiModelNameSelect.value = elements.promptOpenaiModelNameSelect.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptXaiModelNameSelect) {
+                    elements.promptXaiModelNameSelect.addEventListener('change', async () => {
+                        state.settings.xaiModelName = elements.promptXaiModelNameSelect.value;
+                        elements.xaiModelNameSelect.value = elements.promptXaiModelNameSelect.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptLlmaggregatorModelNameSelect) {
+                    elements.promptLlmaggregatorModelNameSelect.addEventListener('change', async () => {
+                        state.settings.llmAggregatorModelName = elements.promptLlmaggregatorModelNameSelect.value;
+                        elements.llmAggregatorModelNameSelect.value = elements.promptLlmaggregatorModelNameSelect.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
                 
-                modelMappings.forEach(mapping => {
-                    if (elements[mapping.prompt]) {
-                        elements[mapping.prompt].addEventListener('change', async () => {
-                            state.settings[mapping.settings] = elements[mapping.prompt].value;
-                            if (elements[mapping.main]) {
-                                elements[mapping.main].value = elements[mapping.prompt].value;
-                            }
-                            await appLogic.saveSettings(false);
-                        });
-                    }
-                });
-                
-                // プロンプト画面の追加モデルイベントリスナー（統合版）
-                const additionalModelMappings = [
-                    { prompt: 'promptGeminiAdditionalModelsTextarea', settings: 'additionalModels', main: 'geminiAdditionalModelsTextarea' },
-                    { prompt: 'promptDeepseekAdditionalModelsTextarea', settings: 'deepSeekAdditionalModels', main: 'deepSeekAdditionalModelsTextarea' },
-                    { prompt: 'promptClaudeAdditionalModelsTextarea', settings: 'claudeAdditionalModels', main: 'claudeAdditionalModelsTextarea' },
-                    { prompt: 'promptOpenaiAdditionalModelsTextarea', settings: 'openaiAdditionalModels', main: 'openaiAdditionalModelsTextarea' },
-                    { prompt: 'promptXaiAdditionalModelsTextarea', settings: 'xaiAdditionalModels', main: 'xaiAdditionalModelsTextarea' },
-                    { prompt: 'promptLlmaggregatorAdditionalModelsTextarea', settings: 'llmAggregatorAdditionalModels', main: 'llmAggregatorAdditionalModelsTextarea' }
-                ];
-                
-                additionalModelMappings.forEach(mapping => {
-                    if (elements[mapping.prompt]) {
-                        elements[mapping.prompt].addEventListener('input', async () => {
-                            state.settings[mapping.settings] = elements[mapping.prompt].value;
-                            if (elements[mapping.main]) {
-                                elements[mapping.main].value = elements[mapping.prompt].value;
-                            }
-                            await appLogic.saveSettings(false);
-                        });
-                    }
-                });
+                // プロンプト画面の追加モデルイベントリスナー
+                if (elements.promptGeminiAdditionalModelsTextarea) {
+                    elements.promptGeminiAdditionalModelsTextarea.addEventListener('input', async () => {
+                        state.settings.additionalModels = elements.promptGeminiAdditionalModelsTextarea.value;
+                        elements.geminiAdditionalModelsTextarea.value = elements.promptGeminiAdditionalModelsTextarea.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptDeepseekAdditionalModelsTextarea) {
+                    elements.promptDeepseekAdditionalModelsTextarea.addEventListener('input', async () => {
+                        state.settings.deepSeekAdditionalModels = elements.promptDeepseekAdditionalModelsTextarea.value;
+                        elements.deepSeekAdditionalModelsTextarea.value = elements.promptDeepseekAdditionalModelsTextarea.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptClaudeAdditionalModelsTextarea) {
+                    elements.promptClaudeAdditionalModelsTextarea.addEventListener('input', async () => {
+                        state.settings.claudeAdditionalModels = elements.promptClaudeAdditionalModelsTextarea.value;
+                        elements.claudeAdditionalModelsTextarea.value = elements.promptClaudeAdditionalModelsTextarea.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptOpenaiAdditionalModelsTextarea) {
+                    elements.promptOpenaiAdditionalModelsTextarea.addEventListener('input', async () => {
+                        state.settings.openaiAdditionalModels = elements.promptOpenaiAdditionalModelsTextarea.value;
+                        elements.openaiAdditionalModelsTextarea.value = elements.promptOpenaiAdditionalModelsTextarea.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptXaiAdditionalModelsTextarea) {
+                    elements.promptXaiAdditionalModelsTextarea.addEventListener('input', async () => {
+                        state.settings.xaiAdditionalModels = elements.promptXaiAdditionalModelsTextarea.value;
+                        elements.xaiAdditionalModelsTextarea.value = elements.promptXaiAdditionalModelsTextarea.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
+                if (elements.promptLlmaggregatorAdditionalModelsTextarea) {
+                    elements.promptLlmaggregatorAdditionalModelsTextarea.addEventListener('input', async () => {
+                        state.settings.llmAggregatorAdditionalModels = elements.promptLlmaggregatorAdditionalModelsTextarea.value;
+                        elements.llmAggregatorAdditionalModelsTextarea.value = elements.promptLlmaggregatorAdditionalModelsTextarea.value;
+                        await appLogic.saveSettings(false);
+                    });
+                }
                 
                 if (elements.userRelationshipSelect) {
                     elements.userRelationshipSelect.addEventListener('change', () => uiUtils.updatePromptPreview());
@@ -11986,7 +12001,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const systemMessage = state.currentMessages.find(m => m.role === 'system');
                     if (systemMessage) {
                         state.settings.commonSystemPrompt = systemMessage.content;
-                        debugLog.info('Restored system prompt from message:', systemMessage.content.substring(0, 100) + '...');
+                        console.log('Restored system prompt from message:', systemMessage.content.substring(0, 100) + '...');
                     }
                     
                     // キャラクター情報を復元
@@ -12041,7 +12056,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // AIアイコンのBlobデータを復元
                         const restoredBlob = convertArrayBufferToBlob(chat.aiIconBlob);
                         if (!restoredBlob && chat.aiIconBlob) {
-                            debugLog.warn('Unknown aiIconBlob format:', typeof chat.aiIconBlob);
+                            console.warn('Unknown aiIconBlob format:', typeof chat.aiIconBlob);
                         }
                         
                         if (restoredBlob && restoredBlob.size > 0) {
@@ -12052,7 +12067,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 // グローバルにも設定（現在のチャット用）
                                 state.aiIconUrl = iconUrl;
                             } catch (e) {
-                                debugLog.warn('Failed to create icon URL:', e);
+                                console.warn('Failed to create icon URL:', e);
                                 chatAssetInfo.aiIconUrl = null;
                                 state.aiIconUrl = null;
                             }
@@ -12093,7 +12108,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 // 背景画像をチャット画面に適用
                                 document.documentElement.style.setProperty('--chat-background-image', `url(${state.backgroundImageUrl})`);
                             } catch (e) {
-                                debugLog.warn('Failed to create background URL:', e);
+                                console.warn('Failed to create background URL:', e);
                                 chatAssetInfo.backgroundImageUrl = null;
                                 state.backgroundImageUrl = null;
                                 document.documentElement.style.setProperty('--chat-background-image', 'none');
@@ -12435,98 +12450,20 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
         },
-        // ダミープロバイダーの処理を独立した関数として抽出
-        async handleDummyProvider(text, attachmentsToSend, isRetry, retryUserMessageIndex, isBackgroundProcess) {
-            let dummyResponseContent = '';
-            if (state.settings.dummyEnableDummyModel && state.settings.dummyDummyModel) {
-                dummyResponseContent += state.settings.dummyDummyModel;
-            }
-            if (state.settings.dummyErrorDebugMode) {
-                const errorLog = errorRecovery.getErrorLogAsString();
-                if (dummyResponseContent) {
-                    dummyResponseContent += '\n\n';
-                }
-                dummyResponseContent += errorLog;
-            }
-
-            if (isBackgroundProcess) {
-                return { content: dummyResponseContent, metadata: { finishReason: 'stop' } };
-            }
-
-            uiUtils.setSendingState(true);
-            if (isRetry) {
-                if (retryUserMessageIndex + 1 < state.currentMessages.length) {
-                    state.currentMessages.splice(retryUserMessageIndex + 1);
-                }
-                uiUtils.renderChatMessages(true);
-            } else {
-                // 新しいチャットの場合、システムプロンプトとキャラクター情報を追加
-                if (state.currentMessages.length === 0) {
-                    // システムプロンプトを追加
-                    const systemPrompt = state.settings.commonSystemPrompt;
-                    if (systemPrompt && systemPrompt.trim()) {
-                        const systemMessage = {
-                            role: 'system',
-                            content: systemPrompt.trim(),
-                            timestamp: Date.now(),
-                            generatedByApiProvider: null
-                        };
-                        state.currentMessages.push(systemMessage);
-                        debugLog.info('Added system message:', systemPrompt.substring(0, 100) + '...');
-                    }
-                    
-                    // キャラクター情報を追加
-                    if (state.pendingCharacterName) {
-                        const characterMessage = {
-                            role: 'character',
-                            content: state.pendingCharacterName,
-                            timestamp: Date.now(),
-                            generatedByApiProvider: null
-                        };
-                        state.currentMessages.push(characterMessage);
-                    }
-                }
-                
-                const userMessage = {
-                    role: 'user', content: text, timestamp: Date.now(),
-                    attachments: attachmentsToSend, generatedByApiProvider: null
-                };
-                state.currentMessages.push(userMessage);
-                const userMessageIndex = state.currentMessages.length - 1;
-                uiUtils.appendMessage(userMessage.role, userMessage.content, userMessageIndex, false, null, userMessage.attachments);
-                elements.userInput.value = '';
-                state.pendingAttachments = [];
-                uiUtils.adjustTextareaHeight();
-                uiUtils.updateAttachmentBadgeVisibility();
-            }
-            
-            const modelMessage = {
-                role: 'model', content: dummyResponseContent, timestamp: Date.now(), generatedByApiProvider: 'dummy'
-            };
-            state.currentMessages.push(modelMessage);
-            const modelMessageIndex = state.currentMessages.length - 1;
-            uiUtils.appendMessage(modelMessage.role, modelMessage.content, modelMessageIndex);
-            
-            // 一度だけ保存する
-            await dbUtils.saveChat();
-            await sleep(300 + Math.random() * 400);
-            uiUtils.setSendingState(false);
-            if (state.settings.autoScrollOnNewMessage) uiUtils.scrollToBottom();
-        },
-
-        // 入力データの準備を独立した関数として抽出
-        prepareInputData(isRetry, retryUserMessageIndex, sourceSessionContext) {
+        async handleSend(isRetry = false, retryUserMessageIndex = -1, sourceSessionContext = null) {
             const isBackgroundProcess = !!sourceSessionContext;
+            const selectedApiProvider = isBackgroundProcess ? (sourceSessionContext.apiProvider || state.settings.apiProvider) : state.settings.apiProvider;
+
             let text = '';
             let attachmentsToSend = [];
-            
             if (isBackgroundProcess) {
                 text = sourceSessionContext.inputText || '';
                 attachmentsToSend = sourceSessionContext.attachments ? [...sourceSessionContext.attachments] : [];
             } else if (isRetry) {
                 const retryUserMessage = state.currentMessages[retryUserMessageIndex];
                 if (!retryUserMessage || retryUserMessage.role !== 'user') {
-                    return null;
+                    uiUtils.setSendingState(false);
+                    return;
                 }
                 text = retryUserMessage.content || '';
                 attachmentsToSend = retryUserMessage.attachments ? [...retryUserMessage.attachments] : [];
@@ -12534,47 +12471,98 @@ document.addEventListener('DOMContentLoaded', async () => {
                 text = elements.userInput.value.trim();
                 attachmentsToSend = [...state.pendingAttachments];
             }
-            
-            return { text, attachmentsToSend, isBackgroundProcess };
-        },
 
-        // 入力検証を独立した関数として抽出
-        validateInput(text, attachmentsToSend, selectedApiProvider, isBackgroundProcess) {
             if (!isBackgroundProcess) {
                 const isInputEmpty = text.trim() === '';
                 const hasAttachments = attachmentsToSend.length > 0;
                 const isDummyProvider = selectedApiProvider === 'dummy';
 
                 if (state.isSending) {
-                    return false;
+                    return;
                 }
 
                 if (!isDummyProvider && isInputEmpty && !hasAttachments) {
-                    return false;
+                    return;
                 }
             }
-            return true;
-        },
-
-        async handleSend(isRetry = false, retryUserMessageIndex = -1, sourceSessionContext = null) {
-            // 入力データの準備
-            const inputData = this.prepareInputData(isRetry, retryUserMessageIndex, sourceSessionContext);
-            if (!inputData) {
-                uiUtils.setSendingState(false);
-                return;
-            }
             
-            const { text, attachmentsToSend, isBackgroundProcess } = inputData;
-            const selectedApiProvider = isBackgroundProcess ? (sourceSessionContext.apiProvider || state.settings.apiProvider) : state.settings.apiProvider;
-
-            // 入力検証
-            if (!this.validateInput(text, attachmentsToSend, selectedApiProvider, isBackgroundProcess)) {
-                return;
-            }
-            
-            // ダミープロバイダーの処理
             if (selectedApiProvider === 'dummy') {
-                return await this.handleDummyProvider(text, attachmentsToSend, isRetry, retryUserMessageIndex, isBackgroundProcess);
+                let dummyResponseContent = '';
+                if (state.settings.dummyEnableDummyModel && state.settings.dummyDummyModel) {
+                    dummyResponseContent += state.settings.dummyDummyModel;
+                }
+                if (state.settings.dummyErrorDebugMode) {
+                    const errorLog = errorRecovery.getErrorLogAsString();
+                    if (dummyResponseContent) {
+                        dummyResponseContent += '\n\n';
+                    }
+                    dummyResponseContent += errorLog;
+                }
+
+                if (isBackgroundProcess) {
+                    return { content: dummyResponseContent, metadata: { finishReason: 'stop' } };
+                }
+
+                uiUtils.setSendingState(true);
+                if (isRetry) {
+                    if (retryUserMessageIndex + 1 < state.currentMessages.length) {
+                        state.currentMessages.splice(retryUserMessageIndex + 1);
+                    }
+                    uiUtils.renderChatMessages(true);
+                } else {
+                    // 新しいチャットの場合、システムプロンプトとキャラクター情報を追加
+                    if (state.currentMessages.length === 0) {
+                        // システムプロンプトを追加
+                        const systemPrompt = state.settings.commonSystemPrompt;
+                        if (systemPrompt && systemPrompt.trim()) {
+                            const systemMessage = {
+                                role: 'system',
+                                content: systemPrompt.trim(),
+                                timestamp: Date.now(),
+                                generatedByApiProvider: null
+                            };
+                            state.currentMessages.push(systemMessage);
+                            console.log('Added system message:', systemPrompt.substring(0, 100) + '...');
+                        }
+                        
+                        // キャラクター情報を追加
+                        if (state.pendingCharacterName) {
+                            const characterMessage = {
+                                role: 'character',
+                                content: state.pendingCharacterName,
+                                timestamp: Date.now(),
+                                generatedByApiProvider: null
+                            };
+                            state.currentMessages.push(characterMessage);
+                        }
+                    }
+                    
+                    const userMessage = {
+                        role: 'user', content: text, timestamp: Date.now(),
+                        attachments: attachmentsToSend, generatedByApiProvider: null
+                    };
+                    state.currentMessages.push(userMessage);
+                    const userMessageIndex = state.currentMessages.length - 1;
+                    uiUtils.appendMessage(userMessage.role, userMessage.content, userMessageIndex, false, null, userMessage.attachments);
+                    elements.userInput.value = '';
+                    state.pendingAttachments = [];
+                    uiUtils.adjustTextareaHeight();
+                    uiUtils.updateAttachmentBadgeVisibility();
+                }
+                
+                const modelMessage = {
+                    role: 'model', content: dummyResponseContent, timestamp: Date.now(), generatedByApiProvider: 'dummy'
+                };
+                state.currentMessages.push(modelMessage);
+                const modelMessageIndex = state.currentMessages.length - 1;
+                uiUtils.appendMessage(modelMessage.role, modelMessage.content, modelMessageIndex);
+                
+                // 一度だけ保存する
+                await dbUtils.saveChat();
+                await sleep(300 + Math.random() * 400);
+                uiUtils.setSendingState(false);
+                if (state.settings.autoScrollOnNewMessage) uiUtils.scrollToBottom();
+                return;
             }
 
             let currentContextSessionId = isBackgroundProcess ? sourceSessionContext.sessionId : state.currentChatId;
@@ -13541,7 +13529,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     displayErrorMessage = error.message;
                 } else if (isSafariError) {
                     displayErrorMessage = "データ保存エラーが発生しました。ページを再読み込みしてください。";
-                    debugLog.error('Safari specific error detected:', error);
+                    console.error('Safari specific error detected:', error);
                 } else {
                     displayErrorMessage = error.message || "不明なエラーが発生しました";
                 }
@@ -17492,7 +17480,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         try {
                             state.aiIconUrl = URL.createObjectURL(file);
                         } catch (e) {
-                            debugLog.warn('Safari Blob URL creation failed in chat settings:', e);
+                            console.warn('Safari Blob URL creation failed in chat settings:', e);
                             // iOS Safariでエラーが発生した場合、FileReaderを使用
                             try {
                                 const reader = new FileReader();
@@ -17522,7 +17510,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 }
                                 return;
                             } catch (readerError) {
-                                debugLog.error('FileReader fallback failed:', readerError);
+                                console.error('FileReader fallback failed:', readerError);
                                 state.aiIconUrl = null;
                             }
                         }
@@ -17546,7 +17534,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                         
                     } catch (error) {
-                        debugLog.error('AIアイコンのアップロードに失敗しました:', error);
+                        console.error('AIアイコンのアップロードに失敗しました:', error);
                         await uiUtils.showCustomAlert('AIアイコンのアップロードに失敗しました。');
                     }
                 };
@@ -17587,7 +17575,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         try {
                             state.backgroundImageUrl = URL.createObjectURL(file);
                         } catch (e) {
-                            debugLog.warn('Safari Blob URL creation failed for chat background:', e);
+                            console.warn('Safari Blob URL creation failed for chat background:', e);
                             // iOS Safariでエラーが発生した場合、FileReaderを使用
                             try {
                                 const reader = new FileReader();
@@ -17618,7 +17606,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 }
                                 return;
                             } catch (readerError) {
-                                debugLog.error('FileReader fallback failed:', readerError);
+                                console.error('FileReader fallback failed:', readerError);
                                 state.backgroundImageUrl = null;
                             }
                         }
@@ -17645,7 +17633,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                         
                     } catch (error) {
-                        debugLog.error('背景画像のアップロードに失敗しました:', error);
+                        console.error('背景画像のアップロードに失敗しました:', error);
                         await uiUtils.showCustomAlert('背景画像のアップロードに失敗しました。');
                     }
                 };
@@ -17668,22 +17656,29 @@ document.addEventListener('DOMContentLoaded', async () => {
         // チャット設定モーダル機能
         const chatSettingsModal = {
             show() {
+                // モーダル要素の確認
                 const modal = document.getElementById('chat-settings-modal');
+                
                 if (!modal) {
-                    errorHandler.logOnly(new Error('モーダル要素が見つかりません'), 'チャット設定モーダル');
+                    console.error('モーダル要素が見つかりません');
                     return;
                 }
                 
-                // ファイル入力フィールドをクリア
+                // ファイル入力フィールドをクリア（前のチャットの値が残らないように）
                 const chatAiIconInput = document.getElementById('chat-ai-icon');
-                if (chatAiIconInput) chatAiIconInput.value = '';
+                if (chatAiIconInput) {
+                    chatAiIconInput.value = '';
+                }
                 const chatBackgroundImageInput = document.getElementById('chat-background-image');
-                if (chatBackgroundImageInput) chatBackgroundImageInput.value = '';
+                if (chatBackgroundImageInput) {
+                    chatBackgroundImageInput.value = '';
+                }
                 
                 // モーダル用の一時変数を初期化
                 state.modalTemp = {};
                 
                 // 現在のチャットのアセット情報を取得
+                // 新規チャットの場合は"pending"から取得
                 const currentChatAssets = state.currentChatId ? 
                     state.chatAssets.get(state.currentChatId) : 
                     state.chatAssets.get("pending");
@@ -17699,10 +17694,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const chatSystemPromptTextarea = document.getElementById('chat-system-prompt');
                 
                 if (chatAiNameInput) {
+                    // 現在のチャットのAI名を優先、なければデフォルト
                     chatAiNameInput.value = currentChatAssets?.aiName || 'AI';
                 }
                 if (chatSystemPromptTextarea) {
+                    // 現在のチャットのシステムプロンプトを表示
                     let systemPromptValue = '';
+                    
+                    // システムプロンプトの取得優先順位：
+                    // 1. チャット固有のシステムプロンプト
+                    // 2. メッセージからシステムプロンプトを探す
                     if (state.chatSystemPrompt) {
                         systemPromptValue = state.chatSystemPrompt;
                     } else if (state.currentMessages && state.currentMessages.length > 0) {
@@ -17711,168 +17712,116 @@ document.addEventListener('DOMContentLoaded', async () => {
                             systemPromptValue = systemMessage.content;
                         }
                     }
+                    
                     chatSystemPromptTextarea.value = systemPromptValue;
+                    
+                    // テキストエリアの高さを内容に合わせて自動調整
+                    chatSystemPromptTextarea.style.height = 'auto';
+                    chatSystemPromptTextarea.style.height = Math.max(60, chatSystemPromptTextarea.scrollHeight) + 'px';
                 }
                 
-                // 現在のテーマを設定画面に反映
-                const chatThemeSelect = document.getElementById('chat-theme-select');
-                if (chatThemeSelect) {
-                    chatThemeSelect.value = state.currentChatTheme || '';
-                }
-                
-                // プレビュー画像を更新
-                this.updatePreviews();
-                
-                // モーダルを表示
-                modal.style.display = 'flex';
-                
-                // フォーカスを設定
-                const firstInput = modal.querySelector('input[type="text"]');
-                if (firstInput) firstInput.focus();
-                
-                // イベントハンドラーを設定
-                this.setupEventHandlers();
-            },
-            
-            updatePreviews() {
+                // AIアイコンプレビューを表示
                 const chatAiIconPreview = document.getElementById('chat-ai-icon-preview');
                 const chatAiIconRemove = document.getElementById('chat-ai-icon-remove');
-                const chatBackgroundPreview = document.getElementById('chat-background-preview');
-                const chatBackgroundRemove = document.getElementById('chat-background-remove');
                 
-                if (state.modalTemp.aiIconBlob && chatAiIconPreview) {
-                    try {
-                        const blob = convertArrayBufferToBlob(state.modalTemp.aiIconBlob);
-                        if (blob && blob.size > 0) {
-                            const url = URL.createObjectURL(blob);
-                            chatAiIconPreview.src = url;
-                            chatAiIconPreview.style.display = 'block';
-                            if (chatAiIconRemove) chatAiIconRemove.style.display = 'inline-block';
-                            
-                            if (state.tempIconUrl && !uiUtils.isIOSSafari()) {
-                                URL.revokeObjectURL(state.tempIconUrl);
-                            }
-                            state.tempIconUrl = url;
+                // 現在のチャットのアイコンを確認
+                const currentIconBlob = currentChatAssets?.aiIconBlob;
+                if (currentIconBlob || state.aiIconUrl) {
+                    if (state.aiIconUrl) {
+                        if (chatAiIconPreview) {
+                            chatAiIconPreview.src = state.aiIconUrl;
+                            chatAiIconPreview.style.display = 'inline-block';
                         }
-                    } catch (e) {
-                        errorHandler.silent(e, 'アイコンプレビュー作成');
+                        if (chatAiIconRemove) {
+                            chatAiIconRemove.style.display = 'inline-block';
+                        }
+                    } else if (currentIconBlob) {
+                        // ArrayBufferからBlobに変換
+                        const blob = convertArrayBufferToBlob(currentIconBlob);
+                        if (blob) {
+                            try {
+                                const url = URL.createObjectURL(blob);
+                                if (chatAiIconPreview) {
+                                    chatAiIconPreview.src = url;
+                                    chatAiIconPreview.style.display = 'inline-block';
+                                }
+                                if (chatAiIconRemove) {
+                                    chatAiIconRemove.style.display = 'inline-block';
+                                }
+                                // 一時的にURLを保持
+                                state.tempIconUrl = url;
+                            } catch (e) {
+                                console.warn('Failed to create icon preview URL:', e);
+                            }
+                        }
                     }
                 } else {
                     if (chatAiIconPreview) {
                         chatAiIconPreview.style.display = 'none';
-                        chatAiIconPreview.src = '';
                     }
-                    if (chatAiIconRemove) chatAiIconRemove.style.display = 'none';
+                    if (chatAiIconRemove) {
+                        chatAiIconRemove.style.display = 'none';
+                    }
                 }
                 
-                if (state.modalTemp.backgroundImageBlob && chatBackgroundPreview) {
-                    try {
-                        const blob = convertArrayBufferToBlob(state.modalTemp.backgroundImageBlob);
-                        if (blob && blob.size > 0) {
-                            const url = URL.createObjectURL(blob);
-                            chatBackgroundPreview.src = url;
-                            chatBackgroundPreview.style.display = 'block';
-                            if (chatBackgroundRemove) chatBackgroundRemove.style.display = 'inline-block';
-                            
-                            if (state.tempBgUrl && !uiUtils.isIOSSafari()) {
-                                URL.revokeObjectURL(state.tempBgUrl);
-                            }
-                            state.tempBgUrl = url;
+                // 背景画像プレビューを表示
+                const chatBackgroundPreview = document.getElementById('chat-background-preview');
+                const chatBackgroundRemove = document.getElementById('chat-background-remove');
+                
+                // 現在のチャットの背景画像を確認
+                const currentBgBlob = currentChatAssets?.backgroundImageBlob;
+                if (currentBgBlob || state.backgroundImageUrl) {
+                    if (state.backgroundImageUrl) {
+                        if (chatBackgroundPreview) {
+                            chatBackgroundPreview.src = state.backgroundImageUrl;
+                            chatBackgroundPreview.style.display = 'inline-block';
                         }
-                    } catch (e) {
-                        errorHandler.silent(e, '背景プレビュー作成');
+                        if (chatBackgroundRemove) {
+                            chatBackgroundRemove.style.display = 'inline-block';
+                        }
+                    } else if (currentBgBlob) {
+                        const blob = convertArrayBufferToBlob(currentBgBlob);
+                        if (blob) {
+                            try {
+                                const url = URL.createObjectURL(blob);
+                                if (chatBackgroundPreview) {
+                                    chatBackgroundPreview.src = url;
+                                    chatBackgroundPreview.style.display = 'inline-block';
+                                }
+                                if (chatBackgroundRemove) {
+                                    chatBackgroundRemove.style.display = 'inline-block';
+                                }
+                                // 一時的にURLを保持
+                                state.tempBgUrl = url;
+                            } catch (e) {
+                                console.warn('Failed to create background preview URL:', e);
+                            }
+                        }
                     }
                 } else {
                     if (chatBackgroundPreview) {
                         chatBackgroundPreview.style.display = 'none';
-                        chatBackgroundPreview.src = '';
                     }
-                    if (chatBackgroundRemove) chatBackgroundRemove.style.display = 'none';
-                }
-            },
-            
-            setupEventHandlers() {
-                // ファイル選択ボタンのイベントハンドラー
-                const chatBackgroundSelectBtn = document.getElementById('chat-background-select');
-                if (chatBackgroundSelectBtn) {
-                    chatBackgroundSelectBtn.onclick = () => {
-                        document.getElementById('chat-background-image').click();
-                    };
-                }
-                
-                const chatAiIconSelectBtn = document.getElementById('chat-ai-icon-select');
-                if (chatAiIconSelectBtn) {
-                    chatAiIconSelectBtn.onclick = () => {
-                        document.getElementById('chat-ai-icon').click();
-                    };
-                }
-                
-                // ファイル入力のイベントハンドラー
-                const chatBackgroundInput = document.getElementById('chat-background-image');
-                if (chatBackgroundInput) {
-                    chatBackgroundInput.onchange = (e) => this.handleFileUpload(e, 'background');
-                }
-                
-                const chatAiIconInput = document.getElementById('chat-ai-icon');
-                if (chatAiIconInput) {
-                    chatAiIconInput.onchange = (e) => this.handleFileUpload(e, 'icon');
-                }
-                
-                // 削除ボタンのイベントハンドラー
-                const chatBackgroundRemove = document.getElementById('chat-background-remove');
-                if (chatBackgroundRemove) {
-                    chatBackgroundRemove.onclick = () => this.removeAsset('background');
-                }
-                
-                const chatAiIconRemove = document.getElementById('chat-ai-icon-remove');
-                if (chatAiIconRemove) {
-                    chatAiIconRemove.onclick = () => this.removeAsset('icon');
-                }
-            },
-            
-            handleFileUpload(event, type) {
-                const file = event.target.files[0];
-                if (!file) return;
-                
-                if (file.size > 10 * 1024 * 1024) {
-                    errorHandler.notifyOnly('ファイルサイズが10MBを超えています。10MB以下のファイルを選択してください。');
-                    return;
-                }
-                if (!file.type.startsWith('image/')) {
-                    errorHandler.notifyOnly('画像ファイルを選択してください。');
-                    return;
-                }
-                
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    const arrayBuffer = event.target.result;
-                    if (type === 'background') {
-                        state.modalTemp.backgroundImageBlob = arrayBuffer;
-                    } else {
-                        state.modalTemp.aiIconBlob = arrayBuffer;
-                    }
-                    this.updatePreviews();
-                };
-                reader.readAsArrayBuffer(file);
-            },
-            
-            removeAsset(type) {
-                if (type === 'background') {
-                    state.modalTemp.backgroundImageBlob = null;
-                    if (state.tempBgUrl && !uiUtils.isIOSSafari()) {
-                        URL.revokeObjectURL(state.tempBgUrl);
-                        state.tempBgUrl = null;
-                    }
-                } else {
-                    state.modalTemp.aiIconBlob = null;
-                    if (state.tempIconUrl && !uiUtils.isIOSSafari()) {
-                        URL.revokeObjectURL(state.tempIconUrl);
-                        state.tempIconUrl = null;
+                    if (chatBackgroundRemove) {
+                        chatBackgroundRemove.style.display = 'none';
                     }
                 }
-                this.updatePreviews();
+                
+                // テーマ設定を読み込み
+                const chatThemeSelect = document.getElementById('chat-theme-select');
+                if (chatThemeSelect) {
+                    // 現在のチャットのテーマを設定（なければ空文字列）
+                    chatThemeSelect.value = state.currentChatTheme || '';
+                }
+                
+                // モーダルを表示
+                modal.style.display = 'flex';
+                
+                // イベントハンドラーを設定
+                setupEventHandlers();
+                
             },
-            
+        
             hide() {
                 const modal = document.getElementById('chat-settings-modal');
                 if (modal) {
@@ -17894,6 +17843,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             },
             
             async save() {
+                // Safari Blob エラー対策: 保存前に状態を保護
+                const preservedState = {
+                    aiName: state.settings.aiName,
+                    aiIconBlob: state.settings.aiIconBlob,
+                    backgroundImageBlob: state.settings.backgroundImageBlob,
+                    aiIconUrl: state.aiIconUrl,
+                    backgroundImageUrl: state.backgroundImageUrl,
+                    assetDirty: {...state.assetDirty},
+                    chatSystemPrompt: state.chatSystemPrompt
+                };
+                
                 try {
                     // AI名を更新
                     const chatAiNameInput = document.getElementById('chat-ai-name');
@@ -17907,173 +17867,334 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // テーマを更新
                     if (selectedTheme) {
                         state.currentChatTheme = selectedTheme;
+                        // 即座にテーマを適用
                         uiUtils.applyTheme(selectedTheme);
                         uiUtils.applySidePanelSettingsToUI();
                     } else {
                         state.currentChatTheme = null;
+                        // デフォルトテーマを適用
                         uiUtils.applyTheme(state.settings.theme);
                         uiUtils.applySidePanelSettingsToUI();
                     }
                     
-                    // チャット固有のアセット情報を保存
-                    const chatId = state.currentChatId || "pending";
-                    const chatAssets = state.chatAssets.get(chatId) || {};
+                    // 現在のチャットのアセット情報を取得
+                    // 新規チャットの場合は"pending"から取得
+                    const currentChatAssets = state.currentChatId ? 
+                        state.chatAssets.get(state.currentChatId) : 
+                        state.chatAssets.get("pending");
                     
-                    // AI名を設定
-                    chatAssets.aiName = aiName;
+                    // AI名が変更された場合はdirtyフラグを設定
+                    if (!currentChatAssets || currentChatAssets.aiName !== aiName) {
+                        state.assetDirty.aiName = true;
+                    }
                     
-                    // AIアイコンを処理
-                    if (state.modalTemp.aiIconBlob !== undefined) {
-                        if (state.modalTemp.aiIconBlob) {
-                            chatAssets.aiIconBlob = state.modalTemp.aiIconBlob;
+                    // 重要: state.settingsは更新せず、現在のチャット用として保持
+                    // AI名入力フィールドを更新
+                    const aiNameInput = document.getElementById('ai-name-input');
+                    if (aiNameInput) {
+                        aiNameInput.value = aiName;
+                    }
+                    
+                    // システムプロンプトは読み取り専用なので更新しない
+                    
+                    // チャットを保存（設定を反映）
+                    if (state.currentChatId && state.currentMessages && state.currentMessages.length > 0) {
+                        try {
+                            // 現在のチャットのアセット情報を取得または作成
+                            const currentAssets = state.chatAssets.get(state.currentChatId) || {
+                                aiName: 'AI',
+                                aiIconBlob: null,
+                                backgroundImageBlob: null
+                            };
                             
-                            try {
-                                const blob = convertArrayBufferToBlob(state.modalTemp.aiIconBlob);
-                                if (blob && blob.size > 0) {
-                                    const newUrl = URL.createObjectURL(blob);
-                                    if (state.aiIconUrl && state.aiIconUrl !== newUrl && !uiUtils.isIOSSafari()) {
-                                        URL.revokeObjectURL(state.aiIconUrl);
+                            // chatAssetsマップを更新（iOS対応でArrayBufferに変換）
+                            const assetData = {
+                                aiName: aiName,  // 上で取得した新しいAI名を使用
+                                aiIconBlob: currentAssets.aiIconBlob,  // 既存のアイコンを保持
+                                backgroundImageBlob: currentAssets.backgroundImageBlob,  // 既存の背景を保持
+                                aiIconUrl: currentAssets.aiIconUrl,  // 既存のURLを保持
+                                backgroundImageUrl: currentAssets.backgroundImageUrl  // 既存のURLを保持
+                            };
+                            
+                            // dirtyフラグがtrueの場合のみ更新
+                            
+                            // アイコンが変更された場合の処理
+                            if (state.assetDirty.aiIcon && state.modalTemp?.aiIconBlob !== undefined) {
+                                // 既存のアイコンURLをクリーンアップ
+                                if (assetData.aiIconUrl && !uiUtils.isIOSSafari()) {
+                                    URL.revokeObjectURL(assetData.aiIconUrl);
+                                }
+                                
+                                if (state.modalTemp.aiIconBlob === null) {
+                                    // 削除された場合
+                                    assetData.aiIconBlob = null;
+                                    assetData.aiIconUrl = null;
+                                    state.aiIconUrl = null;
+                                } else if (state.modalTemp.aiIconBlob instanceof Blob) {
+                                    // ArrayBufferに変換して保存
+                                    assetData.aiIconBlob = await state.modalTemp.aiIconBlob.arrayBuffer();
+                                    // 新しいURLを作成
+                                    try {
+                                        const newUrl = URL.createObjectURL(state.modalTemp.aiIconBlob);
+                                        assetData.aiIconUrl = newUrl;
+                                        state.aiIconUrl = newUrl;
+                                    } catch (e) {
+                                        console.warn('Failed to create icon URL:', e);
+                                        assetData.aiIconUrl = null;
+                                        state.aiIconUrl = null;
                                     }
-                                    chatAssets.aiIconUrl = newUrl;
-                                    state.aiIconUrl = newUrl;
                                 } else {
-                                    chatAssets.aiIconUrl = null;
+                                    assetData.aiIconBlob = state.modalTemp.aiIconBlob;
+                                }
+                            }
+                            
+                            // 背景画像が変更された場合の処理
+                            if (state.assetDirty.bgImage && state.modalTemp?.backgroundImageBlob !== undefined) {
+                                // 既存の背景URLをクリーンアップ
+                                if (assetData.backgroundImageUrl && !uiUtils.isIOSSafari()) {
+                                    URL.revokeObjectURL(assetData.backgroundImageUrl);
+                                }
+                                
+                                if (state.modalTemp.backgroundImageBlob === null) {
+                                    // 削除された場合
+                                    assetData.backgroundImageBlob = null;
+                                    assetData.backgroundImageUrl = null;
+                                    state.backgroundImageUrl = null;
+                                } else if (state.modalTemp.backgroundImageBlob instanceof Blob) {
+                                    // ArrayBufferに変換して保存
+                                    assetData.backgroundImageBlob = await state.modalTemp.backgroundImageBlob.arrayBuffer();
+                                    // 新しいURLを作成
+                                    try {
+                                        const newUrl = URL.createObjectURL(state.modalTemp.backgroundImageBlob);
+                                        assetData.backgroundImageUrl = newUrl;
+                                        state.backgroundImageUrl = newUrl;
+                                    } catch (e) {
+                                        console.warn('Failed to create background URL:', e);
+                                        assetData.backgroundImageUrl = null;
+                                        state.backgroundImageUrl = null;
+                                    }
+                                } else {
+                                    assetData.backgroundImageBlob = state.modalTemp.backgroundImageBlob;
+                                }
+                            }
+                            
+                            state.chatAssets.set(state.currentChatId, assetData);
+                            
+                            await dbUtils.saveChat();
+                            
+                            // 保存後にdirtyフラグをリセット
+                            state.assetDirty.aiIcon = false;
+                            state.assetDirty.bgImage = false;
+                            state.assetDirty.aiName = false;
+                            
+                            // モーダル用の一時変数をクリア
+                            state.modalTemp = null;
+                        } catch (saveError) {
+                            console.error('チャット保存中のエラー:', saveError);
+                            
+                            // Safari Blob エラー対策: エラー時に状態を復元
+                            state.settings.aiName = preservedState.aiName;
+                            state.settings.aiIconBlob = preservedState.aiIconBlob;
+                            state.settings.backgroundImageBlob = preservedState.backgroundImageBlob;
+                            state.aiIconUrl = preservedState.aiIconUrl;
+                            state.backgroundImageUrl = preservedState.backgroundImageUrl;
+                            state.assetDirty = preservedState.assetDirty;
+                            state.chatSystemPrompt = preservedState.chatSystemPrompt;
+                            
+                            // エラーが発生してもUIの更新は続行
+                        }
+                    } else if (!state.currentChatId && state.currentMessages && state.currentMessages.length > 0) {
+                        // 新規チャットでまだIDがない場合は"pending"に保存
+                        const pendingAssets = state.chatAssets.get("pending") || {
+                            aiName: 'AI',
+                            aiIconBlob: null,
+                            backgroundImageBlob: null,
+                            aiIconUrl: null,
+                            backgroundImageUrl: null
+                        };
+                        
+                        // chatAssetsマップを更新
+                        const assetData = {
+                            aiName: aiName,
+                            aiIconBlob: pendingAssets.aiIconBlob,
+                            backgroundImageBlob: pendingAssets.backgroundImageBlob,
+                            aiIconUrl: pendingAssets.aiIconUrl,
+                            backgroundImageUrl: pendingAssets.backgroundImageUrl
+                        };
+                        
+                        // アイコンが変更された場合の処理
+                        if (state.assetDirty.aiIcon && state.modalTemp?.aiIconBlob !== undefined) {
+                            if (assetData.aiIconUrl && !uiUtils.isIOSSafari()) {
+                                URL.revokeObjectURL(assetData.aiIconUrl);
+                            }
+                            
+                            if (state.modalTemp.aiIconBlob === null) {
+                                assetData.aiIconBlob = null;
+                                assetData.aiIconUrl = null;
+                                state.aiIconUrl = null;
+                            } else if (state.modalTemp.aiIconBlob instanceof Blob) {
+                                assetData.aiIconBlob = await state.modalTemp.aiIconBlob.arrayBuffer();
+                                try {
+                                    const newUrl = URL.createObjectURL(state.modalTemp.aiIconBlob);
+                                    assetData.aiIconUrl = newUrl;
+                                    state.aiIconUrl = newUrl;
+                                } catch (e) {
+                                    console.warn('Failed to create icon URL:', e);
+                                    assetData.aiIconUrl = null;
                                     state.aiIconUrl = null;
                                 }
-                            } catch (e) {
-                                errorHandler.silent(e, 'アイコンURL作成');
-                                chatAssets.aiIconUrl = null;
-                                state.aiIconUrl = null;
+                            } else {
+                                assetData.aiIconBlob = state.modalTemp.aiIconBlob;
                             }
-                        } else {
-                            chatAssets.aiIconBlob = null;
-                            chatAssets.aiIconUrl = null;
-                            state.aiIconUrl = null;
                         }
-                    }
-                    
-                    // 背景画像を処理
-                    if (state.modalTemp.backgroundImageBlob !== undefined) {
-                        if (state.modalTemp.backgroundImageBlob) {
-                            chatAssets.backgroundImageBlob = state.modalTemp.backgroundImageBlob;
+                        
+                        // 背景画像が変更された場合の処理
+                        if (state.assetDirty.bgImage && state.modalTemp?.backgroundImageBlob !== undefined) {
+                            if (assetData.backgroundImageUrl && !uiUtils.isIOSSafari()) {
+                                URL.revokeObjectURL(assetData.backgroundImageUrl);
+                            }
                             
-                            try {
-                                const blob = convertArrayBufferToBlob(state.modalTemp.backgroundImageBlob);
-                                if (blob && blob.size > 0) {
-                                    const newUrl = URL.createObjectURL(blob);
-                                    if (state.backgroundImageUrl && state.backgroundImageUrl !== newUrl && !uiUtils.isIOSSafari()) {
-                                        URL.revokeObjectURL(state.backgroundImageUrl);
-                                    }
-                                    chatAssets.backgroundImageUrl = newUrl;
-                                    state.backgroundImageUrl = newUrl;
-                                    document.documentElement.style.setProperty('--chat-background-image', `url(${newUrl})`);
-                                } else {
-                                    chatAssets.backgroundImageUrl = null;
-                                    state.backgroundImageUrl = null;
-                                    document.documentElement.style.setProperty('--chat-background-image', 'none');
-                                }
-                            } catch (e) {
-                                errorHandler.silent(e, '背景URL作成');
-                                chatAssets.backgroundImageUrl = null;
+                            if (state.modalTemp.backgroundImageBlob === null) {
+                                assetData.backgroundImageBlob = null;
+                                assetData.backgroundImageUrl = null;
                                 state.backgroundImageUrl = null;
-                                document.documentElement.style.setProperty('--chat-background-image', 'none');
+                            } else if (state.modalTemp.backgroundImageBlob instanceof Blob) {
+                                assetData.backgroundImageBlob = await state.modalTemp.backgroundImageBlob.arrayBuffer();
+                                try {
+                                    const newUrl = URL.createObjectURL(state.modalTemp.backgroundImageBlob);
+                                    assetData.backgroundImageUrl = newUrl;
+                                    state.backgroundImageUrl = newUrl;
+                                } catch (e) {
+                                    console.warn('Failed to create background URL:', e);
+                                    assetData.backgroundImageUrl = null;
+                                    state.backgroundImageUrl = null;
+                                }
+                            } else {
+                                assetData.backgroundImageBlob = state.modalTemp.backgroundImageBlob;
                             }
-                        } else {
-                            chatAssets.backgroundImageBlob = null;
-                            chatAssets.backgroundImageUrl = null;
-                            state.backgroundImageUrl = null;
-                            document.documentElement.style.setProperty('--chat-background-image', 'none');
                         }
+                        
+                        state.chatAssets.set("pending", assetData);
+                        
+                        // 新規チャットの場合もdirtyフラグをリセット
+                        state.assetDirty.aiIcon = false;
+                        state.assetDirty.bgImage = false;
+                        state.assetDirty.aiName = false;
+                        
+                        // モーダル用の一時変数をクリア
+                        state.modalTemp = null;
                     }
                     
-                    // チャットアセット情報を保存
-                    state.chatAssets.set(chatId, chatAssets);
-                    
-                    // チャットを保存
-                    await dbUtils.saveChat();
-                    
-                    // UI更新
-                    uiUtils.updateAIName(aiName);
-                    if (chatAssets.aiIconBlob && state.aiIconUrl) {
-                        document.querySelectorAll('.message.model .message-icon img').forEach(img => {
-                            img.src = state.aiIconUrl;
-                        });
+                    // メッセージを再描画してAI名とアイコンを反映
+                    if (uiUtils && uiUtils.renderChatMessages) {
+                        uiUtils.renderChatMessages();
                     }
                     
-                    // モーダルを閉じる
+                    // アイコン表示の更新
+                    if (uiUtils && uiUtils.updateIconSettingsUI) {
+                        uiUtils.updateIconSettingsUI();
+                    }
+                    
+                    // 背景画像表示の更新
+                    if (uiUtils && uiUtils.updateBackgroundSettingsUI) {
+                        uiUtils.updateBackgroundSettingsUI();
+                    }
+                    
                     this.hide();
                     
+                    // 成功メッセージを表示
+                    if (uiUtils && uiUtils.showCustomAlert) {
+                        await uiUtils.showCustomAlert('チャット設定を保存しました。');
+                    }
+                    
                 } catch (error) {
-                    await errorHandler.logAndNotify(error, '設定の保存中にエラーが発生しました。', 'チャット設定保存');
-                }
-            }
-        };
-
-        // uiUtilsオブジェクトを作成
-        const uiUtils = {
-            async showScreen(screenName) {
-                if (screenName === 'home') {
-                    elements.homeScreen.classList.add('active');
-                    elements.chatScreen.classList.remove('active');
-                    elements.historyScreen.classList.remove('active');
-                    elements.promptSetupScreen.classList.remove('active');
-                    elements.settingsScreen.classList.remove('active');
-                    state.currentScreen = 'home';
-                } else if (screenName === 'chat') {
-                    elements.homeScreen.classList.remove('active');
-                    elements.chatScreen.classList.add('active');
-                    elements.historyScreen.classList.remove('active');
-                    elements.promptSetupScreen.classList.remove('active');
-                    elements.settingsScreen.classList.remove('active');
-                    state.currentScreen = 'chat';
-                } else if (screenName === 'history') {
-                    elements.homeScreen.classList.remove('active');
-                    elements.chatScreen.classList.remove('active');
-                    elements.historyScreen.classList.add('active');
-                    elements.promptSetupScreen.classList.remove('active');
-                    elements.settingsScreen.classList.remove('active');
-                    state.currentScreen = 'history';
-                } else if (screenName === 'settings') {
-                    elements.homeScreen.classList.remove('active');
-                    elements.chatScreen.classList.remove('active');
-                    elements.historyScreen.classList.remove('active');
-                    elements.promptSetupScreen.classList.remove('active');
-                    elements.settingsScreen.classList.add('active');
-                    state.currentScreen = 'settings';
-                } else if (screenName === 'prompt-setup') {
-                    elements.homeScreen.classList.remove('active');
-                    elements.chatScreen.classList.remove('active');
-                    elements.historyScreen.classList.remove('active');
-                    elements.promptSetupScreen.classList.add('active');
-                    elements.settingsScreen.classList.remove('active');
-                    state.currentScreen = 'prompt-setup';
+                    console.error('チャット設定の保存に失敗しました:', error);
+                    
+                    // Safari Blob エラー対策: エラー時に状態を復元
+                    state.settings.aiName = preservedState.aiName;
+                    state.settings.aiIconBlob = preservedState.aiIconBlob;
+                    state.settings.backgroundImageBlob = preservedState.backgroundImageBlob;
+                    state.aiIconUrl = preservedState.aiIconUrl;
+                    state.backgroundImageUrl = preservedState.backgroundImageUrl;
+                    state.assetDirty = preservedState.assetDirty;
+                    state.chatSystemPrompt = preservedState.chatSystemPrompt;
+                    
+                    if (uiUtils && uiUtils.showCustomAlert) {
+                        await uiUtils.showCustomAlert('チャット設定の保存に失敗しました。');
+                    }
                 }
             },
-
-            async showCustomAlert(message) {
-                const alertDialog = document.getElementById('alertDialog');
-                const alertMessage = document.getElementById('alertMessage');
-                const alertOk = document.getElementById('alertOk');
+        
+            removeBackground() {
+                // モーダル用の一時変数をクリア
+                if (!state.modalTemp) {
+                    state.modalTemp = {};
+                }
+                state.modalTemp.backgroundImageBlob = null;
+                // dirtyフラグを設定
+                state.assetDirty.bgImage = true;
+                if (state.backgroundImageUrl && !uiUtils.isIOSSafari()) {
+                    URL.revokeObjectURL(state.backgroundImageUrl);
+                }
+                state.backgroundImageUrl = null;
+                document.documentElement.style.setProperty('--chat-background-image', 'none');
                 
-                if (alertDialog && alertMessage && alertOk) {
-                    alertMessage.textContent = message;
-                    alertDialog.style.display = 'flex';
-                    
-                    return new Promise((resolve) => {
-                        const handleClick = () => {
-                            alertDialog.style.display = 'none';
-                            alertOk.removeEventListener('click', handleClick);
-                            resolve();
-                        };
-                        alertOk.addEventListener('click', handleClick);
-                    });
+                const chatBackgroundPreview = document.getElementById('chat-background-preview');
+                const chatBackgroundRemove = document.getElementById('chat-background-remove');
+                const chatBackgroundImageInput = document.getElementById('chat-background-image');
+                
+                if (chatBackgroundPreview) {
+                    chatBackgroundPreview.style.display = 'none';
+                }
+                if (chatBackgroundRemove) {
+                    chatBackgroundRemove.style.display = 'none';
+                }
+                if (chatBackgroundImageInput) {
+                    chatBackgroundImageInput.value = '';
+                }
+            },
+        
+            removeIcon() {
+                // モーダル用の一時変数をクリア
+                if (!state.modalTemp) {
+                    state.modalTemp = {};
+                }
+                state.modalTemp.aiIconBlob = null;
+                // dirtyフラグを設定
+                state.assetDirty.aiIcon = true;
+                if (state.aiIconUrl && !uiUtils.isIOSSafari()) {
+                    URL.revokeObjectURL(state.aiIconUrl);
+                }
+                state.aiIconUrl = null;
+                const chatAiIconPreview = document.getElementById('chat-ai-icon-preview');
+                const chatAiIconRemove = document.getElementById('chat-ai-icon-remove');
+                const chatAiIconInput = document.getElementById('chat-ai-icon');
+                
+                if (chatAiIconPreview) {
+                    chatAiIconPreview.style.display = 'none';
+                }
+                if (chatAiIconRemove) {
+                    chatAiIconRemove.style.display = 'none';
+                }
+                if (chatAiIconInput) {
+                    chatAiIconInput.value = '';
+                }
+                
+                // AIアイコンサムネイルを更新
+                const aiIconThumbnail = document.getElementById('ai-icon-thumbnail');
+                if (aiIconThumbnail) {
+                    aiIconThumbnail.style.display = 'none';
+                    aiIconThumbnail.classList.add('hidden');
+                }
+                const deleteAiIconBtn = document.getElementById('delete-ai-icon-btn');
+                if (deleteAiIconBtn) {
+                    deleteAiIconBtn.classList.add('hidden');
                 }
             }
-        };
+    };
     
         // appLogicをグローバルスコープで利用可能にする
         window.appLogic = appLogic;
-        window.uiUtils = uiUtils;
     
         // イベントリスナー設定（null チェック付き）
         const chatSettingsBtn = document.getElementById('chat-settings-btn');
@@ -18128,140 +18249,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 chatSettingsModal.hide();
             }
         });
-        
-        // 自動保存設定の変更をリッスン
-        const autoSaveSettingsToggle = document.getElementById('auto-save-settings-toggle');
-        if (autoSaveSettingsToggle) {
-            autoSaveSettingsToggle.addEventListener('change', function() {
-                state.settings.autoSaveSettings = this.checked;
-                
-                if (state.settings.autoSaveSettings) {
-                    appLogic.saveSettings(false);
-                } else {
-                    localStorage.setItem('settings', JSON.stringify(state.settings));
-                }
-            });
-        }
     
-        // startup時のメソッド
-        const startup = async function() {
-            try {
-                // 自動保存設定をロード
-                const autoSaveSettingsToggle = document.getElementById('auto-save-settings-toggle');
-                if (autoSaveSettingsToggle) {
-                    autoSaveSettingsToggle.checked = state.settings.autoSaveSettings;
-                }
+        window.chatSettingsModal = chatSettingsModal;
+    }
     
-                await appLogic.loadSettings();
-                await appLogic.loadHistory();
-                appLogic.applySettings();
-    
-                if (window.location.hash === '#chat') {
-                    await uiUtils.showScreen('chat');
-                } else if (window.location.hash === '#settings') {
-                    await uiUtils.showScreen('settings');
-                } else if (window.location.hash === '#history') {
-                    await uiUtils.showScreen('history');
-                } else {
-                    await uiUtils.showScreen('home');
-                }
-    
-                document.getElementById('app-version').textContent = state.appVersion;
-    
-            } catch (error) {
-                await errorHandler.logAndNotify(error, 'アプリケーションの初期化中にエラーが発生しました。', '初期化');
-            }
-        };
-    
-    
-        const onLoad = async function() {
-            await startup();
-        };
-    
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', onLoad);
-        } else {
-            onLoad();
-        }
-    
-        </script>
-    
-    <!-- モーダルダイアログHTML -->
-    <div id="promptDialog" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>プロンプト入力</h3>
-                <button class="modal-close-btn" onclick="document.getElementById('promptDialog').style.display='none'">×</button>
-            </div>
-            <div class="modal-body">
-                <textarea id="promptInput" placeholder="プロンプトを入力してください..." rows="8" style="width: 100%; resize: vertical;"></textarea>
-            </div>
-            <div class="modal-footer">
-                <button onclick="if (document.getElementById('promptInput').value.trim()) { appLogic.sendMessage(document.getElementById('promptInput').value); document.getElementById('promptDialog').style.display='none'; document.getElementById('promptInput').value=''; }" class="btn-primary">送信</button>
-                <button onclick="document.getElementById('promptDialog').style.display='none'; document.getElementById('promptInput').value='';" class="btn-secondary">キャンセル</button>
-            </div>
-        </div>
-    </div>
-    
-    <div id="confirmDialog" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="confirmTitle">確認</h3>
-            </div>
-            <div class="modal-body">
-                <p id="confirmMessage">実行してもよろしいですか？</p>
-            </div>
-            <div class="modal-footer">
-                <button id="confirmOk" class="btn-primary">はい</button>
-                <button id="confirmCancel" class="btn-secondary">いいえ</button>
-            </div>
-        </div>
-    </div>
-    
-    <div id="alertDialog" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3 id="alertTitle">お知らせ</h3>
-            </div>
-            <div class="modal-body">
-                <p id="alertMessage">メッセージがここに表示されます。</p>
-            </div>
-            <div class="modal-footer">
-                <button id="alertOk" class="btn-primary">OK</button>
-            </div>
-        </div>
-    </div>
-    
-    <div id="fileUploadDialog" class="modal-overlay" style="display: none;">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>ファイル添付</h3>
-                <button class="modal-close-btn" onclick="uiUtils.closeFileUploadDialog()">×</button>
-            </div>
-            <div class="modal-body">
-                <div id="selected-files-list" class="selected-files-list"></div>
-                <button id="select-files-btn" class="btn-primary">ファイルを選択</button>
-                <input type="file" id="file-input" style="display: none;" multiple accept="image/*,text/*,.pdf">
-            </div>
-            <div class="modal-footer">
-                <button id="confirm-attach-btn" class="btn-primary">添付</button>
-                <button id="cancel-attach-btn" class="btn-secondary">キャンセル</button>
-            </div>
-        </div>
-    </div>
-    
-    <div id="imagePreviewDialog" class="modal-overlay" style="display: none;">
-        <div class="modal-content image-preview-modal">
-            <div class="modal-header">
-                <h3>画像プレビュー</h3>
-                <button class="modal-close-btn" onclick="document.getElementById('imagePreviewDialog').style.display='none'">×</button>
-            </div>
-            <div class="modal-body">
-                <img id="previewImage" style="max-width: 100%; max-height: 70vh;" alt="プレビュー画像">
-            </div>
-        </div>
-    </div>
+    // DOMContentLoadedイベントでチャット設定モーダルを初期化
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeChatSettingsModal);
+    } else {
+        initializeChatSettingsModal();
+    }
+</script>
 
+<!-- チャット設定モーダル -->
 <div id="chat-settings-modal" class="modal-overlay" style="display: none;">
     <div class="modal-content chat-settings-modal">
         <div class="modal-header">
