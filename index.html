@@ -18008,9 +18008,72 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             }
         };
+
+        // uiUtilsオブジェクトを作成
+        const uiUtils = {
+            async showScreen(screenName) {
+                if (screenName === 'home') {
+                    elements.homeScreen.classList.add('active');
+                    elements.chatScreen.classList.remove('active');
+                    elements.historyScreen.classList.remove('active');
+                    elements.promptSetupScreen.classList.remove('active');
+                    elements.settingsScreen.classList.remove('active');
+                    state.currentScreen = 'home';
+                } else if (screenName === 'chat') {
+                    elements.homeScreen.classList.remove('active');
+                    elements.chatScreen.classList.add('active');
+                    elements.historyScreen.classList.remove('active');
+                    elements.promptSetupScreen.classList.remove('active');
+                    elements.settingsScreen.classList.remove('active');
+                    state.currentScreen = 'chat';
+                } else if (screenName === 'history') {
+                    elements.homeScreen.classList.remove('active');
+                    elements.chatScreen.classList.remove('active');
+                    elements.historyScreen.classList.add('active');
+                    elements.promptSetupScreen.classList.remove('active');
+                    elements.settingsScreen.classList.remove('active');
+                    state.currentScreen = 'history';
+                } else if (screenName === 'settings') {
+                    elements.homeScreen.classList.remove('active');
+                    elements.chatScreen.classList.remove('active');
+                    elements.historyScreen.classList.remove('active');
+                    elements.promptSetupScreen.classList.remove('active');
+                    elements.settingsScreen.classList.add('active');
+                    state.currentScreen = 'settings';
+                } else if (screenName === 'prompt-setup') {
+                    elements.homeScreen.classList.remove('active');
+                    elements.chatScreen.classList.remove('active');
+                    elements.historyScreen.classList.remove('active');
+                    elements.promptSetupScreen.classList.add('active');
+                    elements.settingsScreen.classList.remove('active');
+                    state.currentScreen = 'prompt-setup';
+                }
+            },
+
+            async showCustomAlert(message) {
+                const alertDialog = document.getElementById('alertDialog');
+                const alertMessage = document.getElementById('alertMessage');
+                const alertOk = document.getElementById('alertOk');
+                
+                if (alertDialog && alertMessage && alertOk) {
+                    alertMessage.textContent = message;
+                    alertDialog.style.display = 'flex';
+                    
+                    return new Promise((resolve) => {
+                        const handleClick = () => {
+                            alertDialog.style.display = 'none';
+                            alertOk.removeEventListener('click', handleClick);
+                            resolve();
+                        };
+                        alertOk.addEventListener('click', handleClick);
+                    });
+                }
+            }
+        };
     
         // appLogicをグローバルスコープで利用可能にする
         window.appLogic = appLogic;
+        window.uiUtils = uiUtils;
     
         // イベントリスナー設定（null チェック付き）
         const chatSettingsBtn = document.getElementById('chat-settings-btn');
@@ -18094,13 +18157,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                 appLogic.applySettings();
     
                 if (window.location.hash === '#chat') {
-                    screenUtils.goToChat();
+                    await uiUtils.showScreen('chat');
                 } else if (window.location.hash === '#settings') {
-                    screenUtils.goToSettings();
+                    await uiUtils.showScreen('settings');
                 } else if (window.location.hash === '#history') {
-                    screenUtils.goToHistory();
+                    await uiUtils.showScreen('history');
                 } else {
-                    screenUtils.goToHome();
+                    await uiUtils.showScreen('home');
                 }
     
                 document.getElementById('app-version').textContent = state.appVersion;
