@@ -10518,10 +10518,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                         elements.homeScreen.classList.remove('fade-out');
                     }
                     
-                    history.replaceState({ screen: 'home' }, '', '#home');
-                    state.currentScreen = 'home';
-                    await uiUtils.showScreen('home');
-                    
                     // IndexedDB使用可能性を検出
                     state.env = state.env || {};
                     state.env.idbUsable = await detectIndexedDbAvailable();
@@ -10531,30 +10527,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                         // アセット保存系UIを無効化する場合はここで実装
                     }
                     
-                    console.log('Home screen shown');
-                    
                     uiUtils.applySettingsToUI();
     
-                    // チャット履歴は読み込むが、画面遷移は後で制御
+                    // 最後に更新したチャットを読み込む、なければホーム画面を表示
                     const chats = await dbUtils.getAllChats(state.settings.historySortOrder);
                     if (chats && chats.length > 0) {
+                        // 最後に更新したチャット（chats[0]）を読み込んでチャット画面を表示
                         await this.loadChat(chats[0].id);
+                        history.replaceState({ screen: 'chat' }, '', '#chat');
+                        state.currentScreen = 'chat';
+                        await uiUtils.showScreen('chat');
+                        console.log('Last updated chat loaded and chat screen shown');
                     } else {
+                        // チャット履歴がない場合はホーム画面を表示
                         this.startNewChat();
+                        history.replaceState({ screen: 'home' }, '', '#home');
+                        state.currentScreen = 'home';
+                        await uiUtils.showScreen('home');
+                        console.log('No chats found, home screen shown');
                     }
                     
                     updateMessageMaxWidthVar();
                     this.updateZoomState();
                     uiUtils.adjustTextareaHeight();
                     uiUtils.setSendingState(false);
-                    
-                    // 最後に再度ホーム画面を確実に表示
-                    setTimeout(() => {
-                        // 状態を強制的にホーム画面に設定
-                        state.currentScreen = 'home';
-                        uiUtils.showScreen('home');
-                        console.log('Final home screen display');
-                    }, 200);
                     
                     if (state.settings.autoScrollOnNewMessage) {
                         uiUtils.scrollToBottom();
