@@ -13876,6 +13876,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }),
                     createdAt: chat.createdAt,
                     updatedAt: chat.updatedAt,
+                    ...(chat.characterName && { characterName: chat.characterName }),
+                    ...(chat.chatSystemPrompt && { chatSystemPrompt: chat.chatSystemPrompt }),
                     ...(state.settings.persistMessageCollapseState && chat.collapsedStates && { collapsedStates: chat.collapsedStates })
                 }));
 
@@ -13961,6 +13963,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                             createdAt: typeof chatData.createdAt === 'number' ? chatData.createdAt : importTimestamp,
                             updatedAt: typeof chatData.updatedAt === 'number' ? chatData.updatedAt : importTimestamp,
                         };
+                        if (chatData.characterName) {
+                            newChat.characterName = chatData.characterName;
+                        }
+                        if (chatData.chatSystemPrompt) {
+                            newChat.chatSystemPrompt = chatData.chatSystemPrompt;
+                        }
                         if (state.settings.persistMessageCollapseState && chatData.collapsedStates) {
                             newChat.collapsedStates = { ...chatData.collapsedStates };
                         }
