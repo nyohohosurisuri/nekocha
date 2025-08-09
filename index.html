@@ -12296,9 +12296,32 @@ document.addEventListener('DOMContentLoaded', async () => {
                  }
 
                  let exportText = '';
+                 
+                 // システムプロンプトをエクスポートに追加
+                 let systemPrompt = null;
+                 
+                 // チャット固有のシステムプロンプトをチェック
+                 if (chat.chatSystemPrompt && chat.chatSystemPrompt.trim()) {
+                     systemPrompt = chat.chatSystemPrompt.trim();
+                 } else if (chat.messages) {
+                     // メッセージ内からシステムプロンプトを探す
+                     const systemMessage = chat.messages.find(m => m.role === 'system');
+                     if (systemMessage && systemMessage.content) {
+                         systemPrompt = systemMessage.content;
+                     }
+                 }
+                 
+                 // システムプロンプトがある場合は最初に追加
+                 if (systemPrompt) {
+                     exportText += `<|#|system|#|>\n${systemPrompt}\n<|#|/system|#|>\n\n`;
+                 }
+                 
                  if (chat.messages) {
                      chat.messages.forEach(msg => {
-                         if (msg.role === 'user' || msg.role === 'model' || msg.role === 'character' || msg.role === 'system') {
+                         // システムメッセージは既に上で処理したのでスキップ
+                         if (msg.role === 'system') return;
+                         
+                         if (msg.role === 'user' || msg.role === 'model' || msg.role === 'character') {
                              let attributes = '';
                              if (msg.role === 'model') {
                                  if (msg.isCascaded) attributes += ' isCascaded';
@@ -13737,17 +13760,24 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const characterMessage = importedMessages.find(m => m.role === 'character');
                     const characterName = characterMessage ? characterMessage.content : null;
                     
-                    // システムプロンプトを設定に反映
+                    // システムプロンプトを取得してチャット固有のプロンプトとして設定
                     const systemMessage = importedMessages.find(m => m.role === 'system');
+                    let chatSystemPrompt = null;
                     if (systemMessage) {
-                        state.settings.commonSystemPrompt = systemMessage.content;
+                        chatSystemPrompt = systemMessage.content;
+                        // メッセージリストからシステムメッセージを除外（重複を避けるため）
+                        const messageIndex = importedMessages.indexOf(systemMessage);
+                        if (messageIndex > -1) {
+                            importedMessages.splice(messageIndex, 1);
+                        }
                     }
                     
                     const newChatData = {
                         messages: importedMessages,
                         updatedAt: Date.now(), createdAt: Date.now(),
                         title: newTitle.substring(0, 100),
-                        characterName: characterName
+                        characterName: characterName,
+                        chatSystemPrompt: chatSystemPrompt
                     };
                     const newChatId = await new Promise((resolve, reject) => {
                         const store = dbUtils._getStore(CHATS_STORE, 'readwrite');
