@@ -10500,9 +10500,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // イベントリスナーを最初に設定
                     this.setupEventListeners();
                     
-                    // 初期画面をホーム画面に設定（最優先で実行）
-                    
-                    // 全画面を非アクティブにしてからホーム画面を表示
+                    // 全画面を非アクティブにする
                     const allScreens = [elements.homeScreen, elements.chatScreen, elements.historyScreen, elements.promptSetupScreen, elements.settingsScreen];
                     allScreens.forEach(screen => {
                         if (screen) {
@@ -10511,12 +10509,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                             screen.style.transform = 'translateX(0) translateY(0)';
                         }
                     });
-                    
-                    // ホーム画面をアクティブにする
-                    if (elements.homeScreen) {
-                        elements.homeScreen.classList.add('active', 'fade-in');
-                        elements.homeScreen.classList.remove('fade-out');
-                    }
                     
                     // IndexedDB使用可能性を検出
                     state.env = state.env || {};
