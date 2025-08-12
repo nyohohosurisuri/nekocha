@@ -6193,7 +6193,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 enableSwipeNavigation: false,
                 preventZoom: true,
                 minimizeHeader: true,
-                minimizeFooter: true,
+                minimizeFooter: false,
                 showSessionLinkingSettings: false,
                 showChatTitle: true,
                 showNewChatButton: true,
@@ -8753,7 +8753,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                      state.settings.minimizeFooter = state.settings.minimizeHeaderFooter;
                  }
                  elements.minimizeHeaderToggle.checked = state.settings.minimizeHeader ?? true;
-                 elements.minimizeFooterToggle.checked = state.settings.minimizeFooter ?? true;
+                 elements.minimizeFooterToggle.checked = state.settings.minimizeFooter ?? false;
                  elements.showSessionLinkingSettingsToggle.checked = state.settings.showSessionLinkingSettings;
                  if (elements.sessionLinkingSettingsGroup) {
                      elements.sessionLinkingSettingsGroup.classList.toggle('hidden', !state.settings.showSessionLinkingSettings);
@@ -8888,7 +8888,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     delete state.settings.minimizeHeaderFooter;
                 }
                 elements.appContainer.classList.toggle('minimized-header', state.settings.minimizeHeader ?? true);
-                elements.appContainer.classList.toggle('minimized-footer', state.settings.minimizeFooter ?? true);
+                elements.appContainer.classList.toggle('minimized-footer', state.settings.minimizeFooter ?? false);
             },
             applySettingsUIDetailsOpenStates() {
                 const detailsElements = document.querySelectorAll('#settings-screen details[id]');
@@ -14659,7 +14659,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     defaultSettingsCopy.enableSwipeNavigation = false;
                     defaultSettingsCopy.preventZoom = true;
                     defaultSettingsCopy.minimizeHeader = true;
-                    defaultSettingsCopy.minimizeFooter = true;
+                    defaultSettingsCopy.minimizeFooter = false;
                     defaultSettingsCopy.showChatTitle = true;
                     defaultSettingsCopy.showNewChatButton = true;
                     defaultSettingsCopy.showDeleteSessionButton = false;
