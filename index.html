@@ -3031,8 +3031,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             flex-grow: 1;
         }
 
-        .app-container.minimized-ui .app-header,
-        .app-container.minimized-ui #history-screen .app-header {
+        /* ヘッダー最小化 */
+        .app-container.minimized-header .app-header,
+        .app-container.minimized-header #history-screen .app-header {
             padding-top: 0;
             padding-bottom: 0;
             padding-left: 8px;
@@ -3041,56 +3042,57 @@ document.addEventListener('DOMContentLoaded', async () => {
             min-height: 32px;
         }
 
-        .app-container.minimized-ui .app-header h1 {
+        .app-container.minimized-header .app-header h1 {
             font-size: 15px;
         }
 
-        .app-container.minimized-ui .header-button,
-        .app-container.minimized-ui .new-chat-button,
-        .app-container.minimized-ui .app-header .action-button-in-header,
-        .app-container.minimized-ui .header-save-button {
+        .app-container.minimized-header .header-button,
+        .app-container.minimized-header .new-chat-button,
+        .app-container.minimized-header .app-header .action-button-in-header,
+        .app-container.minimized-header .header-save-button {
             padding: 2px 6px;
             font-size: 13px;
             min-width: 28px;
             height: 28px;
         }
 
-        .app-container.minimized-ui .header-button {
+        .app-container.minimized-header .header-button {
             font-size: 16px;
             padding: 2px;
         }
         
-        .app-container.minimized-ui .api-provider-toggle-btn {
+        .app-container.minimized-header .api-provider-toggle-btn {
             font-size: 14px;
             min-width: 28px;
             height: 28px;
         }
 
-        .app-container.minimized-ui .chat-input-area {
+        /* フッター最小化 */
+        .app-container.minimized-footer .chat-input-area {
             padding: 2px 8px;
             gap: 6px;
         }
 
-        .app-container.minimized-ui .chat-input-area textarea {
+        .app-container.minimized-footer .chat-input-area textarea {
             min-height: 32px;
             height: 32px;
             padding: 6px 8px;
             font-size: 13px;
         }
 
-        .app-container.minimized-ui .chat-input-area .footer-action-button,
-        .app-container.minimized-ui .chat-input-area button#send-button {
+        .app-container.minimized-footer .chat-input-area .footer-action-button,
+        .app-container.minimized-footer .chat-input-area button#send-button {
             height: 32px;
             width: 32px;
         }
 
-        .app-container.minimized-ui .chat-input-area .footer-action-button {
+        .app-container.minimized-footer .chat-input-area .footer-action-button {
              font-size: 16px;
         }
-        .app-container.minimized-ui .chat-input-area button#paste-to-input-btn {
+        .app-container.minimized-footer .chat-input-area button#paste-to-input-btn {
             font-size: 14px;
         }
-        .app-container.minimized-ui .chat-input-area button#send-button {
+        .app-container.minimized-footer .chat-input-area button#send-button {
             font-size: 16px;
         }
 
@@ -5156,11 +5158,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                                        ※ 複数のAPIキーを使い分けたい場合に使用。
                                    </p>
                                    <label class="checkbox-label">
-                                       <input type="checkbox" id="minimize-header-footer-toggle">
-                                       ヘッダー/フッターの縦幅を最小化する
+                                       <input type="checkbox" id="minimize-header-toggle">
+                                       ヘッダーの縦幅を最小化する
+                                   </label>
+                                   <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 10px;">
+                                       ※ ヘッダーの縦幅を切り詰め、表示領域を最大化します。画面が小型ないし横長の端末用
+                                   </p>
+                                   <label class="checkbox-label">
+                                       <input type="checkbox" id="minimize-footer-toggle">
+                                       フッターの縦幅を最小化する
                                    </label>
                                    <p style="font-size: 11px; color: var(--text-secondary); margin-top: -5px; margin-bottom: 15px;">
-                                       ※  ヘッダー/フッターの縦幅を切り詰め、表示領域を最大化します。画面が小型ないし横長の端末用
+                                       ※ フッターの縦幅を切り詰め、表示領域を最大化します。画面が小型ないし横長の端末用
                                    </p>
                                    <label class="checkbox-label">
                                        <input type="checkbox" id="show-session-linking-settings-toggle">
@@ -5799,7 +5808,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             enableSessionLinkingCheckbox: document.getElementById('enable-session-linking'),
             swipeNavigationToggle: document.getElementById('swipe-navigation-toggle'),
             preventZoomToggle: document.getElementById('prevent-zoom-toggle'),
-            minimizeHeaderFooterToggle: document.getElementById('minimize-header-footer-toggle'),
+            minimizeHeaderToggle: document.getElementById('minimize-header-toggle'),
+            minimizeFooterToggle: document.getElementById('minimize-footer-toggle'),
             showSessionLinkingSettingsToggle: document.getElementById('show-session-linking-settings-toggle'),
             sessionLinkingSettingsGroup: document.getElementById('settings-group-session-linking'),
             showChatTitleToggle: document.getElementById('show-chat-title-toggle'),
@@ -6182,7 +6192,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 enableSessionLinking: false,
                 enableSwipeNavigation: false,
                 preventZoom: true,
-                minimizeHeaderFooter: true,
+                minimizeHeader: true,
+                minimizeFooter: true,
                 showSessionLinkingSettings: false,
                 showChatTitle: true,
                 showNewChatButton: true,
@@ -8736,7 +8747,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                  elements.thoughtSummaryFontSizeInput.value = state.settings.thoughtSummaryFontSize ?? '';
                  elements.swipeNavigationToggle.checked = state.settings.enableSwipeNavigation;
                  elements.preventZoomToggle.checked = state.settings.preventZoom;
-                 elements.minimizeHeaderFooterToggle.checked = state.settings.minimizeHeaderFooter;
+                 // 後方互換性のため、古い設定から値を継承
+                 if (state.settings.minimizeHeaderFooter !== undefined && state.settings.minimizeHeader === undefined) {
+                     state.settings.minimizeHeader = state.settings.minimizeHeaderFooter;
+                     state.settings.minimizeFooter = state.settings.minimizeHeaderFooter;
+                 }
+                 elements.minimizeHeaderToggle.checked = state.settings.minimizeHeader ?? true;
+                 elements.minimizeFooterToggle.checked = state.settings.minimizeFooter ?? true;
                  elements.showSessionLinkingSettingsToggle.checked = state.settings.showSessionLinkingSettings;
                  if (elements.sessionLinkingSettingsGroup) {
                      elements.sessionLinkingSettingsGroup.classList.toggle('hidden', !state.settings.showSessionLinkingSettings);
@@ -8864,7 +8881,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 this.updateMemoStackHeightSettingsVisibility();
             },
             applyMinimizeUI() {
-                elements.appContainer.classList.toggle('minimized-ui', state.settings.minimizeHeaderFooter);
+                // 後方互換性チェック
+                if (state.settings.minimizeHeaderFooter !== undefined && state.settings.minimizeHeader === undefined) {
+                    state.settings.minimizeHeader = state.settings.minimizeHeaderFooter;
+                    state.settings.minimizeFooter = state.settings.minimizeHeaderFooter;
+                    delete state.settings.minimizeHeaderFooter;
+                }
+                elements.appContainer.classList.toggle('minimized-header', state.settings.minimizeHeader ?? true);
+                elements.appContainer.classList.toggle('minimized-footer', state.settings.minimizeFooter ?? true);
             },
             applySettingsUIDetailsOpenStates() {
                 const detailsElements = document.querySelectorAll('#settings-screen details[id]');
@@ -11221,8 +11245,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                     state.settings.preventZoom = elements.preventZoomToggle.checked;
                     uiUtils.applyZoomPreventionSetting();
                 });
-                document.getElementById('minimize-header-footer-toggle').addEventListener('change', (e) => {
-                    state.settings.minimizeHeaderFooter = e.target.checked;
+                document.getElementById('minimize-header-toggle').addEventListener('change', (e) => {
+                    state.settings.minimizeHeader = e.target.checked;
+                    uiUtils.applyMinimizeUI();
+                });
+                document.getElementById('minimize-footer-toggle').addEventListener('change', (e) => {
+                    state.settings.minimizeFooter = e.target.checked;
                     uiUtils.applyMinimizeUI();
                 });
                 elements.showSessionLinkingSettingsToggle.addEventListener('change', (e) => {
@@ -14311,7 +14339,8 @@ document.addEventListener('DOMContentLoaded', async () => {
              newSettings.thoughtSummaryFontSize = elements.thoughtSummaryFontSizeInput.value === '' ? null : parseInt(elements.thoughtSummaryFontSizeInput.value, 10);
              newSettings.enableSwipeNavigation = elements.swipeNavigationToggle.checked;
              newSettings.preventZoom = elements.preventZoomToggle.checked;
-             newSettings.minimizeHeaderFooter = document.getElementById('minimize-header-footer-toggle').checked;
+             newSettings.minimizeHeader = document.getElementById('minimize-header-toggle').checked;
+             newSettings.minimizeFooter = document.getElementById('minimize-footer-toggle').checked;
              newSettings.showSessionLinkingSettings = elements.showSessionLinkingSettingsToggle.checked;
              newSettings.showChatTitle = elements.showChatTitleToggle.checked;
              newSettings.showNewChatButton = elements.showNewChatButtonToggle.checked;
@@ -14629,7 +14658,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     defaultSettingsCopy.showSessionLinkingSettings = false;
                     defaultSettingsCopy.enableSwipeNavigation = false;
                     defaultSettingsCopy.preventZoom = true;
-                    defaultSettingsCopy.minimizeHeaderFooter = true;
+                    defaultSettingsCopy.minimizeHeader = true;
+                    defaultSettingsCopy.minimizeFooter = true;
                     defaultSettingsCopy.showChatTitle = true;
                     defaultSettingsCopy.showNewChatButton = true;
                     defaultSettingsCopy.showDeleteSessionButton = false;
