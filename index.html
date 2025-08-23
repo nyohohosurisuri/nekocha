@@ -9570,25 +9570,85 @@ document.addEventListener('DOMContentLoaded', async () => {
                         return;
                     }
 
-                    // characterlist.txtから読み込み
                     let characters = [];
+
+                    // 方法1: ディレクトリリスティングを試みる（開発サーバーで動作）
                     try {
-                        const res = await fetch('./systemprompt/characterlist.txt');
-                        if (res.ok) {
-                            const text = await res.text();
-                            characters = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+                        const dirRes = await fetch('./systemprompt/');
+                        if (dirRes.ok) {
+                            const html = await dirRes.text();
+                            // HTMLからファイル名を抽出
+                            const parser = new DOMParser();
+                            const doc = parser.parseFromString(html, 'text/html');
+                            
+                            // <a>タグのhrefから.txtファイルを検出
+                            const links = doc.querySelectorAll('a');
+                            links.forEach(link => {
+                                const href = link.getAttribute('href');
+                                if (href && href.endsWith('.txt') && !href.includes('/')) {
+                                    // .txtを除去してキャラクター名を取得
+                                    const name = decodeURIComponent(href.replace('.txt', ''));
+                                    if (name && name !== 'characterlist') {
+                                        characters.push(name);
+                                    }
+                                }
+                            });
+                            
+                            // 追加の抽出パターン（一部のサーバー用）
+                            if (characters.length === 0) {
+                                // <pre>タグ内のテキストからファイル名を抽出
+                                const preElements = doc.querySelectorAll('pre');
+                                preElements.forEach(pre => {
+                                    const matches = pre.textContent.match(/[^\/\s]+\.txt/g);
+                                    if (matches) {
+                                        matches.forEach(match => {
+                                            const name = decodeURIComponent(match.replace('.txt', ''));
+                                            if (name && name !== 'characterlist' && !characters.includes(name)) {
+                                                characters.push(name);
+                                            }
+                                        });
+                                    }
+                                });
+                            }
                         }
                     } catch (error) {
-                        console.warn('characterlist.txt読み込みエラー:', error);
+                        console.log('ディレクトリリスティング非対応:', error);
                     }
 
-                    // フォールバック
+                    // 方法2: characterlist.txtがあれば読み込み（フォールバック）
                     if (characters.length === 0) {
-                        characters = [
-                            'アイシャ', 'アリーゼ', 'イクシア', 'エプリル', 'キアラ', 'キュア', 'サヤ', 'シェリル',
-                            'シャルロット', 'セツナ', 'セルピナ', 'セーラ', 'ティナ', 'トワ', 'ノクタリカ', 'フェイ',
-                            'マール', 'リスティ', 'リリー', 'リルテット', 'リーチェ', 'ルウシェ', 'ルカ', 'ルナ'
-                        ];
+                        try {
+                            const res = await fetch('./systemprompt/characterlist.txt');
+                            if (res.ok) {
+                                const text = await res.text();
+                                characters = text.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+                            }
+                        } catch (error) {
+                            console.log('characterlist.txt読み込みエラー:', error);
+                        }
+                    }
+
+                    // 方法3: 最小限のデフォルトセット（最終手段）
+                    if (characters.length === 0) {
+                        // 既知の基本キャラクターのみを最終手段として提供
+                        const fallbackCharacters = ['アイシャ', 'ルナ', 'サヤ'];
+                        const checkPromises = fallbackCharacters.map(async (name) => {
+                            try {
+                                const encodedName = encodeURIComponent(name);
+                                const res = await fetch(`./systemprompt/${encodedName}.txt`, { method: 'HEAD' });
+                                if (res.ok) return name;
+                            } catch (error) {}
+                            return null;
+                        });
+                        
+                        const results = await Promise.all(checkPromises);
+                        results.forEach(name => {
+                            if (name) characters.push(name);
+                        });
+                        
+                        if (characters.length === 0) {
+                            console.warn('キャラクターファイルが見つかりませんでした');
+                        }
                     }
 
                     // キャッシュ更新
