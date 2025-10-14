@@ -9694,24 +9694,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                     combinedPrompt += (modePrompt ? '\n\n' : '') + systemPrompt;
                 }
                 
-                // 関係が「なし」以外の場合のみ関係を追加
-                if (relationship !== 'none') {
-                    combinedPrompt += (systemPrompt ? '\n\n' : '') + `ユーザーとの関係は${relationshipText}です。`;
-                }
-                
-                // ユーザー名を追加
+                // ユーザー設定をまとめて追加
                 const userName = state.settings.userName;
-                if (userName && userName.trim() !== '') {
-                    combinedPrompt += `\nユーザーの名前は${userName}です。`;
-                }
+                const genderText = userGender && userGender !== 'none' ? {
+                    'male': '男性',
+                    'female': '女性',
+                    'other': 'その他'
+                }[userGender] : '';
 
-                // ユーザーの性別を追加
-                if (userGender && userGender !== 'none') {
-                    const genderText = {
-                        'male': '男性',
-                        'female': '女性',
-                        'other': 'その他'
-                    }[userGender] || '';
+                // ユーザー設定がある場合のみヘッダーと内容を追加
+                const hasUserSettings = relationship !== 'none' || (userName && userName.trim() !== '') || genderText;
+                if (hasUserSettings) {
+                    combinedPrompt += (systemPrompt ? '\n\n' : '') + '〇ユーザーの設定';
+
+                    // 関係が「なし」以外の場合のみ関係を追加
+                    if (relationship !== 'none') {
+                        combinedPrompt += `\nユーザーとの関係は${relationshipText}です。`;
+                    }
+
+                    // ユーザー名を追加
+                    if (userName && userName.trim() !== '') {
+                        combinedPrompt += `\nユーザーの名前は${userName}です。`;
+                    }
+
+                    // ユーザーの性別を追加
                     if (genderText) {
                         combinedPrompt += `\nユーザーの性別は${genderText}です。`;
                     }
@@ -9894,28 +9900,34 @@ document.addEventListener('DOMContentLoaded', async () => {
                             combinedPrompt += (modePrompt ? '\n\n' : '') + systemPrompt.trim();
                         }
                         
-                        // 関係が「なし」以外の場合のみ関係を追加
-                        if (relationship !== 'none') {
-                            if (combinedPrompt) {
-                                combinedPrompt += '\n\n' + `ユーザーとの関係は${relationshipText}です。`;
-                            } else {
-                                combinedPrompt = `ユーザーとの関係は${relationshipText}です。`;
-                            }
-                        }
-                        
-                        // ユーザー名を追加
+                        // ユーザー設定をまとめて追加
                         const userName = state.settings.userName;
-                        if (userName && userName.trim() !== '') {
-                            combinedPrompt += `\nユーザーの名前は${userName}です。`;
-                        }
+                        const genderText = userGender && userGender !== 'none' ? {
+                            'male': '男性',
+                            'female': '女性',
+                            'other': 'その他'
+                        }[userGender] : '';
 
-                        // ユーザーの性別を追加
-                        if (userGender && userGender !== 'none') {
-                            const genderText = {
-                                'male': '男性',
-                                'female': '女性',
-                                'other': 'その他'
-                            }[userGender] || '';
+                        // ユーザー設定がある場合のみヘッダーと内容を追加
+                        const hasUserSettings = relationship !== 'none' || (userName && userName.trim() !== '') || genderText;
+                        if (hasUserSettings) {
+                            if (combinedPrompt) {
+                                combinedPrompt += '\n\n〇ユーザーの設定';
+                            } else {
+                                combinedPrompt = '〇ユーザーの設定';
+                            }
+
+                            // 関係が「なし」以外の場合のみ関係を追加
+                            if (relationship !== 'none') {
+                                combinedPrompt += `\nユーザーとの関係は${relationshipText}です。`;
+                            }
+
+                            // ユーザー名を追加
+                            if (userName && userName.trim() !== '') {
+                                combinedPrompt += `\nユーザーの名前は${userName}です。`;
+                            }
+
+                            // ユーザーの性別を追加
                             if (genderText) {
                                 combinedPrompt += `\nユーザーの性別は${genderText}です。`;
                             }
