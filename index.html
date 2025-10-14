@@ -3660,6 +3660,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="home-buttons-container">
                     <button id="start-chat-btn" class="home-button">会話を始める</button>
                     <button id="select-history-btn" class="home-button">履歴から選択</button>
+                    <button id="github-btn" class="home-button">GitHub</button>
                 </div>
             </main>
         </div>
@@ -5851,6 +5852,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             gotoHomeBtn: document.getElementById('goto-home-btn'),
             startChatBtn: document.getElementById('start-chat-btn'),
             selectHistoryBtn: document.getElementById('select-history-btn'),
+            githubBtn: document.getElementById('github-btn'),
             characterSelect: document.getElementById('character-select'),
             promptApiProviderSelect: document.getElementById('prompt-api-provider-select'),
             promptGeminiSettings: document.getElementById('prompt-gemini-settings'),
@@ -10666,6 +10668,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     });
                 } else {
                     console.error('selectHistoryBtn element not found');
+                }
+                if (elements.githubBtn) {
+                    elements.githubBtn.addEventListener('click', () => {
+                        window.open('https://github.com/nyohohosurisuri/nekocha', '_blank');
+                    });
                 }
                 elements.backToChatFromHistoryBtn.addEventListener('click', () => history.back());
                 elements.backToChatFromSettingsBtn.addEventListener('click', () => history.back());
