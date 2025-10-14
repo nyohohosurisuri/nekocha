@@ -4019,7 +4019,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 <label for="user-name-input">ユーザーの名前(呼び名):</label>
                                 <input type="text" id="user-name-input" aria-label="ユーザーの名前">
                             </div>
-                            
+
+                            <div class="setting-group">
+                                <label for="user-gender-select">ユーザーの性別:</label>
+                                <select id="user-gender-select" class="setting-select">
+                                    <option value="male">男性</option>
+                                    <option value="female">女性</option>
+                                    <option value="other">その他</option>
+                                    <option value="none">指定なし</option>
+                                </select>
+                            </div>
+
                             <div class="setting-group">
                                 <label for="user-relationship-select">ユーザーとの関係:</label>
                                 <select id="user-relationship-select" class="setting-select">
@@ -5501,6 +5511,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const DEFAULT_MESSAGE_ICON_SIZE = 50;
         const DEFAULT_MESSAGE_ICON_OFFSET_Y = -30;
         const DEFAULT_USER_NAME = "";
+        const DEFAULT_USER_GENDER = "male";
         const DEFAULT_AI_NAME = "AI";
         const DEFAULT_ICON_NAME_FONT_SIZE = 15;
         const DEFAULT_ICON_NAME_OFFSET_Y = -30;
@@ -5961,6 +5972,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             deleteUserIconBtn: document.getElementById('delete-user-icon-btn'),
             showUserNameToggle: document.getElementById('show-user-name-toggle'),
             userNameInput: document.getElementById('user-name-input'),
+            userGenderSelect: document.getElementById('user-gender-select'),
             showAiIconToggle: document.getElementById('show-ai-icon-toggle'),
             aiIconInput: document.getElementById('ai-icon-input'),
             uploadAiIconBtn: document.getElementById('upload-ai-icon-btn'),
@@ -6215,6 +6227,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 userIconBlob: null,
                 showUserName: false,
                 userName: DEFAULT_USER_NAME,
+                userGender: DEFAULT_USER_GENDER,
                 chatMode: 'conversation',
                 showAiIcon: true,
                 aiIconBlob: null,
@@ -9395,6 +9408,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (elements.userNameInput) {
                         elements.userNameInput.value = state.settings.userName || '';
                     }
+                    if (elements.userGenderSelect) {
+                        elements.userGenderSelect.value = state.settings.userGender || DEFAULT_USER_GENDER;
+                    }
                     if (elements.chatModeSelect) {
                         elements.chatModeSelect.value = state.settings.chatMode || 'conversation';
                     }
@@ -9652,6 +9668,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 
                 const chatMode = elements.chatModeSelect ? elements.chatModeSelect.value : 'conversation';
                 const relationship = elements.userRelationshipSelect.value;
+                const userGender = elements.userGenderSelect ? elements.userGenderSelect.value : DEFAULT_USER_GENDER;
                 const systemPrompt = elements.promptSetupSystemPrompt.value;
                 const aiName = elements.promptAiNameInput ? elements.promptAiNameInput.value.trim() || 'AI' : 'AI';
                 
@@ -9687,7 +9704,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (userName && userName.trim() !== '') {
                     combinedPrompt += `\nユーザーの名前は${userName}です。`;
                 }
-                
+
+                // ユーザーの性別を追加
+                if (userGender && userGender !== 'none') {
+                    const genderText = {
+                        'male': '男性',
+                        'female': '女性',
+                        'other': 'その他'
+                    }[userGender] || '';
+                    if (genderText) {
+                        combinedPrompt += `\nユーザーの性別は${genderText}です。`;
+                    }
+                }
+
                 // AI名を追加（無効化）
                 // if (aiName && aiName !== 'AI') {
                 //     combinedPrompt += `\nあなたの名前は${aiName}です。`;
@@ -9832,6 +9861,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const characterValue = elements.characterSelect.value;
                     const chatMode = elements.chatModeSelect ? elements.chatModeSelect.value : 'conversation';
                     const relationship = elements.userRelationshipSelect.value;
+                    const userGender = elements.userGenderSelect ? elements.userGenderSelect.value : DEFAULT_USER_GENDER;
                     const systemPrompt = elements.promptSetupSystemPrompt.value;
                     
                     const relationshipText = {
@@ -9878,7 +9908,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                         if (userName && userName.trim() !== '') {
                             combinedPrompt += `\nユーザーの名前は${userName}です。`;
                         }
-                        
+
+                        // ユーザーの性別を追加
+                        if (userGender && userGender !== 'none') {
+                            const genderText = {
+                                'male': '男性',
+                                'female': '女性',
+                                'other': 'その他'
+                            }[userGender] || '';
+                            if (genderText) {
+                                combinedPrompt += `\nユーザーの性別は${genderText}です。`;
+                            }
+                        }
+
                         // AI名を追加（無効化）
                         // if (aiName && aiName !== 'AI') {
                         //     combinedPrompt += `\nあなたの名前は${aiName}です。`;
@@ -10866,7 +10908,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                         uiUtils.updatePromptPreview();
                     });
                 }
-                
+
+                if (elements.userGenderSelect) {
+                    elements.userGenderSelect.addEventListener('change', async () => {
+                        state.settings.userGender = elements.userGenderSelect.value;
+                        await appLogic.saveSettings(false);
+                        uiUtils.updatePromptPreview();
+                    });
+                }
+
                 if (elements.promptAiNameInput) {
                     elements.promptAiNameInput.addEventListener('input', () => {
                         uiUtils.updatePromptPreview();
