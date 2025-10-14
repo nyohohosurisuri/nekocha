@@ -3706,7 +3706,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div id="loading-indicator" class="loading-indicator hidden" aria-live="polite">応答中</div>
             </main>
             <footer class="chat-input-area">
-                <button id="footer-api-provider-toggle-btn" class="footer-action-button api-provider-toggle-btn" title="APIプロバイダー切替"></button>
                 <button id="roll-dice-btn" title="ランダム数値を入力" class="footer-action-button hidden">🎲</button>
                 <button id="ai-to-ai-chat-btn" title="AI間会話ステップ実行" class="footer-action-button hidden">👥</button>
                 <button id="paste-to-input-btn" title="入力欄に貼り付け" class="footer-action-button">貼</button>
@@ -6000,7 +5999,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             disableSaveSettingsConfirmationToggle: document.getElementById('disable-save-settings-confirmation-toggle'),
             autoSaveSettingsToggle: document.getElementById('auto-save-settings-toggle'),
             headerApiProviderToggleBtn: document.getElementById('header-api-provider-toggle-btn'),
-            footerApiProviderToggleBtn: document.getElementById('footer-api-provider-toggle-btn'),
+            // footerApiProviderToggleBtn: document.getElementById('footer-api-provider-toggle-btn'), // フッターのAPIプロバイダー切替ボタンを無効化
             showApiProviderToggleHeaderCheckbox: document.getElementById('show-api-provider-toggle-header'),
             showApiProviderToggleFooterCheckbox: document.getElementById('show-api-provider-toggle-footer'),
             apiProviderCycleGeminiCheckbox: document.getElementById('api-provider-cycle-gemini'),
@@ -9041,7 +9040,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 };
                 const currentProviderInfo = providerMap[state.settings.apiProvider] || { text: '??', title: 'Unknown', className: '' };
                 
-                [elements.headerApiProviderToggleBtn, elements.footerApiProviderToggleBtn].forEach(button => {
+                // フッターのAPIプロバイダー切替ボタンを削除したためheaderのみ処理
+                [elements.headerApiProviderToggleBtn].forEach(button => {
                     if (button) {
                         button.textContent = currentProviderInfo.text;
                         button.title = `API: ${currentProviderInfo.title}`;
@@ -10960,7 +10960,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 elements.copySessionBtn.addEventListener('click', () => this.copyCurrentSessionText());
                 elements.toggleAllContentBtn.addEventListener('click', () => this.toggleAllMessagesVisibility());
                 elements.headerApiProviderToggleBtn.addEventListener('click', () => this.toggleApiProvider());
-                elements.footerApiProviderToggleBtn.addEventListener('click', () => this.toggleApiProvider());
+                // elements.footerApiProviderToggleBtn.addEventListener('click', () => this.toggleApiProvider()); // フッターのAPIプロバイダー切替ボタンを無効化
                 elements.sendButton.addEventListener('click', () => {
                     if (state.isSending) this.abortRequest();
                     else this.handleSend();
