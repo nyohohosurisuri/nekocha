@@ -10579,8 +10579,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     
                     // イベントリスナーを最初に設定
                     this.setupEventListeners();
-                    
-                    // 全画面を非アクティブにしてからホーム画面を初期表示
+
+                    // 全画面を非アクティブにする
                     const allScreens = [elements.homeScreen, elements.chatScreen, elements.historyScreen, elements.promptSetupScreen, elements.settingsScreen];
                     allScreens.forEach(screen => {
                         if (screen) {
@@ -10589,16 +10589,31 @@ document.addEventListener('DOMContentLoaded', async () => {
                             screen.style.transform = 'translateX(0) translateY(0)';
                         }
                     });
-                    
-                    // まず初期状態でホーム画面を表示
-                    if (elements.homeScreen) {
-                        elements.homeScreen.classList.add('active', 'fade-in');
-                        elements.homeScreen.classList.remove('fade-out');
+
+                    // チャット履歴を先に確認して、適切な画面を表示
+                    const chats = await dbUtils.getAllChats(state.settings.historySortOrder);
+                    if (chats && chats.length > 0) {
+                        // 履歴がある場合は最初からチャット画面を表示
+                        await this.loadChat(chats[0].id);
+                        if (elements.chatScreen) {
+                            elements.chatScreen.classList.add('active', 'fade-in');
+                            elements.chatScreen.classList.remove('fade-out');
+                        }
+                        history.replaceState({ screen: 'chat' }, '', '#chat');
+                        state.currentScreen = 'chat';
+                        console.log('Last updated chat loaded and chat screen shown directly');
+                    } else {
+                        // 履歴がない場合はホーム画面を表示
+                        if (elements.homeScreen) {
+                            elements.homeScreen.classList.add('active', 'fade-in');
+                            elements.homeScreen.classList.remove('fade-out');
+                        }
+                        history.replaceState({ screen: 'home' }, '', '#home');
+                        state.currentScreen = 'home';
+                        this.startNewChat();
+                        console.log('No chats found, showing home screen');
                     }
-                    
-                    history.replaceState({ screen: 'home' }, '', '#home');
-                    state.currentScreen = 'home';
-                    
+
                     // IndexedDB使用可能性を検出
                     state.env = state.env || {};
                     state.env.idbUsable = await detectIndexedDbAvailable();
@@ -10607,23 +10622,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         await uiUtils.showCustomAlert('プライベートブラウズモードまたはIndexedDBが使用できない環境です。\n画像アセットの保存が無効化されます。');
                         // アセット保存系UIを無効化する場合はここで実装
                     }
-                    
-                    console.log('Home screen shown');
-                    
+
                     uiUtils.applySettingsToUI();
-    
-                    // チャット履歴があれば最後に更新したチャットを読み込んでチャット画面に遷移
-                    const chats = await dbUtils.getAllChats(state.settings.historySortOrder);
-                    if (chats && chats.length > 0) {
-                        // 最後に更新したチャット（chats[0]）を読み込んでチャット画面を表示
-                        await this.loadChat(chats[0].id);
-                        await uiUtils.showScreen('chat');
-                        console.log('Last updated chat loaded and chat screen shown');
-                    } else {
-                        // チャット履歴がない場合は新規チャットを準備してホーム画面のまま
-                        this.startNewChat();
-                        console.log('No chats found, staying on home screen');
-                    }
                     
                     updateMessageMaxWidthVar();
                     this.updateZoomState();
