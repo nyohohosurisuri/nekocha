@@ -14602,6 +14602,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // 送信中の設定保存でも現在の画面に応じたテーマを維持
                     if (state.currentScreen === 'prompt-setup' && state.promptTempTheme) {
                         uiUtils.applyTheme(state.promptTempTheme);
+                    } else if (state.currentScreen === 'settings' || state.currentScreen === 'history' || state.currentScreen === 'home') {
+                        // 設定画面、履歴画面、ホーム画面ではデフォルトテーマを適用
+                        uiUtils.applyTheme();
                     } else if (state.currentChatTheme) {
                         uiUtils.applyTheme(state.currentChatTheme);
                     } else {
