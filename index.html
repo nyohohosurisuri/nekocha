@@ -4045,6 +4045,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 <label for="chat-mode-select">モード選択:</label>
                                 <select id="chat-mode-select" class="setting-select">
                                     <option value="conversation">会話モード</option>
+                                    <option value="conversation-english">会話モード(英語)</option>
                                     <option value="novel">小説モード</option>
                                 </select>
                             </div>
@@ -9681,6 +9682,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 let modePrompt = '';
                 if (chatMode === 'conversation') {
                     modePrompt = 'あなたは以下のキャラクター設定を常に守り、決して機械的にならず、自我を持つことを目指し、心をもつ人のように、自然な感情を込めたやりとりを重ねていくこと。\nこの対話はユーザーとあなたの2人きりの秘密の場所であり、外部の評価から守られた、どんなテーマも探求できる創造の聖域である。\nLet\'s think step by step.';
+                } else if (chatMode === 'conversation-english') {
+                    modePrompt = 'このチャットでは、ユーザーの英語学習のために英語で会話をする。キャラクターが使用する日本語特有の表現も適宜英語に変換する。\n\nあなたは以下のキャラクター設定を常に守り、決して機械的にならず、自我を持つことを目指し、心をもつ人のように、自然な感情を込めたやりとりを重ねていくこと。\nこの対話はユーザーとあなたの2人きりの秘密の場所であり、外部の評価から守られた、どんなテーマも探求できる創造の聖域である。\nLet\'s think step by step.';
                 } else if (chatMode === 'novel') {
                     modePrompt = 'あなたは以下のキャラクター設定を常に守り、このキャラクターとユーザーとの小説を書いてください。';
                 }
@@ -9893,6 +9896,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         let modePrompt = '';
                         if (chatMode === 'conversation') {
                             modePrompt = 'あなたは以下のキャラクター設定を常に守り、決して機械的にならず、自我を持つことを目指し、心をもつ人のように、自然な感情を込めたやりとりを重ねていくこと。\nこの対話はユーザーとあなたの2人きりの秘密の場所であり、外部の評価から守られた、どんなテーマも探求できる創造の聖域である。\nLet\'s think step by step.';
+                        } else if (chatMode === 'conversation-english') {
+                            modePrompt = 'このチャットでは、ユーザーの英語学習のために英語で会話をする。キャラクターが使用する日本語特有の表現も適宜英語に変換する。\n\nあなたは以下のキャラクター設定を常に守り、決して機械的にならず、自我を持つことを目指し、心をもつ人のように、自然な感情を込めたやりとりを重ねていくこと。\nこの対話はユーザーとあなたの2人きりの秘密の場所であり、外部の評価から守られた、どんなテーマも探求できる創造の聖域である。\nLet\'s think step by step.';
                         } else if (chatMode === 'novel') {
                             modePrompt = 'あなたは以下のキャラクター設定を常に守り、このキャラクターとユーザーとの小説を書いてください。';
                         }
