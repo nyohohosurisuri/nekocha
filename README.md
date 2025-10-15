@@ -1,9 +1,9 @@
 # 概要
-- https://github.com/titan823/geminipwaをもとに、白猫のキャラクターとのチャットに特化させたPWAです。
+- https://github.com/titan823/geminipwa をもとに、白猫のキャラクターとのチャットに特化させたPWAです。
 ## 使い方
 -  以下のURLから利用可能です。
 https://nyohohosurisuri.github.io/nekocha/
--  AI studio(https://aistudio.google.com)でGemini APIキーを取得します。
+-  AI studio(https://aistudio.google.com) でGemini APIキーを取得します。
 - 新規チャット作成画面または設定画面を開き、APIキーを入力して保存します。
 - チャット作成画面からキャラクター等の設定をし、チャットを作成すると、会話を開始できます。
 
