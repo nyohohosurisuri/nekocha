@@ -8880,6 +8880,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // プロンプト設定画面の場合は一時テーマを適用、それ以外は通常のテーマ適用
                 if (state.currentScreen === 'prompt-setup' && state.promptTempTheme) {
                     this.applyTheme(state.promptTempTheme);
+                } else if (state.currentScreen === 'settings' || state.currentScreen === 'history' || state.currentScreen === 'home') {
+                    // 設定画面、履歴画面、ホーム画面ではデフォルトテーマを適用
+                    this.applyTheme();
                 } else if (state.currentChatTheme) {
                     this.applyTheme(state.currentChatTheme);
                 } else {
